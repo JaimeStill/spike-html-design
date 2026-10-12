@@ -75,6 +75,13 @@ const COLORS = {
 
 const HUES = ["blue", "green", "red", "yellow", "orange"];
 
+// COMPONENTS are the component classes, frozen at v0.1.0: herald's six, its button variants, and
+// a badge variant per hue.
+const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
+const BADGES = HUES.map((h) => `badge-${h}`);
+const COMPONENTS = ["btn", ...BUTTONS, "card", "input", "label", "badge", ...BADGES];
+COMPONENTS.push("scroll-y", "scroll-x");
+
 // rootTokens resolves to every custom property declared on :root, name to computed value.
 function rootTokens(page) {
   return page.evaluate(`(() => {
@@ -93,6 +100,26 @@ function resolveColor(page, token) {
     probe.remove();
     return color;
   })()`);
+}
+
+// tint parses a computed color(srgb r g b / a) into the rgb() of its opaque hue and its alpha,
+// the form chromium computes a color-mix() of a hue with transparent to. It is null for any
+// other color, so a bare rgb() hue or transparent never passes for a tint.
+function tint(value) {
+  const match = value.match(/^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+) \/ ([\d.]+)\)$/);
+  if (!match) return null;
+  const [r, g, b] = match.slice(1, 4).map((c) => Math.round(Number(c) * 255));
+  return { hue: `rgb(${r}, ${g}, ${b})`, alpha: Number(match[4]) };
+}
+
+// tabTo presses Tab, a trusted keyboard event, until the element matching selector has focus,
+// and throws if it never does.
+async function tabTo(page, selector) {
+  for (let i = 0; i < 50; i++) {
+    await page.view.press("Tab");
+    if (await page.evaluate(`document.activeElement.matches(${JSON.stringify(selector)})`)) return;
+  }
+  throw new Error(`no Tab reached ${selector}`);
 }
 
 describe("layers", () => {
@@ -259,11 +286,176 @@ describe("theme", () => {
     expect(await page.style("#prose hr + p", "margin-top")).toBe("16px");
   });
 
-  test("draws no shadows and no gradients", async () => {
+  test("draws no shadows and no gradients, on prose or components", async () => {
     const page = await open(specimen, { scheme: "light" });
+    // The check is only as wide as the page: it must hold every component class.
+    const shown = COMPONENTS.map((name) => `!!document.querySelector("#components .${name}")`);
+    expect(await page.evaluate(`[${shown}].every(Boolean)`)).toBe(true);
     const styles = (await page.fingerprint(["box-shadow", "background-image"])).map(([, s]) => s);
     expect(new Set(styles.map((s) => s["box-shadow"]))).toEqual(new Set(["none"]));
     expect(new Set(styles.map((s) => s["background-image"]))).toEqual(new Set(["none"]));
+  });
+});
+
+describe("components", () => {
+  test("the components layer styles exactly the frozen classes", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const classes = await page.evaluate(`(() => {
+      const sheet = [...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css"));
+      const layer = [...sheet.cssRules].find((r) => r.name === "components" && r.cssRules);
+      const selectors = [];
+      const walk = (rules) => {
+        for (const rule of rules) {
+          if (rule.selectorText) selectors.push(rule.selectorText);
+          if (rule.cssRules) walk(rule.cssRules);
+        }
+      };
+      walk(layer.cssRules);
+      return [...new Set(selectors.join(" ").match(/\\.[\\w-]+/g))].map((c) => c.slice(1));
+    })()`);
+    expect(classes.sort()).toEqual([...COMPONENTS].sort());
+  });
+
+  test("buttons, inputs, labels and cards resolve from tokens", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const [bg, bg1, color, color1, divider] = ["--bg", "--bg-1", "--color", "--color-1"]
+      .concat("--divider")
+      .map((t) => COLORS[t][0]);
+    const expected = {
+      ".btn": {
+        padding: "4px 12px",
+        "border-top": `1px solid ${divider}`,
+        "border-radius": "4px",
+        "background-color": bg,
+        color,
+        "font-size": "12px",
+        "font-family": MONO,
+        cursor: "pointer",
+      },
+      ".input": {
+        padding: "8px 12px",
+        "border-top": `1px solid ${divider}`,
+        "border-radius": "4px",
+        "background-color": bg1,
+        color,
+        "font-size": "14px",
+        "font-family": MONO,
+      },
+      ".label": {
+        "font-size": "12px",
+        "font-family": MONO,
+        color: color1,
+        "text-transform": "uppercase",
+      },
+      ".card": {
+        display: "flex",
+        "flex-direction": "column",
+        gap: "12px",
+        padding: "16px",
+        "background-color": bg1,
+        "border-top": `1px solid ${divider}`,
+        "border-radius": "8px",
+      },
+    };
+    for (const [selector, styles] of Object.entries(expected)) {
+      for (const [property, value] of Object.entries(styles)) {
+        expect([selector, property, await page.style(`#components ${selector}`, property)]).toEqual(
+          [selector, property, value],
+        );
+      }
+    }
+  });
+
+  test("each button variant takes its color token, in both schemes", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const tokens = { ...Object.fromEntries(HUES.map((h) => [`btn-${h}`, `--${h}`])) };
+    tokens["btn-muted"] = "--color-2";
+    for (const scheme of [0, 1]) {
+      if (scheme) await page.setScheme("dark");
+      for (const variant of BUTTONS) {
+        const value = COLORS[tokens[variant]][scheme];
+        const selector = `#components .${variant}:not(:disabled)`;
+        expect([variant, await page.style(selector, "color")]).toEqual([variant, value]);
+        expect([variant, await page.style(selector, "border-top-color")]).toEqual([variant, value]);
+      }
+    }
+  });
+
+  test("a disabled button keeps the plain button's colors, dimmed", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    expect(await page.style("#components .btn:disabled", "color")).toBe(COLORS["--color"][0]);
+    expect(await page.style("#components .btn:disabled", "opacity")).toBe("0.4");
+  });
+
+  test("each badge variant is its hue on a translucent mix of that hue", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    for (const hue of HUES) {
+      const selector = `#components .badge-${hue}`;
+      const [value] = COLORS[`--${hue}`];
+      expect([hue, await page.style(selector, "color")]).toEqual([hue, value]);
+      const fill = tint(await page.style(selector, "background-color"));
+      expect([hue, fill?.hue]).toEqual([hue, value]);
+      expect(fill.alpha).toBeGreaterThan(0);
+      expect(fill.alpha).toBeLessThan(1);
+    }
+    expect(await page.style("#components .badge", "font-weight")).toBe("600");
+    expect(await page.style("#components .badge", "padding")).toBe("4px 8px");
+  });
+
+  test("a hovered color button fills with a translucent mix of its hue", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const selector = "#components .btn-red";
+    expect(await page.style(selector, "background-color")).toBe(COLORS["--bg"][0]);
+    const [x, y] = await page.evaluate(`(() => {
+      const button = document.querySelector(${JSON.stringify(selector)});
+      button.scrollIntoView({ block: "center" });
+      const box = button.getBoundingClientRect();
+      return [box.x + box.width / 2, box.y + box.height / 2];
+    })()`);
+    // A real pointer move through CDP, so :hover matches as it would under a mouse.
+    await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+    // Skip the background transition to its end.
+    await page.evaluate(`document.querySelector(${JSON.stringify(selector)})
+      .getAnimations().forEach((a) => a.finish())`);
+    const fill = tint(await page.style(selector, "background-color"));
+    expect(fill?.hue).toBe(COLORS["--red"][0]);
+    expect(fill.alpha).toBeLessThan(1);
+  });
+
+  for (const selector of [".btn", ".input"]) {
+    test(`${selector} shows a 2px outline on keyboard focus`, async () => {
+      const page = await open(specimen, { scheme: "light" });
+      const target = `#components ${selector}:not(:disabled)`;
+      expect(await page.style(target, "outline-style")).toBe("none");
+      await tabTo(page, target);
+      expect(await page.evaluate(`document.activeElement.matches(":focus-visible")`)).toBe(true);
+      expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
+        `${COLORS["--blue"][0]} solid 2px`,
+      );
+      expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineOffset`)).toBe(
+        "2px",
+      );
+    });
+  }
+
+  test("scroll-y and scroll-x scroll their overflow on one axis", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    for (const [axis, overflow, size, padding] of [
+      ["y", "overflow-y", "Height", "padding-right"],
+      ["x", "overflow-x", "Width", "padding-bottom"],
+    ]) {
+      const selector = `#components .scroll-${axis}`;
+      expect(await page.style(selector, overflow)).toBe("auto");
+      expect(await page.style(selector, "scrollbar-gutter")).toBe("stable");
+      expect(await page.style(selector, padding)).toBe("8px");
+      const scrolled = await page.evaluate(`(() => {
+        const el = document.querySelector(${JSON.stringify(selector)});
+        el.scroll${axis === "y" ? "Top" : "Left"} = 10;
+        return el.scroll${size} > el.client${size} && el.scroll${axis === "y" ? "Top" : "Left"};
+      })()`);
+      expect([axis, scrolled]).toEqual([axis, 10]);
+    }
   });
 });
 
@@ -283,6 +475,16 @@ describe("specimen", () => {
     tags.push("pre", "code", "kbd", "table", "th", "td", "hr");
     for (const tag of tags) {
       expect(await page.evaluate(`!!document.querySelector("#prose ${tag}")`)).toBe(true);
+    }
+  });
+
+  test("shows every component class", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    for (const name of COMPONENTS) {
+      expect([
+        name,
+        await page.evaluate(`!!document.querySelector("#components .${name}")`),
+      ]).toEqual([name, true]);
     }
   });
 

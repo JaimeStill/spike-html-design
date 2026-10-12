@@ -241,3 +241,169 @@
     }
   }
 }
+
+/*
+ * herald's six component classes (app/client/design/styles), ported from CSS modules to plain
+ * classes. Class names are frozen at v0.1.0. Every value is a token, apart from 1px borders and
+ * 2px focus outlines, and herald's own em letter spacing, opacity, and transition times.
+ *
+ * Adapted from herald: where herald fills with a tint token (--*-bg), a fill here is a
+ * color-mix() of the hue at its use; .badge takes a variant per hue in place of herald's status
+ * names, so a badge says its color, not its meaning. Elevation is a border, never a shadow.
+ */
+@layer components {
+  .btn {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--divider);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--color);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  /* herald's variant set: four hues and muted. herald ships no orange button. */
+  .btn-blue:not(:disabled) {
+    border-color: var(--blue);
+    color: var(--blue);
+
+    &:hover {
+      background: color-mix(in srgb, var(--blue) 15%, transparent);
+    }
+  }
+
+  .btn-green:not(:disabled) {
+    border-color: var(--green);
+    color: var(--green);
+
+    &:hover {
+      background: color-mix(in srgb, var(--green) 15%, transparent);
+    }
+  }
+
+  .btn-red:not(:disabled) {
+    border-color: var(--red);
+    color: var(--red);
+
+    &:hover {
+      background: color-mix(in srgb, var(--red) 15%, transparent);
+    }
+  }
+
+  .btn-yellow:not(:disabled) {
+    border-color: var(--yellow);
+    color: var(--yellow);
+
+    &:hover {
+      background: color-mix(in srgb, var(--yellow) 15%, transparent);
+    }
+  }
+
+  /* Muted hovers onto a surface token, as herald's does, rather than a tint of a hue. */
+  .btn-muted:not(:disabled) {
+    border-color: var(--color-2);
+    color: var(--color-2);
+
+    &:hover {
+      background: var(--bg-2);
+    }
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--bg-1);
+    border: 1px solid var(--divider);
+    border-radius: var(--radius-md);
+    transition: border-color 0.15s;
+  }
+
+  .input {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--divider);
+    border-radius: var(--radius-sm);
+    background: var(--bg-1);
+    color: var(--color);
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
+
+    &:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  .label {
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+    color: var(--color-1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge {
+    flex-shrink: 0;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    &.badge-blue {
+      color: var(--blue);
+      background: color-mix(in srgb, var(--blue) 15%, transparent);
+    }
+
+    &.badge-green {
+      color: var(--green);
+      background: color-mix(in srgb, var(--green) 15%, transparent);
+    }
+
+    &.badge-red {
+      color: var(--red);
+      background: color-mix(in srgb, var(--red) 15%, transparent);
+    }
+
+    &.badge-yellow {
+      color: var(--yellow);
+      background: color-mix(in srgb, var(--yellow) 15%, transparent);
+    }
+
+    &.badge-orange {
+      color: var(--orange);
+      background: color-mix(in srgb, var(--orange) 15%, transparent);
+    }
+  }
+
+  .scroll-y {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding-inline-end: var(--space-2);
+  }
+
+  .scroll-x {
+    overflow-x: auto;
+    scrollbar-gutter: stable;
+    padding-block-end: var(--space-2);
+  }
+}
