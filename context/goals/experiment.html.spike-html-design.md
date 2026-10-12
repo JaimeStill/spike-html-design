@@ -1,12 +1,12 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
-- **Task:** layers
-- **Branch:** layers
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
-1. [ ] layers
+1. [x] layers
 2. [ ] themes
 3. [ ] toggle
 4. [ ] keys
@@ -82,10 +82,6 @@ Door          One-way for v0.1.0 once pushed (jsDelivr caches the tag as
               class names); two-way before the push.
 Release       v0.1.0 (spike-html-design root)
 ```
-
-## Progress
-
-slices 7/7 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
