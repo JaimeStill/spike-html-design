@@ -26,8 +26,8 @@ spike-html-go-wasm link to it.
 
 ## The evidence
 
-1. One stylesheet with layers tokens, reset, theme, components in that order, herald's scales
-   and token names, system font stacks, plain-class components, outline elevation, no shadows or
+1. One root stylesheet that declares the layers tokens, reset, theme, components in that order
+   and imports one file per layer, with no build; herald's scales and token names, system font stacks, plain-class components, outline elevation, no shadows or
    tint tokens; an artifact's own app layer, added last, overrides it without specificity
    workarounds.
 2. A dark and a light theme from Flexoki, each with 18 hue tokens (ANSI 16 plus orange and
@@ -59,8 +59,8 @@ spike-html-go-wasm link to it.
 
 ## Capabilities
 
-- **Stylesheet:** `baseline.css`: four cascade layers (tokens, reset, theme, components),
-  herald's scales and semantic token names, prose styling, and herald's six component classes.
+- **Stylesheet:** `baseline.css`, the root, imports `layers/tokens.css`, `reset.css`,
+  `theme.css`, and `components.css` into their cascade layers; herald's scales and semantic token names, prose styling, and herald's six component classes.
 - **Themes:** Flexoki dark and light, the system default, the contrast table.
 - **Theme toggle:** `<theme-toggle>`, its storage, and the flash measurement.
 - **Keyboard:** `keys.js`, the ? help dialog, key-hint styling.
