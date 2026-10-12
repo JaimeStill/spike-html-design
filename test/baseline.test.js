@@ -259,14 +259,47 @@ describe("tokens", () => {
     }
   });
 
-  test("with no app styles the page follows the system scheme", async () => {
+  test("with no data-theme the page follows a live change of the system scheme", async () => {
     const page = await open(specimen, { scheme: "dark" });
+    expect(await page.evaluate("document.documentElement.hasAttribute('data-theme')")).toBe(false);
     expect(await page.style(":root", "color-scheme")).toBe("light dark");
-    expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][1]);
-    expect(await page.style("body", "color")).toBe(COLORS["--fg"][1]);
+    expect(await resolveColor(page, "--bg")).toBe(COLORS["--bg"][1]);
+    expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
+    // A marker on the window survives only if the page is never reloaded or navigated.
+    await page.evaluate("window.unreloaded = true");
     await page.setScheme("light");
+    expect(await resolveColor(page, "--bg")).toBe(COLORS["--bg"][0]);
+    expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][0]);
     expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][0]);
     expect(await page.style("body", "color")).toBe(COLORS["--fg"][0]);
+    expect(await page.evaluate("window.unreloaded === true")).toBe(true);
+  });
+
+  for (const [index, theme] of ["light", "dark"].entries()) {
+    for (const scheme of ["light", "dark"]) {
+      test(`data-theme="${theme}" forces the ${theme} theme under a ${scheme} system`, async () => {
+        const page = await open(specimen, { scheme });
+        await page.evaluate(`document.documentElement.dataset.theme = "${theme}"`);
+        expect(await page.style(":root", "color-scheme")).toBe(theme);
+        for (const name of ["--bg", "--fg", "--accent"]) {
+          expect([name, await resolveColor(page, name)]).toEqual([name, COLORS[name][index]]);
+        }
+        expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][index]);
+        expect(await page.style("body", "color")).toBe(COLORS["--fg"][index]);
+      });
+    }
+  }
+
+  test("an app layer's token override still wins under a forced theme", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.documentElement.dataset.theme = "dark"`);
+    // A plain :root rule, less specific than :root[data-theme]: the later layer wins anyway.
+    await addAppStyle(page, "@layer app { :root { --bg: rgb(1, 2, 3); } }");
+    expect(await page.style(":root", "color-scheme")).toBe("dark");
+    expect(await resolveColor(page, "--bg")).toBe("rgb(1, 2, 3)");
+    expect(await page.style("body", "background-color")).toBe("rgb(1, 2, 3)");
+    // The tokens it leaves alone keep the forced theme.
+    expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
   });
 });
 

@@ -9,6 +9,9 @@
  * dark-default) through light-dark(); a role holds no color of its own, so a page that
  * overrides a hue in its app layer changes every role on that hue with it.
  *
+ * A data-theme attribute of "light" or "dark" on the root element forces that theme by setting
+ * color-scheme; with no attribute the page follows the system scheme, live.
+ *
  * baseline.css imports this file into the tokens layer. Pages link baseline.css, never this
  * file: linked on its own, its rules would be unlayered.
  */
@@ -73,4 +76,14 @@
   --success: var(--green);
   --warning: var(--yellow);
   --danger: var(--red);
+}
+
+/* The data-theme hook: each forces color-scheme, so every light-dark() token resolves to that
+   theme's value whatever the system scheme. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
