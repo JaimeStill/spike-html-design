@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
+- **State:** building
 - **Task:** layers
 - **Branch:** layers
 
@@ -19,8 +19,10 @@ Problem       No baseline exists to consume; the other two spikes link to it.
               Evidence 1 and 7 need one layered stylesheet, a published
               specimen, and a pinned tag.
 Behaviors
-  1. The stylesheet declares its layers tokens, reset, theme, components
-     before any rule.
+  1. The root stylesheet, baseline.css, declares its layers tokens, reset,
+     theme, components before any rule, then imports one file per layer
+     into its layer; the layered result is the same from file://, a local
+     server and the pinned URL.
   2. A rule in an app layer declared after the stylesheet overrides a
      components rule of equal or higher specificity, with no !important
      and no added selectors.
@@ -70,6 +72,8 @@ Slices
   5. pinned page with intercepted file:// and local-server test (9)
   6. live pin check mise task (12); fails "v0.1.0 not published" until the
      tag exists; run after SHIP's tag, result recorded
+  7. split: one file per layer under layers/, imported by baseline.css with
+     @import ... layer(); tests follow the imports (1, 8, 9)
 Out of scope  The other 13 hue names, muted, accent, Flexoki values
               (themes); <theme-toggle>; keys.js, ? dialog, key-hint
               styling; sizes and pin stability (validate); SRI; a CI check.
@@ -81,7 +85,7 @@ Release       v0.1.0 (spike-html-design root)
 
 ## Progress
 
-slices 6/6 committed · standards ✓ · spec ✓ · editor ✓
+slices 6/7 committed · standards — · spec — · editor — (round 3 reopened: per-layer files)
 
 ## Decisions
 
@@ -149,7 +153,14 @@ slices 6/6 committed · standards ✓ · spec ✓ · editor ✓
   the working-tree `index.html` and `baseline.css`. Once either changes after v0.1.0, the test
   must compare against `git show v0.1.0:index.html` and `git show v0.1.0:baseline.css`; otherwise
   it fails, or renders the v0.1.0 page with newer CSS and misstates evidence 8.
+- layers: round 3 (after the first session brief): the source is one file per layer, with
+  baseline.css as the root that declares the order and imports each into its layer; rejected one
+  file, which herald avoids and gets away with only because its bundler inlines the imports. The
+  pinned URL is unchanged; the extra round trip is measured under evidence 9.
+- layers: the layer files live in `layers/` (tokens.css, reset.css, theme.css, components.css);
+  their paths freeze at v0.1.0 with baseline.css's.
 
 ## Pending edits
 
-(none)
+- coordinator · html-artifacts.md, "Style baseline": "One native stylesheet" becomes a root
+  stylesheet that imports one file per layer (layers.round 3).
