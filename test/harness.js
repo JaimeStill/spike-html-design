@@ -203,7 +203,7 @@ export function serve(root, { prefix = "/" } = {}) {
       if (!pathname.startsWith(prefix)) return new Response(null, { status: 404 });
       let path = resolve(base, `./${pathname.slice(prefix.length)}`);
       if (path !== base && !path.startsWith(base + sep)) return new Response(null, { status: 404 });
-      if (request.url.endsWith("/")) path = resolve(path, "index.html");
+      if (pathname.endsWith("/")) path = resolve(path, "index.html");
       const file = Bun.file(path);
       return (await file.exists()) ? new Response(file) : new Response(null, { status: 404 });
     },

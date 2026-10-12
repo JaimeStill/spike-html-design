@@ -21,7 +21,8 @@ if (!tag) {
   process.exit(2);
 }
 
-// git runs a read-only git command in the repository and returns its exit code and stdout.
+// git runs a read-only git command in the repository and returns whether it exited 0, and its
+// stdout.
 function git(...args) {
   const result = Bun.spawnSync(["git", ...args], { cwd: root });
   return { ok: result.exitCode === 0, stdout: result.stdout };
@@ -51,12 +52,12 @@ try {
   const response = await fetch(cdn);
   const type = response.headers.get("content-type") ?? "";
   const cache = response.headers.get("cache-control") ?? "";
-  const body = new Uint8Array(await response.arrayBuffer());
+  const body = Buffer.from(await response.arrayBuffer());
   const tagged = git("show", `${tag}:baseline.css`).stdout;
   check(response.status === 200, `jsDelivr serves ${cdn} with 200`, `got ${response.status}`);
   check(type.startsWith("text/css"), "its content-type is text/css", `got "${type}"`);
   check(cache.includes("immutable"), "its cache-control is immutable", `got "${cache}"`);
-  check(Buffer.from(body).equals(tagged), `its body is byte-equal to ${tag}:baseline.css`);
+  check(body.equals(tagged), `its body is byte-equal to ${tag}:baseline.css`);
 } catch (error) {
   check(false, `jsDelivr serves ${cdn}`, error.message);
 }

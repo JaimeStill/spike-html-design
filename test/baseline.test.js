@@ -79,8 +79,17 @@ const HUES = ["blue", "green", "red", "yellow", "orange"];
 // a badge variant per hue.
 const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
 const BADGES = HUES.map((h) => `badge-${h}`);
-const COMPONENTS = ["btn", ...BUTTONS, "card", "input", "label", "badge", ...BADGES];
-COMPONENTS.push("scroll-y", "scroll-x");
+const COMPONENTS = [
+  "btn",
+  ...BUTTONS,
+  "card",
+  "input",
+  "label",
+  "badge",
+  ...BADGES,
+  "scroll-y",
+  "scroll-x",
+];
 
 // rootTokens resolves to every custom property declared on :root, name to computed value.
 function rootTokens(page) {
@@ -153,15 +162,8 @@ describe("tokens", () => {
   test("declares exactly herald's token names, without its shadow and tint tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
     const names = Object.keys(await rootTokens(page)).sort();
+    // An exact match, so herald's shadow tokens and --*-bg tints cannot slip in.
     expect(names).toEqual([...Object.keys(SCALES), ...Object.keys(COLORS)].sort());
-    for (const absent of [
-      "--shadow-sm",
-      "--shadow-md",
-      "--shadow-lg",
-      ...HUES.map((h) => `--${h}-bg`),
-    ]) {
-      expect(await page.style(":root", absent)).toBe("");
-    }
   });
 
   test("the font stacks and scales carry herald's values", async () => {
@@ -319,9 +321,13 @@ describe("components", () => {
 
   test("buttons, inputs, labels and cards resolve from tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const [bg, bg1, color, color1, divider] = ["--bg", "--bg-1", "--color", "--color-1"]
-      .concat("--divider")
-      .map((t) => COLORS[t][0]);
+    const [bg, bg1, color, color1, divider] = [
+      "--bg",
+      "--bg-1",
+      "--color",
+      "--color-1",
+      "--divider",
+    ].map((token) => COLORS[token][0]);
     const expected = {
       ".btn": {
         padding: "4px 12px",
@@ -369,8 +375,10 @@ describe("components", () => {
 
   test("each button variant takes its color token, in both schemes", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const tokens = { ...Object.fromEntries(HUES.map((h) => [`btn-${h}`, `--${h}`])) };
-    tokens["btn-muted"] = "--color-2";
+    const tokens = {
+      ...Object.fromEntries(HUES.map((h) => [`btn-${h}`, `--${h}`])),
+      "btn-muted": "--color-2",
+    };
     for (const scheme of [0, 1]) {
       if (scheme) await page.setScheme("dark");
       for (const variant of BUTTONS) {
