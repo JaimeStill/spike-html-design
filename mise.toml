@@ -1,0 +1,22 @@
+[tools]
+actionlint = "1.7.12"
+biome = "2.5.15"
+bun = "1.4.3"
+jq = "1.8.2"
+shellcheck = "0.11.0"
+
+[tasks.check]
+description = "Lint and format-check the CSS, JS, scripts, and workflows, and run the tests in headless chromium; writes nothing"
+run = '''
+set -eu
+cd "$MISE_PROJECT_ROOT"
+command -v chromium >/dev/null || { echo "check: chromium not found"; exit 1; }
+biome ci --no-errors-on-unmatched .
+shellcheck scripts/*.sh
+if [ -d .github/workflows ]; then actionlint; fi
+bun test --pass-with-no-tests
+'''
+
+[tasks.currency]
+description = "Report every mise tool and workflow action pin behind its latest; writes nothing"
+run = "scripts/currency.sh"

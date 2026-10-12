@@ -1,0 +1,23 @@
+# Project kind: this spike holds native CSS and ES modules, checked by `mise run check`. Its
+# goals live in the coordinator's roadmap (standards-lab/context/roadmap.toml).
+[project]
+kind = "code"
+check = "mise run check"
+currency = "mise run currency"
+
+# Remote platform, the commands that publish and merge a finished branch, and the wait for the
+# Pages deploy on the merge commit before a tag. Pull requests run no checks, so the merge
+# doesn't wait on them.
+[remote]
+platform = "github"
+publish = "gh pr create"
+merge = "gh pr merge --merge --delete-branch"
+ci = '''
+sha=$(git rev-parse HEAD)
+for _ in $(seq 30); do
+  runs=$(gh run list --commit "$sha" --event push --json databaseId --jq '.[].databaseId')
+  [ -n "$runs" ] && break || sleep 10
+done
+[ -n "$runs" ] || exit 1
+for run in $runs; do gh run watch --exit-status "$run" || exit 1; done
+'''
