@@ -11,7 +11,8 @@
 
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "../test/harness.js";
-import { LAYERS, LOADED, layersLoaded } from "../test/layers.js";
+import { layersLoaded, loaded } from "../test/layers.js";
+import { git, stylesheets, tagExists } from "../test/tags.js";
 
 const REPO = "JaimeStill/spike-html-design";
 const PAGES = "https://jaimestill.github.io/spike-html-design/";
@@ -23,16 +24,9 @@ if (!tag) {
   process.exit(2);
 }
 
-// git runs a read-only git command in the repository and returns whether it exited 0, and its
-// stdout.
-function git(...args) {
-  const result = Bun.spawnSync(["git", ...args], { cwd: root });
-  return { ok: result.exitCode === 0, stdout: result.stdout };
-}
-
 // The tag must exist locally (its stylesheet files are the reference bytes) and on origin
 // (jsDelivr and Pages read GitHub, not this checkout).
-const local = git("rev-parse", "-q", "--verify", `refs/tags/${tag}`).ok;
+const local = tagExists(tag);
 const remote = git("ls-remote", "--exit-code", "--tags", "origin", `refs/tags/${tag}`).ok;
 if (!local || !remote) {
   const where = [!local && "locally", !remote && "on origin"].filter(Boolean).join(" or ");
@@ -49,8 +43,9 @@ function check(ok, label, detail = "") {
 }
 
 // Every published stylesheet file at its pinned jsDelivr URL: the root and the layer files it
-// imports, which the browser fetches from the same tag.
-const FILES = ["baseline.css", ...LAYERS.map((layer) => `layers/${layer}.css`)];
+// imports, which the browser fetches from the same tag. The list is the tag's, not the working
+// tree's.
+const FILES = stylesheets(tag);
 for (const path of FILES) {
   const cdn = `https://cdn.jsdelivr.net/gh/${REPO}@${tag}/${path}`;
   try {
@@ -89,9 +84,10 @@ try {
       try {
         opened = await openPage(url, { scheme });
         // A load that lost the stylesheet or any of its layer files misses that layer's probe, so
-        // two failed loads cannot pass for equal renders.
-        const probes = await layersLoaded(opened);
-        const styled = JSON.stringify(probes) === JSON.stringify(LOADED);
+        // two failed loads cannot pass for equal renders. The probes and their values are the
+        // tag's own, from the per-tag table, so a later tag's token changes never fail this tag.
+        const probes = await layersLoaded(opened, tag);
+        const styled = JSON.stringify(probes) === JSON.stringify(loaded(tag));
         check(
           styled,
           `${page} from ${name} loads the baseline and its layers, in ${scheme}`,
