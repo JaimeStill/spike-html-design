@@ -81,7 +81,7 @@ Release       v0.1.0 (spike-html-design root)
 
 ## Progress
 
-slices 6/6 committed · standards ✓ · spec ✓ · editor —
+slices 6/6 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -129,6 +129,26 @@ slices 6/6 committed · standards ✓ · spec ✓ · editor —
   reruns it per tag.
 - layers: the Pages workflow deploys only (no check, no mise-action); pull requests run none.
 - layers: no actions/configure-pages; Pages is already enabled and nothing reads base_url.
+- layers: the harness finds chromium with `Bun.which("chromium")`, serializes CDP calls per page
+  (a view allows one in flight), and shares one chromium per bun process.
+- layers: `color-scheme: light dark`; herald writes `dark light`, which differs only when the
+  system states no preference.
+- layers: the theme layer gives adjacent prose blocks a `--space-4` top margin through one
+  `:where()` rule; h1–h6 take text 4xl down to base at weight 600; `kbd` is outlined as prose,
+  and key-hint styling stays with keys.
+- layers: components keep herald's `.btn-muted` (on `--color-2`, not the muted token themes
+  adds), add no orange button (herald has none), write badge variants `.badge.badge-*`, and keep
+  herald's 0.05em letter spacing, 0.4 disabled opacity, and 0.15s transitions.
+- layers: a pinned page is flat `pinned/vX.Y.Z.html`, a copy of the specimen that a test holds
+  identical; its hermetic test answers the pin from the working tree and answers every other
+  https request 404.
+- layers: `mise run pin <tag>` runs `scripts/pin.js`, a plain bun script that `bun test` doesn't
+  collect; a tag counts as published when it exists locally and on origin.
+- layers: the Pages workflow adds `workflow_dispatch` and a `pages` concurrency group.
+- layers: standards review deferred to themes: the pinned page's hermetic test compares against
+  the working-tree `index.html` and `baseline.css`. Once either changes after v0.1.0, the test
+  must compare against `git show v0.1.0:index.html` and `git show v0.1.0:baseline.css`; otherwise
+  it fails, or renders the v0.1.0 page with newer CSS and misstates evidence 8.
 
 ## Pending edits
 

@@ -59,11 +59,13 @@ spike-html-go-wasm link to it.
 
 ## Capabilities
 
-- **Stylesheet:** the cascade layers, herald's scales and semantic token names, components.
+- **Stylesheet:** `baseline.css`: four cascade layers (tokens, reset, theme, components),
+  herald's scales and semantic token names, prose styling, and herald's six component classes.
 - **Themes:** Flexoki dark and light, the system default, the contrast table.
 - **Theme toggle:** `<theme-toggle>`, its storage, and the flash measurement.
 - **Keyboard:** `keys.js`, the ? help dialog, key-hint styling.
-- **Publishing:** the specimen page on Pages and the pinned jsDelivr URLs.
+- **Publishing:** the specimen page, `index.html`, on Pages; a page per tag under `pinned/` that
+  links the tag's jsDelivr URL; `mise run pin <tag>`, which checks a published tag live.
 
 ## Path
 

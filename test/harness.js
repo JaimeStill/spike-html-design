@@ -18,7 +18,8 @@ export function fileUrl(path) {
 // openPage opens url in a new tab of a headless chromium the harness spawns itself and resolves
 // to a Page once the page has loaded. Options set up the tab before the first load:
 // `scheme` emulates prefers-color-scheme ("dark" or "light"), and `intercept` maps URL prefixes
-// to the local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. Throws when chromium is not on PATH or will not start.
+// to the local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. It throws
+// when chromium is not on PATH or won't start.
 export async function openPage(url, { scheme, intercept } = {}) {
   const page = new Page(spawnView());
   try {
