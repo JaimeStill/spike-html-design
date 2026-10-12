@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** building
+- **State:** brief ready
 - **Task:** themes
 - **Branch:** themes
 
