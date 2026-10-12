@@ -1,6 +1,7 @@
-// pin checks a published tag live: jsDelivr serves the tag's baseline.css as an immutable,
-// byte-equal stylesheet, and the tag's pinned page renders the same from file://, a local
-// server, and GitHub Pages, in light and in dark. It reads the network and writes nothing.
+// pin checks a published tag live: jsDelivr serves the tag's baseline.css and each layer file it
+// imports as an immutable, byte-equal stylesheet, and the tag's pinned page renders the same from
+// file://, a local server, and GitHub Pages, in light and in dark. It reads the network and
+// writes nothing.
 //
 // Usage: bun scripts/pin.js <tag>   (mise run pin <tag>)
 //
@@ -10,6 +11,7 @@
 
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "../test/harness.js";
+import { LAYERS, LOADED, layersLoaded } from "../test/layers.js";
 
 const REPO = "JaimeStill/spike-html-design";
 const PAGES = "https://jaimestill.github.io/spike-html-design/";
@@ -28,8 +30,8 @@ function git(...args) {
   return { ok: result.exitCode === 0, stdout: result.stdout };
 }
 
-// The tag must exist locally (its baseline.css is the reference bytes) and on origin (jsDelivr
-// and Pages read GitHub, not this checkout).
+// The tag must exist locally (its stylesheet files are the reference bytes) and on origin
+// (jsDelivr and Pages read GitHub, not this checkout).
 const local = git("rev-parse", "-q", "--verify", `refs/tags/${tag}`).ok;
 const remote = git("ls-remote", "--exit-code", "--tags", "origin", `refs/tags/${tag}`).ok;
 if (!local || !remote) {
@@ -46,20 +48,28 @@ function check(ok, label, detail = "") {
   console.log(`${ok ? "✓" : "✗"} ${label}${!ok && detail ? ` (${detail})` : ""}`);
 }
 
-// The stylesheet at its pinned jsDelivr URL.
-const cdn = `https://cdn.jsdelivr.net/gh/${REPO}@${tag}/baseline.css`;
-try {
-  const response = await fetch(cdn);
-  const type = response.headers.get("content-type") ?? "";
-  const cache = response.headers.get("cache-control") ?? "";
-  const body = Buffer.from(await response.arrayBuffer());
-  const tagged = git("show", `${tag}:baseline.css`).stdout;
-  check(response.status === 200, `jsDelivr serves ${cdn} with 200`, `got ${response.status}`);
-  check(type.startsWith("text/css"), "its content-type is text/css", `got "${type}"`);
-  check(cache.includes("immutable"), "its cache-control is immutable", `got "${cache}"`);
-  check(body.equals(tagged), `its body is byte-equal to ${tag}:baseline.css`);
-} catch (error) {
-  check(false, `jsDelivr serves ${cdn}`, error.message);
+// Every published stylesheet file at its pinned jsDelivr URL: the root and the layer files it
+// imports, which the browser fetches from the same tag.
+const FILES = ["baseline.css", ...LAYERS.map((layer) => `layers/${layer}.css`)];
+for (const path of FILES) {
+  const cdn = `https://cdn.jsdelivr.net/gh/${REPO}@${tag}/${path}`;
+  try {
+    const response = await fetch(cdn);
+    const type = response.headers.get("content-type") ?? "";
+    const cache = response.headers.get("cache-control") ?? "";
+    const body = Buffer.from(await response.arrayBuffer());
+    const tagged = git("show", `${tag}:${path}`);
+    check(response.status === 200, `jsDelivr serves ${cdn} with 200`, `got ${response.status}`);
+    check(type.startsWith("text/css"), "its content-type is text/css", `got "${type}"`);
+    check(cache.includes("immutable"), "its cache-control is immutable", `got "${cache}"`);
+    check(
+      tagged.ok && body.equals(tagged.stdout),
+      `its body is byte-equal to ${tag}:${path}`,
+      tagged.ok ? "" : `no ${path} at ${tag}`,
+    );
+  } catch (error) {
+    check(false, `jsDelivr serves ${cdn}`, error.message);
+  }
 }
 
 // The pinned page from three origins, on the real network: no interception. The file:// and
@@ -78,10 +88,15 @@ try {
       let opened;
       try {
         opened = await openPage(url, { scheme });
-        // An unstyled load declares no --bg, so two failed loads cannot pass for equal renders.
-        const bg = await opened.style(":root", "--bg");
-        const styled = bg.startsWith("light-dark(");
-        check(styled, `${page} from ${name} loads the baseline, in ${scheme}`, `--bg "${bg}"`);
+        // A load that lost the stylesheet or any of its layer files misses that layer's probe, so
+        // two failed loads cannot pass for equal renders.
+        const probes = await layersLoaded(opened);
+        const styled = JSON.stringify(probes) === JSON.stringify(LOADED);
+        check(
+          styled,
+          `${page} from ${name} loads the baseline and its layers, in ${scheme}`,
+          `probes ${JSON.stringify(probes)}`,
+        );
         if (styled) prints[name] = JSON.stringify(await opened.fingerprint());
       } catch (error) {
         check(false, `${page} from ${name} loads, in ${scheme}`, error.message);

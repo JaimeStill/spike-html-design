@@ -1,6 +1,7 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
+import { LAYERS, LOADED, layersLoaded } from "./layers.js";
 
 const root = dirname(import.meta.dir);
 const specimen = fileUrl(join(root, "index.html"));
@@ -132,18 +133,30 @@ async function tabTo(page, selector) {
 }
 
 describe("layers", () => {
-  test("the stylesheet declares tokens, reset, theme, components before any rule", async () => {
+  test("the stylesheet declares the four layers, then imports each one's file", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
-    const first = await page.evaluate(`(() => {
+    const rules = await page.evaluate(`(() => {
       const sheet = [...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css"));
-      const rule = sheet.cssRules[0];
-      return { type: rule.constructor.name, names: [...rule.nameList] };
+      return [...sheet.cssRules].map((rule) => ({
+        type: rule.constructor.name,
+        names: rule.nameList && [...rule.nameList],
+        layer: rule.layerName,
+        href: rule.href,
+        // An import whose file failed to load has a sheet with no rules.
+        loaded: rule.styleSheet ? rule.styleSheet.cssRules.length > 0 : undefined,
+      }));
     })()`);
-    expect(first).toEqual({
-      type: "CSSLayerStatementRule",
-      names: ["tokens", "reset", "theme", "components"],
-    });
+    // An exact match: the root holds the statement and the four imports, and no rule of its own.
+    expect(rules).toEqual([
+      { type: "CSSLayerStatementRule", names: LAYERS },
+      ...LAYERS.map((layer) => ({
+        type: "CSSImportRule",
+        layer,
+        href: `./layers/${layer}.css`,
+        loaded: true,
+      })),
+    ]);
   });
 
   test("a page's app layer overrides components rules of equal and higher specificity", async () => {
@@ -305,7 +318,8 @@ describe("components", () => {
     const page = await open(server.url, { scheme: "light" });
     const classes = await page.evaluate(`(() => {
       const sheet = [...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css"));
-      const layer = [...sheet.cssRules].find((r) => r.name === "components" && r.cssRules);
+      // The components layer is the sheet its import loads, not a block in the root.
+      const layer = [...sheet.cssRules].find((r) => r.layerName === "components").styleSheet;
       const selectors = [];
       const walk = (rules) => {
         for (const rule of rules) {
@@ -500,9 +514,9 @@ describe("specimen", () => {
     const local = await open(specimen, { scheme: "light" });
     const served = await open(server.url, { scheme: "light" });
     expect(served.view.url).toBe(server.url);
-    const fromFile = await local.fingerprint();
-    // Equal fingerprints prove nothing if the stylesheet failed to load in both.
-    expect(fromFile[0][1]["--bg"]).toStartWith("light-dark(");
-    expect(await served.fingerprint()).toEqual(fromFile);
+    // Equal fingerprints prove nothing if the stylesheet, or one of its layer files, failed to
+    // load in both.
+    for (const page of [local, served]) expect(await layersLoaded(page)).toEqual(LOADED);
+    expect(await served.fingerprint()).toEqual(await local.fingerprint());
   });
 });
