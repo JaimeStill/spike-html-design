@@ -292,6 +292,15 @@ const answer = 42;</code></pre>
           <span class="badge badge-red">.badge-red</span>
           <span class="badge badge-yellow">.badge-yellow</span>
           <span class="badge badge-orange">.badge-orange</span>
+          <span class="badge badge-cyan">.badge-cyan</span>
+          <span class="badge badge-purple">.badge-purple</span>
+          <span class="badge badge-magenta">.badge-magenta</span>
+        </div>
+        <div class="row">
+          <span class="badge badge-accent">.badge-accent</span>
+          <span class="badge badge-success">.badge-success</span>
+          <span class="badge badge-warning">.badge-warning</span>
+          <span class="badge badge-danger">.badge-danger</span>
         </div>
 
         <h3>Input and label</h3>
@@ -325,6 +334,68 @@ const answer = 42;</code></pre>
         <div class="scroll-sample scroll-x">
           .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that will
           not wrap stays readable to its end in a box narrower than itself.
+        </div>
+      </section>
+
+      <section id="usage">
+        <h2>Roles and hues</h2>
+        <p>
+          A role marks state or interaction; a hue marks a category and never implies status. On a
+          page that shows status, categories draw first from the hues no role uses (cyan, purple,
+          magenta, orange), leaving red, green and yellow for status.
+        </p>
+
+        <h3>Roles</h3>
+        <div class="specimen">
+          <code>--accent</code>
+          <span><span class="badge badge-accent">selected</span> aliases <code>--blue</code></span>
+          <code>--success</code>
+          <span><span class="badge badge-success">passed</span> aliases <code>--green</code></span>
+          <code>--warning</code>
+          <span><span class="badge badge-warning">pending</span> aliases <code>--yellow</code></span>
+          <code>--danger</code>
+          <span><span class="badge badge-danger">failed</span> aliases <code>--red</code></span>
+        </div>
+
+        <h3>Hues</h3>
+        <div class="specimen">
+          <code>--red</code>
+          <span><span class="badge badge-red">red</span> held for status</span>
+          <code>--orange</code>
+          <span><span class="badge badge-orange">orange</span> category, used by no role</span>
+          <code>--yellow</code>
+          <span><span class="badge badge-yellow">yellow</span> held for status</span>
+          <code>--green</code>
+          <span><span class="badge badge-green">green</span> held for status</span>
+          <code>--cyan</code>
+          <span><span class="badge badge-cyan">cyan</span> category, used by no role</span>
+          <code>--blue</code>
+          <span><span class="badge badge-blue">blue</span> category, shared with accent</span>
+          <code>--purple</code>
+          <span><span class="badge badge-purple">purple</span> category, used by no role</span>
+          <code>--magenta</code>
+          <span><span class="badge badge-magenta">magenta</span> category, used by no role</span>
+        </div>
+
+        <h3>On a status page</h3>
+        <div class="card">
+          <span class="label">Builds</span>
+          <div class="row">
+            <span class="badge badge-cyan">docs</span>
+            <span class="badge badge-success">passed</span>
+          </div>
+          <div class="row">
+            <span class="badge badge-purple">api</span>
+            <span class="badge badge-warning">pending</span>
+          </div>
+          <div class="row">
+            <span class="badge badge-magenta">web</span>
+            <span class="badge badge-danger">failed</span>
+          </div>
+          <div class="row">
+            <span class="badge badge-orange">cli</span>
+            <span class="badge badge-success">passed</span>
+          </div>
         </div>
       </section>
     </main>

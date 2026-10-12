@@ -6,8 +6,9 @@
  * 2px focus outlines, and herald's own em letter spacing, opacity, and transition times.
  *
  * Adapted from herald: where herald fills with a tint token (--*-bg), a fill here is a
- * color-mix() of the hue at its use; .badge takes a variant per hue in place of herald's status
- * names, so a badge says its color, not its meaning. Elevation is a border, never a shadow.
+ * color-mix() of the hue at its use. .badge takes a variant per hue, which says a color and marks
+ * a category, and a variant per role (accent, success, warning, danger), which marks state; the
+ * roles stand in for herald's status names. Elevation is a border, never a shadow.
  *
  * baseline.css imports this file into the components layer. Pages link baseline.css, never this
  * file: linked on its own, its rules would be unlayered.
@@ -153,6 +154,42 @@
   &.badge-orange {
     color: var(--orange);
     background: color-mix(in srgb, var(--orange) 15%, transparent);
+  }
+
+  &.badge-cyan {
+    color: var(--cyan);
+    background: color-mix(in srgb, var(--cyan) 15%, transparent);
+  }
+
+  &.badge-purple {
+    color: var(--purple);
+    background: color-mix(in srgb, var(--purple) 15%, transparent);
+  }
+
+  &.badge-magenta {
+    color: var(--magenta);
+    background: color-mix(in srgb, var(--magenta) 15%, transparent);
+  }
+
+  /* A role variant names the role token, never its hue, so it follows an override of either. */
+  &.badge-accent {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  &.badge-success {
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 15%, transparent);
+  }
+
+  &.badge-warning {
+    color: var(--warning);
+    background: color-mix(in srgb, var(--warning) 15%, transparent);
+  }
+
+  &.badge-danger {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
   }
 }
 

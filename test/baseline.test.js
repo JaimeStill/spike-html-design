@@ -103,10 +103,15 @@ const COLORS = Object.fromEntries([
 // VARIANTS are the hues the button and badge variants take, as they did at v0.1.0.
 const VARIANTS = ["blue", "green", "red", "yellow", "orange"];
 
-// COMPONENTS are the component classes, frozen at v0.1.0: herald's six, its button variants, and
-// a badge variant per hue.
+// BADGE_TOKENS are the badge variants, class to the token it shows: one per hue and one per role.
+const BADGE_TOKENS = Object.fromEntries(
+  [...Object.keys(HUES), ...Object.keys(ROLES)].map((token) => [`badge-${token.slice(2)}`, token]),
+);
+
+// COMPONENTS are the component classes: herald's six and its button variants, frozen at v0.1.0,
+// and a badge variant per hue and per role.
 const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
-const BADGES = VARIANTS.map((h) => `badge-${h}`);
+const BADGES = Object.keys(BADGE_TOKENS);
 const COMPONENTS = [
   "btn",
   ...BUTTONS,
@@ -528,19 +533,32 @@ describe("components", () => {
     expect(await page.style("#components .btn:disabled", "opacity")).toBe("0.4");
   });
 
-  test("each badge variant is its hue on a translucent mix of that hue", async () => {
+  test("each badge variant is its token on a translucent mix of that token, in both schemes", async () => {
     const page = await open(specimen, { scheme: "light" });
-    for (const hue of VARIANTS) {
-      const selector = `#components .badge-${hue}`;
-      const [value] = COLORS[`--${hue}`];
-      expect([hue, await page.style(selector, "color")]).toEqual([hue, value]);
-      const fill = tint(await page.style(selector, "background-color"));
-      expect([hue, fill?.hue]).toEqual([hue, value]);
-      expect(fill.alpha).toBeGreaterThan(0);
-      expect(fill.alpha).toBeLessThan(1);
+    for (const scheme of [0, 1]) {
+      if (scheme) await page.setScheme("dark");
+      for (const [variant, token] of Object.entries(BADGE_TOKENS)) {
+        const selector = `#components .badge.${variant}`;
+        const value = COLORS[token][scheme];
+        expect([variant, await page.style(selector, "color")]).toEqual([variant, value]);
+        const fill = tint(await page.style(selector, "background-color"));
+        expect([variant, fill?.hue]).toEqual([variant, value]);
+        expect(fill.alpha).toBeGreaterThan(0);
+        expect(fill.alpha).toBeLessThan(1);
+      }
     }
     expect(await page.style("#components .badge", "font-weight")).toBe("600");
     expect(await page.style("#components .badge", "padding")).toBe("4px 8px");
+  });
+
+  test("a role badge follows an app layer's override of its hue", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { :root { --green: rgb(1, 2, 3); } }");
+    const selector = "#components .badge.badge-success";
+    expect(await page.style(selector, "color")).toBe("rgb(1, 2, 3)");
+    expect(tint(await page.style(selector, "background-color"))?.hue).toBe("rgb(1, 2, 3)");
+    // A role badge on another hue keeps it.
+    expect(await page.style("#components .badge.badge-danger", "color")).toBe(COLORS["--red"][0]);
   });
 
   test("a hovered color button fills with a translucent mix of its hue", async () => {
@@ -625,6 +643,36 @@ describe("specimen", () => {
         name,
         await page.evaluate(`!!document.querySelector("#components .${name}")`),
       ]).toEqual([name, true]);
+    }
+  });
+
+  test("sets the four roles beside the eight hues under the usage rule", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const rule =
+      "A role marks state or interaction; a hue marks a category and never implies status. On a " +
+      "page that shows status, categories draw first from the hues no role uses (cyan, purple, " +
+      "magenta, orange), leaving red, green and yellow for status.";
+    expect(
+      squash(await page.evaluate(`document.querySelector("#usage p").textContent`)).trim(),
+    ).toBe(rule);
+    // Each token row names its token and shows that token's badge.
+    const rows = await page.evaluate(`[...document.querySelectorAll("#usage .specimen > code")]
+      .map((code) => [code.textContent, code.nextElementSibling.querySelector(".badge").className])`);
+    expect(rows.map(([token]) => token).sort()).toEqual(
+      [...Object.keys(ROLES), ...Object.keys(HUES)].sort(),
+    );
+    for (const [token, className] of rows) {
+      expect([token, className]).toEqual([token, `badge badge-${token.slice(2)}`]);
+    }
+    // The status sample marks state with roles and categories with hues no role uses.
+    const sample = await page.evaluate(`[...document.querySelectorAll("#usage .card .row")]
+      .map((row) => [...row.querySelectorAll(".badge")].map((b) => b.classList[1]))`);
+    const free = ["badge-cyan", "badge-purple", "badge-magenta", "badge-orange"];
+    const roles = Object.keys(ROLES).map((r) => `badge-${r.slice(2)}`);
+    expect(sample.length).toBeGreaterThan(0);
+    for (const [category, state] of sample) {
+      expect(free).toContain(category);
+      expect(roles).toContain(state);
     }
   });
 
