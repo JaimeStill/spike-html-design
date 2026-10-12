@@ -163,6 +163,33 @@ function tint(value) {
   return { hue: `rgb(${r}, ${g}, ${b})`, alpha: Number(match[4]) };
 }
 
+// luminance is the WCAG 2 relative luminance of a computed rgb() color: each sRGB channel
+// linearized, then weighted.
+function luminance(color) {
+  const [r, g, b] = color
+    .match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+    .slice(1)
+    .map((channel) => {
+      const c = Number(channel) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// contrast is the WCAG 2 contrast ratio of two computed rgb() colors, lighter over darker.
+function contrast(a, b) {
+  const [lighter, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+// mark is the badge a contrast ratio earns in the specimen's table: AA at 4.5 for body text,
+// AA large at 3 for large text and interface parts, fail below 3.
+function mark(ratio) {
+  if (ratio >= 4.5) return { text: "AA", badge: "badge-success" };
+  if (ratio >= 3) return { text: "AA large", badge: "badge-warning" };
+  return { text: "fail", badge: "badge-danger" };
+}
+
 // tabTo presses Tab, a trusted keyboard event, until the element matching selector has focus,
 // and throws if it never does.
 async function tabTo(page, selector) {
@@ -675,6 +702,43 @@ describe("specimen", () => {
       expect(roles).toContain(state);
     }
   });
+
+  test("the contrast table has one row per color token but --bg", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const rows = await page.evaluate(`[...document.querySelectorAll("#contrast tbody th code")]
+      .map((code) => code.textContent)`);
+    // An exact match, so a new color token without a row fails.
+    expect([...rows].sort()).toEqual(
+      Object.keys(COLORS)
+        .filter((name) => name !== "--bg")
+        .sort(),
+    );
+    expect(new Set(rows).size).toBe(rows.length);
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`the contrast table's ${scheme} column matches each ratio recomputed in chromium`, async () => {
+      const page = await open(specimen, { scheme });
+      // The table is static: each cell is the ratio as written, then its mark badge.
+      const cells = await page.evaluate(`[...document.querySelectorAll("#contrast tbody tr")]
+        .map((row) => {
+          const cell = row.cells[${index + 1}];
+          const badge = cell.querySelector(".badge");
+          return {
+            token: row.querySelector("th code").textContent,
+            ratio: cell.firstChild.textContent.trim(),
+            text: badge?.textContent,
+            badge: badge?.classList[1],
+          };
+        })`);
+      const bg = await resolveColor(page, "--bg");
+      expect(bg).toBe(COLORS["--bg"][index]);
+      for (const { token, ...cell } of cells) {
+        const ratio = contrast(await resolveColor(page, token), bg);
+        expect([token, cell]).toEqual([token, { ratio: ratio.toFixed(2), ...mark(ratio) }]);
+      }
+    });
+  }
 
   test("renders the same from file:// and from a server under a project subpath", async () => {
     const local = await open(specimen, { scheme: "light" });

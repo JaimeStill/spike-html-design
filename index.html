@@ -398,6 +398,116 @@ const answer = 42;</code></pre>
           </div>
         </div>
       </section>
+
+      <section id="contrast">
+        <h2>Contrast</h2>
+        <table>
+          <caption>
+            Each color token's WCAG 2 contrast ratio against <code>--bg</code>, from relative
+            luminance, in each theme. AA meets 4.5 for body text; AA large meets 3 for large text
+            and interface parts; fail is below 3. Failures are recorded here, not corrected.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Token</th>
+              <th scope="col">Light</th>
+              <th scope="col">Dark</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><code>--bg-1</code></th>
+              <td>1.06 <span class="badge badge-danger">fail</span></td>
+              <td>1.09 <span class="badge badge-danger">fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--bg-2</code></th>
+              <td>1.12 <span class="badge badge-danger">fail</span></td>
+              <td>1.35 <span class="badge badge-danger">fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--divider</code></th>
+              <td>1.43 <span class="badge badge-danger">fail</span></td>
+              <td>1.92 <span class="badge badge-danger">fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg</code></th>
+              <td>15.80 <span class="badge badge-success">AA</span></td>
+              <td>17.39 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg-1</code></th>
+              <td>6.11 <span class="badge badge-success">AA</span></td>
+              <td>6.50 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg-2</code></th>
+              <td>3.45 <span class="badge badge-warning">AA large</span></td>
+              <td>3.57 <span class="badge badge-warning">AA large</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--red</code></th>
+              <td>6.07 <span class="badge badge-success">AA</span></td>
+              <td>7.24 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--orange</code></th>
+              <td>6.14 <span class="badge badge-success">AA</span></td>
+              <td>7.10 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--yellow</code></th>
+              <td>6.27 <span class="badge badge-success">AA</span></td>
+              <td>7.05 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--green</code></th>
+              <td>6.17 <span class="badge badge-success">AA</span></td>
+              <td>7.06 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--cyan</code></th>
+              <td>6.23 <span class="badge badge-success">AA</span></td>
+              <td>7.24 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--blue</code></th>
+              <td>5.98 <span class="badge badge-success">AA</span></td>
+              <td>7.02 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--purple</code></th>
+              <td>5.96 <span class="badge badge-success">AA</span></td>
+              <td>7.03 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--magenta</code></th>
+              <td>5.91 <span class="badge badge-success">AA</span></td>
+              <td>7.04 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--accent</code></th>
+              <td>5.98 <span class="badge badge-success">AA</span></td>
+              <td>7.02 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--success</code></th>
+              <td>6.17 <span class="badge badge-success">AA</span></td>
+              <td>7.06 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--warning</code></th>
+              <td>6.27 <span class="badge badge-success">AA</span></td>
+              <td>7.05 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--danger</code></th>
+              <td>6.07 <span class="badge badge-success">AA</span></td>
+              <td>7.24 <span class="badge badge-success">AA</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     </main>
   </body>
 </html>
