@@ -81,7 +81,7 @@ Release       v0.1.0 (spike-html-design root)
 
 ## Progress
 
-slices 4/6 committed · standards — · spec — · editor —
+slices 5/6 committed · standards — · spec — · editor —
 
 ## Decisions
 
