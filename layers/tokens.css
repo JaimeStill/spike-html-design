@@ -1,7 +1,17 @@
 /*
+ * Colors derived from @primer/primitives (MIT, GitHub Inc.), https://github.com/primer/primitives
+ *
  * layers/tokens.css, the tokens layer.
  *
- * The custom properties every other layer resolves through.
+ * The custom properties every other layer resolves through. The color tokens come in three
+ * kinds: tiers (surfaces, divider, text), hues named for their color, and roles that alias a
+ * hue. Each tier and hue pairs a value from Primer's functional light and dark themes
+ * (dist/css/functional/themes/light.css and dark.css) through light-dark(). A hue takes its
+ * color's display-*-fgColor; --magenta takes display-pink-fgColor. A role holds no color of its
+ * own, so a page that overrides a hue in its app layer changes every role on that hue.
+ *
+ * A data-theme attribute of "light" or "dark" on the root element forces that theme by setting
+ * color-scheme. With no attribute, the page follows the system scheme and changes when it does.
  *
  * baseline.css imports this file into the tokens layer. Pages link baseline.css, never this
  * file: linked on its own, its rules would be unlayered.
@@ -42,18 +52,39 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
 
-  /* herald's values, carried as-is until the Flexoki themes replace them. */
-  --bg: light-dark(hsl(0, 0%, 100%), hsl(0, 0%, 7%));
-  --bg-1: light-dark(hsl(0, 0%, 96%), hsl(0, 0%, 12%));
-  --bg-2: light-dark(hsl(0, 0%, 92%), hsl(0, 0%, 18%));
-  --color: light-dark(hsl(0, 0%, 10%), hsl(0, 0%, 93%));
-  --color-1: light-dark(hsl(0, 0%, 30%), hsl(0, 0%, 80%));
-  --color-2: light-dark(hsl(0, 0%, 45%), hsl(0, 0%, 65%));
-  --divider: light-dark(hsl(0, 0%, 80%), hsl(0, 0%, 25%));
+  /* Tiers: three surfaces, the divider, and three text weights, from Primer's bgColor,
+     borderColor and fgColor. */
+  --bg: light-dark(#ffffff, #0d1117);
+  --bg-1: light-dark(#f6f8fa, #151b23);
+  --bg-2: light-dark(#eff2f5, #262c36);
+  --divider: light-dark(#d1d9e0, #3d444d);
+  --fg: light-dark(#1f2328, #f0f6fc);
+  --fg-1: light-dark(#59636e, #9198a1);
+  --fg-2: light-dark(#818b98, #656c76);
 
-  --blue: light-dark(hsl(210, 90%, 45%), hsl(210, 100%, 70%));
-  --green: light-dark(hsl(140, 60%, 35%), hsl(140, 70%, 55%));
-  --red: light-dark(hsl(0, 70%, 50%), hsl(0, 85%, 65%));
-  --yellow: light-dark(hsl(45, 80%, 40%), hsl(45, 90%, 60%));
-  --orange: light-dark(hsl(25, 85%, 50%), hsl(25, 95%, 65%));
+  /* Hues: one token per color, named for the color, never for a meaning. */
+  --red: light-dark(#c50d28, #f27d83);
+  --orange: light-dark(#a24610, #ed8326);
+  --yellow: light-dark(#805900, #d3910d);
+  --green: light-dark(#2b6e3f, #41b445);
+  --cyan: light-dark(#006a80, #07ace4);
+  --blue: light-dark(#005fcc, #4da0ff);
+  --purple: light-dark(#783ae4, #b687f7);
+  --magenta: light-dark(#b12f79, #e57bb2);
+
+  /* Roles: a meaning, resolved through a hue. */
+  --accent: var(--blue);
+  --success: var(--green);
+  --warning: var(--yellow);
+  --danger: var(--red);
+}
+
+/* The data-theme hook: each forces color-scheme, so every light-dark() token resolves to that
+   theme's value whatever the system scheme. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }

@@ -58,28 +58,60 @@ const SCALES = {
   "--radius-lg": "0.75rem",
 };
 
-// COLORS are herald's color tokens, name to the color each resolves to in light and in dark.
-const COLORS = {
-  "--bg": ["rgb(255, 255, 255)", "rgb(18, 18, 18)"],
-  "--bg-1": ["rgb(245, 245, 245)", "rgb(31, 31, 31)"],
-  "--bg-2": ["rgb(235, 235, 235)", "rgb(46, 46, 46)"],
-  "--color": ["rgb(26, 26, 26)", "rgb(237, 237, 237)"],
-  "--color-1": ["rgb(77, 77, 77)", "rgb(204, 204, 204)"],
-  "--color-2": ["rgb(115, 115, 115)", "rgb(166, 166, 166)"],
-  "--divider": ["rgb(204, 204, 204)", "rgb(64, 64, 64)"],
-  "--blue": ["rgb(11, 115, 218)", "rgb(102, 179, 255)"],
-  "--green": ["rgb(36, 143, 71)", "rgb(60, 221, 113)"],
-  "--red": ["rgb(217, 38, 38)", "rgb(242, 90, 90)"],
-  "--yellow": ["rgb(184, 143, 20)", "rgb(245, 199, 61)"],
-  "--orange": ["rgb(236, 109, 19)", "rgb(251, 152, 81)"],
+// rgb converts a #rrggbb hex to the rgb() a computed color reads as.
+const rgb = (hex) =>
+  `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
+
+// TIERS are the surface, divider and text tokens, name to Primer's [light, dark] values.
+const TIERS = {
+  "--bg": ["#ffffff", "#0d1117"],
+  "--bg-1": ["#f6f8fa", "#151b23"],
+  "--bg-2": ["#eff2f5", "#262c36"],
+  "--divider": ["#d1d9e0", "#3d444d"],
+  "--fg": ["#1f2328", "#f0f6fc"],
+  "--fg-1": ["#59636e", "#9198a1"],
+  "--fg-2": ["#818b98", "#656c76"],
 };
 
-const HUES = ["blue", "green", "red", "yellow", "orange"];
+// HUES are the hue tokens, each named for its color, name to Primer's [light, dark] values.
+const HUES = {
+  "--red": ["#c50d28", "#f27d83"],
+  "--orange": ["#a24610", "#ed8326"],
+  "--yellow": ["#805900", "#d3910d"],
+  "--green": ["#2b6e3f", "#41b445"],
+  "--cyan": ["#006a80", "#07ace4"],
+  "--blue": ["#005fcc", "#4da0ff"],
+  "--purple": ["#783ae4", "#b687f7"],
+  "--magenta": ["#b12f79", "#e57bb2"],
+};
 
-// COMPONENTS are the component classes, frozen at v0.1.0: herald's six, its button variants, and
-// a badge variant per hue.
+// ROLES are the role tokens, name to the hue each aliases.
+const ROLES = {
+  "--accent": "--blue",
+  "--success": "--green",
+  "--warning": "--yellow",
+  "--danger": "--red",
+};
+
+// COLORS are every color token, name to the color it resolves to in light and in dark; a role
+// resolves to its hue's.
+const COLORS = Object.fromEntries([
+  ...Object.entries({ ...TIERS, ...HUES }).map(([name, pair]) => [name, pair.map(rgb)]),
+  ...Object.entries(ROLES).map(([role, hue]) => [role, HUES[hue].map(rgb)]),
+]);
+
+// VARIANTS are the hues the button and badge variants take, as they did at v0.1.0.
+const VARIANTS = ["blue", "green", "red", "yellow", "orange"];
+
+// BADGE_TOKENS are the badge variants, class to the token it shows: one per hue and one per role.
+const BADGE_TOKENS = Object.fromEntries(
+  [...Object.keys(HUES), ...Object.keys(ROLES)].map((token) => [`badge-${token.slice(2)}`, token]),
+);
+
+// COMPONENTS are the component classes: herald's six and its button variants, as v0.1.0 shipped
+// them, and a badge variant per hue and per role.
 const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
-const BADGES = HUES.map((h) => `badge-${h}`);
+const BADGES = Object.keys(BADGE_TOKENS);
 const COMPONENTS = [
   "btn",
   ...BUTTONS,
@@ -112,6 +144,15 @@ function resolveColor(page, token) {
   })()`);
 }
 
+// addAppStyle appends css to the page in a style element, after the baseline, as an artifact's
+// own app layer would sit.
+function addAppStyle(page, css) {
+  return page.evaluate(`(() => {
+    const style = document.head.appendChild(document.createElement("style"));
+    style.textContent = ${JSON.stringify(css)};
+  })()`);
+}
+
 // tint parses a computed color(srgb r g b / a) into the rgb() of its opaque hue and its alpha,
 // the form chromium computes a color-mix() of a hue with transparent to. It is null for any
 // other color, so a bare rgb() hue or transparent never passes for a tint.
@@ -120,6 +161,33 @@ function tint(value) {
   if (!match) return null;
   const [r, g, b] = match.slice(1, 4).map((c) => Math.round(Number(c) * 255));
   return { hue: `rgb(${r}, ${g}, ${b})`, alpha: Number(match[4]) };
+}
+
+// luminance is the WCAG 2 relative luminance of a computed rgb() color: each sRGB channel
+// linearized, then weighted.
+function luminance(color) {
+  const [r, g, b] = color
+    .match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+    .slice(1)
+    .map((channel) => {
+      const c = Number(channel) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// contrast is the WCAG 2 contrast ratio of two computed rgb() colors, lighter over darker.
+function contrast(a, b) {
+  const [lighter, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+// mark is the badge a contrast ratio earns in the specimen's table: AA at 4.5 for body text,
+// AA large at 3 for large text and interface parts, fail below 3.
+function mark(ratio) {
+  if (ratio >= 4.5) return { text: "AA", badge: "badge-success" };
+  if (ratio >= 3) return { text: "AA large", badge: "badge-warning" };
+  return { text: "fail", badge: "badge-danger" };
 }
 
 // tabTo presses Tab, a trusted keyboard event, until the element matching selector has focus,
@@ -172,10 +240,11 @@ describe("layers", () => {
 });
 
 describe("tokens", () => {
-  test("declares exactly herald's token names, without its shadow and tint tokens", async () => {
+  test("declares exactly the scales, tiers, hues and roles, without shadow and tint tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
     const names = Object.keys(await rootTokens(page)).sort();
-    // An exact match, so herald's shadow tokens and --*-bg tints cannot slip in.
+    // An exact match, so shadow tokens, --*-bg tints, and bright, black, white or ANSI hues
+    // cannot slip in.
     expect(names).toEqual([...Object.keys(SCALES), ...Object.keys(COLORS)].sort());
   });
 
@@ -185,27 +254,69 @@ describe("tokens", () => {
     for (const [name, value] of Object.entries(SCALES)) expect(squash(tokens[name])).toBe(value);
   });
 
-  test("every color token is a light-dark() pair of herald's values", async () => {
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`every tier, hue and role resolves to its ${scheme} value`, async () => {
+      const page = await open(specimen, { scheme });
+      for (const [name, pair] of Object.entries(COLORS)) {
+        expect([name, await resolveColor(page, name)]).toEqual([name, pair[index]]);
+      }
+    });
+  }
+
+  test("a role follows an app layer's override of its hue", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const tokens = await rootTokens(page);
-    for (const name of Object.keys(COLORS)) expect(tokens[name]).toStartWith("light-dark(");
-    for (const [name, [light]] of Object.entries(COLORS)) {
-      expect(await resolveColor(page, name)).toBe(light);
-    }
-    await page.setScheme("dark");
-    for (const [name, [, dark]] of Object.entries(COLORS)) {
-      expect(await resolveColor(page, name)).toBe(dark);
+    await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
+    expect(await resolveColor(page, "--blue")).toBe("rgb(1, 2, 3)");
+    expect(await resolveColor(page, "--accent")).toBe("rgb(1, 2, 3)");
+    // The other roles keep their own hues.
+    for (const role of ["--success", "--warning", "--danger"]) {
+      expect([role, await resolveColor(page, role)]).toEqual([role, COLORS[role][0]]);
     }
   });
 
-  test("with no app styles the page follows the system scheme", async () => {
+  test("with no data-theme the page follows a live change of the system scheme", async () => {
     const page = await open(specimen, { scheme: "dark" });
+    expect(await page.evaluate("document.documentElement.hasAttribute('data-theme')")).toBe(false);
     expect(await page.style(":root", "color-scheme")).toBe("light dark");
-    expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][1]);
-    expect(await page.style("body", "color")).toBe(COLORS["--color"][1]);
+    expect(await resolveColor(page, "--bg")).toBe(COLORS["--bg"][1]);
+    expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
+    // A marker on the window survives only if the page is never reloaded or navigated.
+    await page.evaluate("window.unreloaded = true");
     await page.setScheme("light");
+    expect(await resolveColor(page, "--bg")).toBe(COLORS["--bg"][0]);
+    expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][0]);
     expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][0]);
-    expect(await page.style("body", "color")).toBe(COLORS["--color"][0]);
+    expect(await page.style("body", "color")).toBe(COLORS["--fg"][0]);
+    expect(await page.evaluate("window.unreloaded === true")).toBe(true);
+  });
+
+  for (const [index, theme] of ["light", "dark"].entries()) {
+    for (const scheme of ["light", "dark"]) {
+      test(`data-theme="${theme}" forces the ${theme} theme under a ${scheme} system`, async () => {
+        const page = await open(specimen, { scheme });
+        await page.evaluate(`document.documentElement.dataset.theme = "${theme}"`);
+        expect(await page.style(":root", "color-scheme")).toBe(theme);
+        // Every color token, so one that answered the system scheme by a media query rather
+        // than through color-scheme would fail.
+        for (const [name, pair] of Object.entries(COLORS)) {
+          expect([name, await resolveColor(page, name)]).toEqual([name, pair[index]]);
+        }
+        expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][index]);
+        expect(await page.style("body", "color")).toBe(COLORS["--fg"][index]);
+      });
+    }
+  }
+
+  test("an app layer's token override still wins under a forced theme", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.documentElement.dataset.theme = "dark"`);
+    // A plain :root rule, less specific than :root[data-theme]: the later layer wins anyway.
+    await addAppStyle(page, "@layer app { :root { --bg: rgb(1, 2, 3); } }");
+    expect(await page.style(":root", "color-scheme")).toBe("dark");
+    expect(await resolveColor(page, "--bg")).toBe("rgb(1, 2, 3)");
+    expect(await page.style("body", "background-color")).toBe("rgb(1, 2, 3)");
+    // The tokens it leaves alone keep the forced theme.
+    expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
   });
 });
 
@@ -279,9 +390,9 @@ describe("theme", () => {
 
   test("styles links, lists, tables, blockquotes and rules in outline", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const [blue] = COLORS["--blue"];
+    const [accent] = COLORS["--accent"];
     const [divider] = COLORS["--divider"];
-    expect(await page.style("#prose a", "color")).toBe(blue);
+    expect(await page.style("#prose a", "color")).toBe(accent);
     expect(await page.style("#prose a", "text-decoration-line")).toBe("underline");
     expect(await page.style("#prose ul", "padding-inline-start")).toBe("24px");
     expect(await page.style("#prose ol", "padding-inline-start")).toBe("24px");
@@ -293,6 +404,34 @@ describe("theme", () => {
     expect(await page.style("#prose hr", "border-top")).toBe(`1px solid ${divider}`);
     expect(await page.style("#prose hr", "border-bottom-width")).toBe("0px");
     expect(await page.style("#prose pre", "border-top")).toBe(`1px solid ${divider}`);
+  });
+
+  test("links and focus outlines resolve to --accent, not a hue by name", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    // Override the role alone: a rule that named --blue would keep Primer's blue.
+    await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
+    expect(await page.style("#prose a", "color")).toBe("rgb(1, 2, 3)");
+    for (const target of ["#prose a", "#components .btn:not(:disabled)", "#components .input"]) {
+      await tabTo(page, target);
+      expect([
+        target,
+        await page.evaluate(`getComputedStyle(document.activeElement).outline`),
+      ]).toEqual([target, "rgb(1, 2, 3) solid 2px"]);
+    }
+  });
+
+  test("selected text sits on a translucent mix of --accent", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const selection = () =>
+      page.evaluate(`getComputedStyle(document.querySelector("#prose p"), "::selection")
+        .backgroundColor`);
+    const fill = tint(await selection());
+    expect(fill?.hue).toBe(COLORS["--accent"][0]);
+    expect(fill.alpha).toBeGreaterThan(0);
+    expect(fill.alpha).toBeLessThan(1);
+    // The mix is of the role: overriding --accent alone moves it.
+    await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
+    expect(tint(await selection())?.hue).toBe("rgb(1, 2, 3)");
   });
 
   test("spaces adjacent prose blocks", async () => {
@@ -313,7 +452,7 @@ describe("theme", () => {
 });
 
 describe("components", () => {
-  test("the components layer styles exactly the frozen classes", async () => {
+  test("the components layer styles exactly the component classes", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
     const classes = await page.evaluate(`(() => {
@@ -335,13 +474,9 @@ describe("components", () => {
 
   test("buttons, inputs, labels and cards resolve from tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const [bg, bg1, color, color1, divider] = [
-      "--bg",
-      "--bg-1",
-      "--color",
-      "--color-1",
-      "--divider",
-    ].map((token) => COLORS[token][0]);
+    const [bg, bg1, color, color1, divider] = ["--bg", "--bg-1", "--fg", "--fg-1", "--divider"].map(
+      (token) => COLORS[token][0],
+    );
     const expected = {
       ".btn": {
         padding: "4px 12px",
@@ -390,8 +525,8 @@ describe("components", () => {
   test("each button variant takes its color token, in both schemes", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tokens = {
-      ...Object.fromEntries(HUES.map((h) => [`btn-${h}`, `--${h}`])),
-      "btn-muted": "--color-2",
+      ...Object.fromEntries(VARIANTS.map((h) => [`btn-${h}`, `--${h}`])),
+      "btn-muted": "--fg-2",
     };
     for (const scheme of [0, 1]) {
       if (scheme) await page.setScheme("dark");
@@ -406,23 +541,36 @@ describe("components", () => {
 
   test("a disabled button keeps the plain button's colors, dimmed", async () => {
     const page = await open(specimen, { scheme: "light" });
-    expect(await page.style("#components .btn:disabled", "color")).toBe(COLORS["--color"][0]);
+    expect(await page.style("#components .btn:disabled", "color")).toBe(COLORS["--fg"][0]);
     expect(await page.style("#components .btn:disabled", "opacity")).toBe("0.4");
   });
 
-  test("each badge variant is its hue on a translucent mix of that hue", async () => {
+  test("each badge variant is its token on a translucent mix of that token, in both schemes", async () => {
     const page = await open(specimen, { scheme: "light" });
-    for (const hue of HUES) {
-      const selector = `#components .badge-${hue}`;
-      const [value] = COLORS[`--${hue}`];
-      expect([hue, await page.style(selector, "color")]).toEqual([hue, value]);
-      const fill = tint(await page.style(selector, "background-color"));
-      expect([hue, fill?.hue]).toEqual([hue, value]);
-      expect(fill.alpha).toBeGreaterThan(0);
-      expect(fill.alpha).toBeLessThan(1);
+    for (const scheme of [0, 1]) {
+      if (scheme) await page.setScheme("dark");
+      for (const [variant, token] of Object.entries(BADGE_TOKENS)) {
+        const selector = `#components .badge.${variant}`;
+        const value = COLORS[token][scheme];
+        expect([variant, await page.style(selector, "color")]).toEqual([variant, value]);
+        const fill = tint(await page.style(selector, "background-color"));
+        expect([variant, fill?.hue]).toEqual([variant, value]);
+        expect(fill.alpha).toBeGreaterThan(0);
+        expect(fill.alpha).toBeLessThan(1);
+      }
     }
     expect(await page.style("#components .badge", "font-weight")).toBe("600");
     expect(await page.style("#components .badge", "padding")).toBe("4px 8px");
+  });
+
+  test("a role badge follows an app layer's override of its hue", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { :root { --green: rgb(1, 2, 3); } }");
+    const selector = "#components .badge.badge-success";
+    expect(await page.style(selector, "color")).toBe("rgb(1, 2, 3)");
+    expect(tint(await page.style(selector, "background-color"))?.hue).toBe("rgb(1, 2, 3)");
+    // A role badge on another hue keeps it.
+    expect(await page.style("#components .badge.badge-danger", "color")).toBe(COLORS["--red"][0]);
   });
 
   test("a hovered color button fills with a translucent mix of its hue", async () => {
@@ -446,14 +594,14 @@ describe("components", () => {
   });
 
   for (const selector of [".btn", ".input"]) {
-    test(`${selector} shows a 2px outline on keyboard focus`, async () => {
+    test(`${selector} shows a 2px accent outline on keyboard focus`, async () => {
       const page = await open(specimen, { scheme: "light" });
       const target = `#components ${selector}:not(:disabled)`;
       expect(await page.style(target, "outline-style")).toBe("none");
       await tabTo(page, target);
       expect(await page.evaluate(`document.activeElement.matches(":focus-visible")`)).toBe(true);
       expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
-        `${COLORS["--blue"][0]} solid 2px`,
+        `${COLORS["--accent"][0]} solid 2px`,
       );
       expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineOffset`)).toBe(
         "2px",
@@ -509,6 +657,73 @@ describe("specimen", () => {
       ]).toEqual([name, true]);
     }
   });
+
+  test("sets the four roles beside the eight hues under the usage rule", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const rule =
+      "A role marks state or interaction; a hue marks a category and never implies status. On a " +
+      "page that shows status, categories draw first from the hues no role uses (cyan, purple, " +
+      "magenta, orange), leaving red, green and yellow for status.";
+    expect(
+      squash(await page.evaluate(`document.querySelector("#usage p").textContent`)).trim(),
+    ).toBe(rule);
+    // Each token row names its token and shows that token's badge.
+    const rows = await page.evaluate(`[...document.querySelectorAll("#usage .specimen > code")]
+      .map((code) => [code.textContent, code.nextElementSibling.querySelector(".badge").className])`);
+    expect(rows.map(([token]) => token).sort()).toEqual(
+      [...Object.keys(ROLES), ...Object.keys(HUES)].sort(),
+    );
+    for (const [token, className] of rows) {
+      expect([token, className]).toEqual([token, `badge badge-${token.slice(2)}`]);
+    }
+    // The status sample marks state with roles and categories with hues no role uses.
+    const sample = await page.evaluate(`[...document.querySelectorAll("#usage .card .row")]
+      .map((row) => [...row.querySelectorAll(".badge")].map((b) => b.classList[1]))`);
+    const free = ["badge-cyan", "badge-purple", "badge-magenta", "badge-orange"];
+    const roles = Object.keys(ROLES).map((r) => `badge-${r.slice(2)}`);
+    expect(sample.length).toBeGreaterThan(0);
+    for (const [category, state] of sample) {
+      expect(free).toContain(category);
+      expect(roles).toContain(state);
+    }
+  });
+
+  test("the contrast table has one row per color token but --bg", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const rows = await page.evaluate(`[...document.querySelectorAll("#contrast tbody th code")]
+      .map((code) => code.textContent)`);
+    // An exact match, so a new color token without a row fails.
+    expect([...rows].sort()).toEqual(
+      Object.keys(COLORS)
+        .filter((name) => name !== "--bg")
+        .sort(),
+    );
+    expect(new Set(rows).size).toBe(rows.length);
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`the contrast table's ${scheme} column matches each ratio recomputed in chromium`, async () => {
+      const page = await open(specimen, { scheme });
+      // The table is static: each cell is the ratio as written, then its mark badge.
+      const cells = await page.evaluate(`[...document.querySelectorAll("#contrast tbody tr")]
+        .map((row) => {
+          const cell = row.cells[${index + 1}];
+          const badge = cell.querySelector(".badge");
+          return {
+            token: row.querySelector("th code").textContent,
+            ratio: cell.firstChild.textContent.trim(),
+            text: badge?.textContent,
+            badge: badge?.classList[1],
+          };
+        })`);
+      const bg = await resolveColor(page, "--bg");
+      expect(bg).toBe(COLORS["--bg"][index]);
+      for (const { token, ...cell } of cells) {
+        const ratio = contrast(await resolveColor(page, token), bg);
+        expect([token, cell]).toEqual([token, { ratio: ratio.toFixed(2), ...mark(ratio) }]);
+      }
+    });
+  }
 
   test("renders the same from file:// and from a server under a project subpath", async () => {
     const local = await open(specimen, { scheme: "light" });
