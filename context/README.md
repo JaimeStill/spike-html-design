@@ -54,7 +54,7 @@ spike-html-go-wasm link to it.
   Tools are pinned in mise; there are no package dependencies.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. The baseline
   itself is consumed from `cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@vX.Y.Z/...`.
-- **Releases.** One minor tag per task, v0.1.0 to v0.4.0. A tag is never changed or re-cut.
+- **Releases.** One minor tag per task, v0.1.0 to v0.5.0. A tag is never changed or re-cut.
 - **Not here.** The section tree with reading progress belongs to spike-html-artifacts, as do the
   screenshot review script and the HTML briefs themselves.
 
@@ -78,9 +78,12 @@ The tasks, in the order they run; each cites the evidence it proves.
    Pages workflow, and tag v0.1.0 linked by its pinned URL from Pages (evidence 1, 7).
 2. `themes`: Primer-derived dark and light, the `data-theme` hook, the system default, the
    contrast table; v0.2.0 (evidence 2, 3, 4).
-3. `toggle`: `<theme-toggle>` and the flash measurement; v0.3.0 (evidence 5).
-4. `keys`: `keys.js`, the ? dialog, key-hint styling; v0.4.0 (evidence 6).
-5. `validate`: evidence 1–9 end to end, pin stability and sizes, and the answer (evidence 8, 9).
+3. `aesthetic`: a modern web and terminal look inspired by cassette futurism: Flexoki values
+   in the hue and role model, a type system with mono headings and chrome, and a designed
+   specimen layout, chosen from rendered variants; v0.3.0 (evidence 2, 4).
+4. `toggle`: `<theme-toggle>` and the flash measurement; v0.4.0 (evidence 5).
+5. `keys`: `keys.js`, the ? dialog, key-hint styling; v0.5.0 (evidence 6).
+6. `validate`: evidence 1–9 end to end, pin stability and sizes, and the answer (evidence 8, 9).
 
 ## References
 
