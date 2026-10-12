@@ -8,9 +8,10 @@
 
 1. [x] layers
 2. [x] themes
-3. [ ] toggle
-4. [ ] keys
-5. [ ] validate
+3. [ ] aesthetic
+4. [ ] toggle
+5. [ ] keys
+6. [ ] validate
 
 ## Task brief · themes
 
@@ -231,6 +232,16 @@ Release       v0.2.0 (spike-html-design root)
   removed.
 - themes: notes outside the task: Primer's high-contrast and colorblind themes as later themes;
   a LICENSE for this repository.
+- plan (after v0.2.0): the architect reviewed v0.2.0 on Pages: Primer reads too cold, the
+  specimen's layout is a mess, and mono isn't applied to headings and chrome. Kept: the hue and
+  role model, and dropping ANSI 16 as the token model.
+- plan: a new task, `aesthetic`, runs before toggle: a modern web and terminal look inspired by
+  cassette futurism, Flexoki values in the hue and role model, a type system, and a designed
+  specimen layout. Tags shift: aesthetic v0.3.0, toggle v0.4.0, keys v0.5.0.
+- plan: looks are chosen from rendered options, not numbers: aesthetic's plan rounds show 2–3
+  rendered specimen variants, and every later session brief that changes how pages look embeds
+  screenshots of the specimen in both themes. themes' palette was accepted from contrast ratios
+  alone, without a rendered page.
 
 ## Pending edits
 
