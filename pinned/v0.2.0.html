@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spike-html-design pinned v0.2.0</title>
+    <!-- The consumer proof for tag v0.2.0: the specimen's markup, linking the baseline by its
+         pinned jsDelivr URL, as a page on another origin would. Only this link and the title
+         differ from index.html at v0.2.0; the tests hold the rest identical. Never edit it
+         after the tag: a later tag gets its own page beside it. -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.2.0/baseline.css"
+    />
+    <style>
+      /* The specimen's own layout, in an app layer after the baseline's four, as any artifact
+         would add it. Swatches and samples read the token they show from --sample. */
+      @layer app {
+        main {
+          max-width: 60rem;
+          margin-inline: auto;
+          padding: var(--space-8) var(--space-6);
+        }
+
+        section {
+          margin-block-start: var(--space-12);
+        }
+
+        .specimen {
+          display: grid;
+          grid-template-columns: max-content 1fr;
+          gap: var(--space-2) var(--space-6);
+          align-items: center;
+          margin-block-start: var(--space-4);
+          font-size: var(--text-sm);
+
+          & > code {
+            color: var(--fg-2);
+          }
+        }
+
+        .font-sample {
+          font-family: var(--sample);
+        }
+
+        .space-sample {
+          width: var(--sample);
+          height: var(--space-4);
+          border: 1px solid var(--blue);
+        }
+
+        .text-sample {
+          font-size: var(--sample);
+          line-height: 1.25;
+        }
+
+        .radius-sample {
+          width: var(--space-16);
+          height: var(--space-10);
+          border: 1px solid var(--fg-1);
+          border-radius: var(--sample);
+        }
+
+        .swatch {
+          width: var(--space-16);
+          height: var(--space-8);
+          border: 1px solid var(--divider);
+          border-radius: var(--radius-sm);
+          background: var(--sample);
+        }
+
+        .row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-2);
+          align-items: center;
+          margin-block-start: var(--space-4);
+        }
+
+        .field {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-1);
+          max-inline-size: calc(5 * var(--space-16));
+          margin-block-start: var(--space-4);
+        }
+
+        /* Bounded boxes, so the scroll samples overflow. */
+        .scroll-sample {
+          max-inline-size: calc(5 * var(--space-16));
+          block-size: calc(2 * var(--space-16));
+          margin-block-start: var(--space-4);
+          border: 1px solid var(--divider);
+
+          &.scroll-x {
+            block-size: auto;
+            white-space: nowrap;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>spike-html-design</h1>
+        <p>
+          The baseline's tokens, the prose elements its theme styles, and its components,
+          rendered by <code>baseline.css</code> alone. It follows the system scheme; a
+          <code>data-theme</code> of <code>light</code> or <code>dark</code> on the root element
+          forces one.
+        </p>
+      </header>
+
+      <section id="tokens">
+        <h2>Tokens</h2>
+
+        <h3>Font stacks</h3>
+        <div class="specimen">
+          <code>--font-sans</code>
+          <span class="font-sample" style="--sample: var(--font-sans)">The quick brown fox</span>
+          <code>--font-mono</code>
+          <span class="font-sample" style="--sample: var(--font-mono)">The quick brown fox</span>
+        </div>
+
+        <h3>Spacing</h3>
+        <div class="specimen">
+          <code>--space-1</code>
+          <div class="space-sample" style="--sample: var(--space-1)"></div>
+          <code>--space-2</code>
+          <div class="space-sample" style="--sample: var(--space-2)"></div>
+          <code>--space-3</code>
+          <div class="space-sample" style="--sample: var(--space-3)"></div>
+          <code>--space-4</code>
+          <div class="space-sample" style="--sample: var(--space-4)"></div>
+          <code>--space-5</code>
+          <div class="space-sample" style="--sample: var(--space-5)"></div>
+          <code>--space-6</code>
+          <div class="space-sample" style="--sample: var(--space-6)"></div>
+          <code>--space-8</code>
+          <div class="space-sample" style="--sample: var(--space-8)"></div>
+          <code>--space-10</code>
+          <div class="space-sample" style="--sample: var(--space-10)"></div>
+          <code>--space-12</code>
+          <div class="space-sample" style="--sample: var(--space-12)"></div>
+          <code>--space-16</code>
+          <div class="space-sample" style="--sample: var(--space-16)"></div>
+        </div>
+
+        <h3>Text</h3>
+        <div class="specimen">
+          <code>--text-xs</code>
+          <span class="text-sample" style="--sample: var(--text-xs)">Specimen</span>
+          <code>--text-sm</code>
+          <span class="text-sample" style="--sample: var(--text-sm)">Specimen</span>
+          <code>--text-base</code>
+          <span class="text-sample" style="--sample: var(--text-base)">Specimen</span>
+          <code>--text-lg</code>
+          <span class="text-sample" style="--sample: var(--text-lg)">Specimen</span>
+          <code>--text-xl</code>
+          <span class="text-sample" style="--sample: var(--text-xl)">Specimen</span>
+          <code>--text-2xl</code>
+          <span class="text-sample" style="--sample: var(--text-2xl)">Specimen</span>
+          <code>--text-3xl</code>
+          <span class="text-sample" style="--sample: var(--text-3xl)">Specimen</span>
+          <code>--text-4xl</code>
+          <span class="text-sample" style="--sample: var(--text-4xl)">Specimen</span>
+        </div>
+
+        <h3>Radii</h3>
+        <div class="specimen">
+          <code>--radius-sm</code>
+          <div class="radius-sample" style="--sample: var(--radius-sm)"></div>
+          <code>--radius-md</code>
+          <div class="radius-sample" style="--sample: var(--radius-md)"></div>
+          <code>--radius-lg</code>
+          <div class="radius-sample" style="--sample: var(--radius-lg)"></div>
+        </div>
+
+        <h3>Tiers</h3>
+        <div class="specimen">
+          <code>--bg</code>
+          <div class="swatch" style="--sample: var(--bg)"></div>
+          <code>--bg-1</code>
+          <div class="swatch" style="--sample: var(--bg-1)"></div>
+          <code>--bg-2</code>
+          <div class="swatch" style="--sample: var(--bg-2)"></div>
+          <code>--divider</code>
+          <div class="swatch" style="--sample: var(--divider)"></div>
+          <code>--fg</code>
+          <div class="swatch" style="--sample: var(--fg)"></div>
+          <code>--fg-1</code>
+          <div class="swatch" style="--sample: var(--fg-1)"></div>
+          <code>--fg-2</code>
+          <div class="swatch" style="--sample: var(--fg-2)"></div>
+        </div>
+
+        <h3>Hues</h3>
+        <div class="specimen">
+          <code>--red</code>
+          <div class="swatch" style="--sample: var(--red)"></div>
+          <code>--orange</code>
+          <div class="swatch" style="--sample: var(--orange)"></div>
+          <code>--yellow</code>
+          <div class="swatch" style="--sample: var(--yellow)"></div>
+          <code>--green</code>
+          <div class="swatch" style="--sample: var(--green)"></div>
+          <code>--cyan</code>
+          <div class="swatch" style="--sample: var(--cyan)"></div>
+          <code>--blue</code>
+          <div class="swatch" style="--sample: var(--blue)"></div>
+          <code>--purple</code>
+          <div class="swatch" style="--sample: var(--purple)"></div>
+          <code>--magenta</code>
+          <div class="swatch" style="--sample: var(--magenta)"></div>
+        </div>
+
+        <h3>Roles</h3>
+        <div class="specimen">
+          <code>--accent</code>
+          <div class="swatch" style="--sample: var(--accent)"></div>
+          <code>--success</code>
+          <div class="swatch" style="--sample: var(--success)"></div>
+          <code>--warning</code>
+          <div class="swatch" style="--sample: var(--warning)"></div>
+          <code>--danger</code>
+          <div class="swatch" style="--sample: var(--danger)"></div>
+        </div>
+      </section>
+
+      <section id="prose">
+        <h2>Prose</h2>
+        <h1>Heading one</h1>
+        <h2>Heading two</h2>
+        <h3>Heading three</h3>
+        <h4>Heading four</h4>
+        <h5>Heading five</h5>
+        <h6>Heading six</h6>
+        <p>
+          A paragraph of body text in the sans stack, with <a href="#prose">a link to this section</a>,
+          <strong>strong text</strong>, <em>emphasis</em>, inline <code>code</code>, and a key,
+          <kbd>T</kbd>.
+        </p>
+        <ul>
+          <li>An unordered item</li>
+          <li>A second item</li>
+        </ul>
+        <ol>
+          <li>An ordered item</li>
+          <li>A second item</li>
+        </ol>
+        <blockquote>
+          <p>A blockquote, set off by a rule at its start edge.</p>
+        </blockquote>
+        <pre><code>// A preformatted block in the mono stack.
+const answer = 42;</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>--bg</code></td>
+              <td>Page surface</td>
+            </tr>
+            <tr>
+              <td><code>--fg</code></td>
+              <td>Body text</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr />
+        <p>A paragraph after the rule.</p>
+      </section>
+
+      <section id="components">
+        <h2>Components</h2>
+
+        <h3>Buttons</h3>
+        <div class="row">
+          <button type="button" class="btn">.btn</button>
+          <button type="button" class="btn btn-blue">.btn-blue</button>
+          <button type="button" class="btn btn-green">.btn-green</button>
+          <button type="button" class="btn btn-red">.btn-red</button>
+          <button type="button" class="btn btn-yellow">.btn-yellow</button>
+          <button type="button" class="btn btn-muted">.btn-muted</button>
+          <button type="button" class="btn btn-blue" disabled>disabled</button>
+        </div>
+
+        <h3>Badges</h3>
+        <div class="row">
+          <span class="badge badge-blue">.badge-blue</span>
+          <span class="badge badge-green">.badge-green</span>
+          <span class="badge badge-red">.badge-red</span>
+          <span class="badge badge-yellow">.badge-yellow</span>
+          <span class="badge badge-orange">.badge-orange</span>
+          <span class="badge badge-cyan">.badge-cyan</span>
+          <span class="badge badge-purple">.badge-purple</span>
+          <span class="badge badge-magenta">.badge-magenta</span>
+        </div>
+        <div class="row">
+          <span class="badge badge-accent">.badge-accent</span>
+          <span class="badge badge-success">.badge-success</span>
+          <span class="badge badge-warning">.badge-warning</span>
+          <span class="badge badge-danger">.badge-danger</span>
+        </div>
+
+        <h3>Input and label</h3>
+        <div class="field">
+          <label class="label" for="specimen-input">.label</label>
+          <input class="input" id="specimen-input" placeholder=".input" />
+        </div>
+        <div class="field">
+          <label class="label" for="specimen-disabled">disabled</label>
+          <input class="input" id="specimen-disabled" placeholder=".input" disabled />
+        </div>
+
+        <h3>Card</h3>
+        <div class="card">
+          <span class="label">.card</span>
+          <p>A card is a raised surface, set off by a border rather than a shadow.</p>
+          <div class="row">
+            <span class="badge badge-green">ready</span>
+            <button type="button" class="btn btn-blue">Open</button>
+          </div>
+        </div>
+
+        <h3>Scroll</h3>
+        <div class="scroll-sample scroll-y">
+          <p>.scroll-y scrolls its overflow vertically, with a stable gutter.</p>
+          <p>A second paragraph.</p>
+          <p>A third paragraph.</p>
+          <p>A fourth paragraph.</p>
+          <p>A fifth paragraph.</p>
+        </div>
+        <div class="scroll-sample scroll-x">
+          .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that will
+          not wrap stays readable to its end in a box narrower than itself.
+        </div>
+      </section>
+
+      <section id="usage">
+        <h2>Roles and hues</h2>
+        <p>
+          A role marks state or interaction; a hue marks a category and never implies status. On a
+          page that shows status, categories draw first from the hues no role uses (cyan, purple,
+          magenta, orange), leaving red, green and yellow for status.
+        </p>
+
+        <h3>Roles</h3>
+        <div class="specimen">
+          <code>--accent</code>
+          <span><span class="badge badge-accent">selected</span> aliases <code>--blue</code></span>
+          <code>--success</code>
+          <span><span class="badge badge-success">passed</span> aliases <code>--green</code></span>
+          <code>--warning</code>
+          <span><span class="badge badge-warning">pending</span> aliases <code>--yellow</code></span>
+          <code>--danger</code>
+          <span><span class="badge badge-danger">failed</span> aliases <code>--red</code></span>
+        </div>
+
+        <h3>Hues</h3>
+        <div class="specimen">
+          <code>--red</code>
+          <span><span class="badge badge-red">red</span> held for status</span>
+          <code>--orange</code>
+          <span><span class="badge badge-orange">orange</span> category, used by no role</span>
+          <code>--yellow</code>
+          <span><span class="badge badge-yellow">yellow</span> held for status</span>
+          <code>--green</code>
+          <span><span class="badge badge-green">green</span> held for status</span>
+          <code>--cyan</code>
+          <span><span class="badge badge-cyan">cyan</span> category, used by no role</span>
+          <code>--blue</code>
+          <span><span class="badge badge-blue">blue</span> category, shared with accent</span>
+          <code>--purple</code>
+          <span><span class="badge badge-purple">purple</span> category, used by no role</span>
+          <code>--magenta</code>
+          <span><span class="badge badge-magenta">magenta</span> category, used by no role</span>
+        </div>
+
+        <h3>On a status page</h3>
+        <div class="card">
+          <span class="label">Builds</span>
+          <div class="row">
+            <span class="badge badge-cyan">docs</span>
+            <span class="badge badge-success">passed</span>
+          </div>
+          <div class="row">
+            <span class="badge badge-purple">api</span>
+            <span class="badge badge-warning">pending</span>
+          </div>
+          <div class="row">
+            <span class="badge badge-magenta">web</span>
+            <span class="badge badge-danger">failed</span>
+          </div>
+          <div class="row">
+            <span class="badge badge-orange">cli</span>
+            <span class="badge badge-success">passed</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="contrast">
+        <h2>Contrast</h2>
+        <table>
+          <caption>
+            Each color token's WCAG 2 contrast ratio against <code>--bg</code>, from relative
+            luminance, in each theme. AA meets 4.5 for body text; AA large meets 3 for large text
+            and interface parts; fail is below 3. Failures are recorded here, not corrected.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Token</th>
+              <th scope="col">Light</th>
+              <th scope="col">Dark</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><code>--bg-1</code></th>
+              <td>1.06 <span class="badge badge-danger">fail</span></td>
+              <td>1.09 <span class="badge badge-danger">fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--bg-2</code></th>
+              <td>1.12 <span class="badge badge-danger">fail</span></td>
+              <td>1.35 <span class="badge badge-danger">fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--divider</code></th>
+              <td>1.43 <span class="badge badge-danger">fail</span></td>
+              <td>1.92 <span class="badge badge-danger">fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg</code></th>
+              <td>15.80 <span class="badge badge-success">AA</span></td>
+              <td>17.39 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg-1</code></th>
+              <td>6.11 <span class="badge badge-success">AA</span></td>
+              <td>6.50 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg-2</code></th>
+              <td>3.45 <span class="badge badge-warning">AA large</span></td>
+              <td>3.57 <span class="badge badge-warning">AA large</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--red</code></th>
+              <td>6.07 <span class="badge badge-success">AA</span></td>
+              <td>7.24 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--orange</code></th>
+              <td>6.14 <span class="badge badge-success">AA</span></td>
+              <td>7.10 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--yellow</code></th>
+              <td>6.27 <span class="badge badge-success">AA</span></td>
+              <td>7.05 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--green</code></th>
+              <td>6.17 <span class="badge badge-success">AA</span></td>
+              <td>7.06 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--cyan</code></th>
+              <td>6.23 <span class="badge badge-success">AA</span></td>
+              <td>7.24 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--blue</code></th>
+              <td>5.98 <span class="badge badge-success">AA</span></td>
+              <td>7.02 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--purple</code></th>
+              <td>5.96 <span class="badge badge-success">AA</span></td>
+              <td>7.03 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--magenta</code></th>
+              <td>5.91 <span class="badge badge-success">AA</span></td>
+              <td>7.04 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--accent</code></th>
+              <td>5.98 <span class="badge badge-success">AA</span></td>
+              <td>7.02 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--success</code></th>
+              <td>6.17 <span class="badge badge-success">AA</span></td>
+              <td>7.06 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--warning</code></th>
+              <td>6.27 <span class="badge badge-success">AA</span></td>
+              <td>7.05 <span class="badge badge-success">AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--danger</code></th>
+              <td>6.07 <span class="badge badge-success">AA</span></td>
+              <td>7.24 <span class="badge badge-success">AA</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>
