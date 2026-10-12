@@ -58,28 +58,55 @@ const SCALES = {
   "--radius-lg": "0.75rem",
 };
 
-// COLORS are herald's color tokens, name to the color each resolves to in light and in dark.
-const COLORS = {
-  "--bg": ["rgb(255, 255, 255)", "rgb(18, 18, 18)"],
-  "--bg-1": ["rgb(245, 245, 245)", "rgb(31, 31, 31)"],
-  "--bg-2": ["rgb(235, 235, 235)", "rgb(46, 46, 46)"],
-  "--color": ["rgb(26, 26, 26)", "rgb(237, 237, 237)"],
-  "--color-1": ["rgb(77, 77, 77)", "rgb(204, 204, 204)"],
-  "--color-2": ["rgb(115, 115, 115)", "rgb(166, 166, 166)"],
-  "--divider": ["rgb(204, 204, 204)", "rgb(64, 64, 64)"],
-  "--blue": ["rgb(11, 115, 218)", "rgb(102, 179, 255)"],
-  "--green": ["rgb(36, 143, 71)", "rgb(60, 221, 113)"],
-  "--red": ["rgb(217, 38, 38)", "rgb(242, 90, 90)"],
-  "--yellow": ["rgb(184, 143, 20)", "rgb(245, 199, 61)"],
-  "--orange": ["rgb(236, 109, 19)", "rgb(251, 152, 81)"],
+// rgb converts a #rrggbb hex to the rgb() a computed color reads as.
+const rgb = (hex) =>
+  `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
+
+// TIERS are the surface, divider and text tokens, name to Primer's [light, dark] values.
+const TIERS = {
+  "--bg": ["#ffffff", "#0d1117"],
+  "--bg-1": ["#f6f8fa", "#151b23"],
+  "--bg-2": ["#eff2f5", "#262c36"],
+  "--divider": ["#d1d9e0", "#3d444d"],
+  "--fg": ["#1f2328", "#f0f6fc"],
+  "--fg-1": ["#59636e", "#9198a1"],
+  "--fg-2": ["#818b98", "#656c76"],
 };
 
-const HUES = ["blue", "green", "red", "yellow", "orange"];
+// HUES are the hue tokens, each named for its color, name to Primer's [light, dark] values.
+const HUES = {
+  "--red": ["#c50d28", "#f27d83"],
+  "--orange": ["#a24610", "#ed8326"],
+  "--yellow": ["#805900", "#d3910d"],
+  "--green": ["#2b6e3f", "#41b445"],
+  "--cyan": ["#006a80", "#07ace4"],
+  "--blue": ["#005fcc", "#4da0ff"],
+  "--purple": ["#783ae4", "#b687f7"],
+  "--magenta": ["#b12f79", "#e57bb2"],
+};
+
+// ROLES are the role tokens, name to the hue each aliases.
+const ROLES = {
+  "--accent": "--blue",
+  "--success": "--green",
+  "--warning": "--yellow",
+  "--danger": "--red",
+};
+
+// COLORS are every color token, name to the color it resolves to in light and in dark; a role
+// resolves to its hue's.
+const COLORS = Object.fromEntries([
+  ...Object.entries({ ...TIERS, ...HUES }).map(([name, pair]) => [name, pair.map(rgb)]),
+  ...Object.entries(ROLES).map(([role, hue]) => [role, HUES[hue].map(rgb)]),
+]);
+
+// VARIANTS are the hues the button and badge variants take, as they did at v0.1.0.
+const VARIANTS = ["blue", "green", "red", "yellow", "orange"];
 
 // COMPONENTS are the component classes, frozen at v0.1.0: herald's six, its button variants, and
 // a badge variant per hue.
 const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
-const BADGES = HUES.map((h) => `badge-${h}`);
+const BADGES = VARIANTS.map((h) => `badge-${h}`);
 const COMPONENTS = [
   "btn",
   ...BUTTONS,
@@ -109,6 +136,15 @@ function resolveColor(page, token) {
     const color = getComputedStyle(probe).color;
     probe.remove();
     return color;
+  })()`);
+}
+
+// addAppStyle appends css to the page in a style element, after the baseline, as an artifact's
+// own app layer would sit.
+function addAppStyle(page, css) {
+  return page.evaluate(`(() => {
+    const style = document.head.appendChild(document.createElement("style"));
+    style.textContent = ${JSON.stringify(css)};
   })()`);
 }
 
@@ -172,10 +208,11 @@ describe("layers", () => {
 });
 
 describe("tokens", () => {
-  test("declares exactly herald's token names, without its shadow and tint tokens", async () => {
+  test("declares exactly the scales, tiers, hues and roles, without shadow and tint tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
     const names = Object.keys(await rootTokens(page)).sort();
-    // An exact match, so herald's shadow tokens and --*-bg tints cannot slip in.
+    // An exact match, so shadow tokens, --*-bg tints, and bright, black, white or ANSI hues
+    // cannot slip in.
     expect(names).toEqual([...Object.keys(SCALES), ...Object.keys(COLORS)].sort());
   });
 
@@ -185,16 +222,40 @@ describe("tokens", () => {
     for (const [name, value] of Object.entries(SCALES)) expect(squash(tokens[name])).toBe(value);
   });
 
-  test("every color token is a light-dark() pair of herald's values", async () => {
+  test("every tier and hue is a light-dark() pair of Primer's values", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tokens = await rootTokens(page);
-    for (const name of Object.keys(COLORS)) expect(tokens[name]).toStartWith("light-dark(");
-    for (const [name, [light]] of Object.entries(COLORS)) {
-      expect(await resolveColor(page, name)).toBe(light);
+    for (const [name, [light, dark]] of Object.entries({ ...TIERS, ...HUES })) {
+      expect([name, tokens[name]]).toEqual([name, `light-dark(${light}, ${dark})`]);
     }
-    await page.setScheme("dark");
-    for (const [name, [, dark]] of Object.entries(COLORS)) {
-      expect(await resolveColor(page, name)).toBe(dark);
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`every tier, hue and role resolves to its ${scheme} value`, async () => {
+      const page = await open(specimen, { scheme });
+      for (const [name, pair] of Object.entries(COLORS)) {
+        expect([name, await resolveColor(page, name)]).toEqual([name, pair[index]]);
+      }
+    });
+  }
+
+  test("the old text token names are gone, with no alias", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const old = await page.evaluate(`(() => {
+      const style = getComputedStyle(document.documentElement);
+      return ["--color", "--color-1", "--color-2"].map((name) => style.getPropertyValue(name));
+    })()`);
+    expect(old).toEqual(["", "", ""]);
+  });
+
+  test("a role follows an app layer's override of its hue", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
+    expect(await resolveColor(page, "--blue")).toBe("rgb(1, 2, 3)");
+    expect(await resolveColor(page, "--accent")).toBe("rgb(1, 2, 3)");
+    // The other roles keep their own hues.
+    for (const role of ["--success", "--warning", "--danger"]) {
+      expect([role, await resolveColor(page, role)]).toEqual([role, COLORS[role][0]]);
     }
   });
 
@@ -202,10 +263,10 @@ describe("tokens", () => {
     const page = await open(specimen, { scheme: "dark" });
     expect(await page.style(":root", "color-scheme")).toBe("light dark");
     expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][1]);
-    expect(await page.style("body", "color")).toBe(COLORS["--color"][1]);
+    expect(await page.style("body", "color")).toBe(COLORS["--fg"][1]);
     await page.setScheme("light");
     expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][0]);
-    expect(await page.style("body", "color")).toBe(COLORS["--color"][0]);
+    expect(await page.style("body", "color")).toBe(COLORS["--fg"][0]);
   });
 });
 
@@ -279,9 +340,9 @@ describe("theme", () => {
 
   test("styles links, lists, tables, blockquotes and rules in outline", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const [blue] = COLORS["--blue"];
+    const [accent] = COLORS["--accent"];
     const [divider] = COLORS["--divider"];
-    expect(await page.style("#prose a", "color")).toBe(blue);
+    expect(await page.style("#prose a", "color")).toBe(accent);
     expect(await page.style("#prose a", "text-decoration-line")).toBe("underline");
     expect(await page.style("#prose ul", "padding-inline-start")).toBe("24px");
     expect(await page.style("#prose ol", "padding-inline-start")).toBe("24px");
@@ -293,6 +354,34 @@ describe("theme", () => {
     expect(await page.style("#prose hr", "border-top")).toBe(`1px solid ${divider}`);
     expect(await page.style("#prose hr", "border-bottom-width")).toBe("0px");
     expect(await page.style("#prose pre", "border-top")).toBe(`1px solid ${divider}`);
+  });
+
+  test("links and focus outlines resolve to --accent, not a hue by name", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    // Override the role alone: a rule that named --blue would keep Primer's blue.
+    await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
+    expect(await page.style("#prose a", "color")).toBe("rgb(1, 2, 3)");
+    for (const target of ["#prose a", "#components .btn:not(:disabled)", "#components .input"]) {
+      await tabTo(page, target);
+      expect([
+        target,
+        await page.evaluate(`getComputedStyle(document.activeElement).outline`),
+      ]).toEqual([target, "rgb(1, 2, 3) solid 2px"]);
+    }
+  });
+
+  test("selected text sits on a translucent mix of --accent", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const selection = () =>
+      page.evaluate(`getComputedStyle(document.querySelector("#prose p"), "::selection")
+        .backgroundColor`);
+    const fill = tint(await selection());
+    expect(fill?.hue).toBe(COLORS["--accent"][0]);
+    expect(fill.alpha).toBeGreaterThan(0);
+    expect(fill.alpha).toBeLessThan(1);
+    // The mix is of the role: overriding --accent alone moves it.
+    await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
+    expect(tint(await selection())?.hue).toBe("rgb(1, 2, 3)");
   });
 
   test("spaces adjacent prose blocks", async () => {
@@ -335,13 +424,9 @@ describe("components", () => {
 
   test("buttons, inputs, labels and cards resolve from tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const [bg, bg1, color, color1, divider] = [
-      "--bg",
-      "--bg-1",
-      "--color",
-      "--color-1",
-      "--divider",
-    ].map((token) => COLORS[token][0]);
+    const [bg, bg1, color, color1, divider] = ["--bg", "--bg-1", "--fg", "--fg-1", "--divider"].map(
+      (token) => COLORS[token][0],
+    );
     const expected = {
       ".btn": {
         padding: "4px 12px",
@@ -390,8 +475,8 @@ describe("components", () => {
   test("each button variant takes its color token, in both schemes", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tokens = {
-      ...Object.fromEntries(HUES.map((h) => [`btn-${h}`, `--${h}`])),
-      "btn-muted": "--color-2",
+      ...Object.fromEntries(VARIANTS.map((h) => [`btn-${h}`, `--${h}`])),
+      "btn-muted": "--fg-2",
     };
     for (const scheme of [0, 1]) {
       if (scheme) await page.setScheme("dark");
@@ -406,13 +491,13 @@ describe("components", () => {
 
   test("a disabled button keeps the plain button's colors, dimmed", async () => {
     const page = await open(specimen, { scheme: "light" });
-    expect(await page.style("#components .btn:disabled", "color")).toBe(COLORS["--color"][0]);
+    expect(await page.style("#components .btn:disabled", "color")).toBe(COLORS["--fg"][0]);
     expect(await page.style("#components .btn:disabled", "opacity")).toBe("0.4");
   });
 
   test("each badge variant is its hue on a translucent mix of that hue", async () => {
     const page = await open(specimen, { scheme: "light" });
-    for (const hue of HUES) {
+    for (const hue of VARIANTS) {
       const selector = `#components .badge-${hue}`;
       const [value] = COLORS[`--${hue}`];
       expect([hue, await page.style(selector, "color")]).toEqual([hue, value]);
@@ -446,14 +531,14 @@ describe("components", () => {
   });
 
   for (const selector of [".btn", ".input"]) {
-    test(`${selector} shows a 2px outline on keyboard focus`, async () => {
+    test(`${selector} shows a 2px accent outline on keyboard focus`, async () => {
       const page = await open(specimen, { scheme: "light" });
       const target = `#components ${selector}:not(:disabled)`;
       expect(await page.style(target, "outline-style")).toBe("none");
       await tabTo(page, target);
       expect(await page.evaluate(`document.activeElement.matches(":focus-visible")`)).toBe(true);
       expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
-        `${COLORS["--blue"][0]} solid 2px`,
+        `${COLORS["--accent"][0]} solid 2px`,
       );
       expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineOffset`)).toBe(
         "2px",

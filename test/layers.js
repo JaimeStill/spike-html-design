@@ -20,6 +20,13 @@ export const PROBES = {
     ["#prose h1", "font-size", "36px"],
     ["#components .card", "display", "flex"],
   ],
+  // Primer's tiers replace herald's values, so the tokens probe reads the new --bg pair.
+  "v0.2.0": [
+    [":root", "--bg", "light-dark(#ffffff, #0d1117)"],
+    ["body", "box-sizing", "border-box"],
+    ["#prose h1", "font-size", "36px"],
+    ["#components .card", "display", "flex"],
+  ],
 };
 
 // CURRENT is the tag whose probes the working tree answers.

@@ -10,10 +10,11 @@
  * URLs are relative, so a pinned jsDelivr tag serves the layer files from the same tag, and the
  * root works from file:// and under a Pages subpath alike.
  *
- * Structure, token names, and scales follow herald's client design (app/client/design). Token
- * names are frozen at v0.1.0. herald's tint tokens (--*-bg) and shadow tokens are left out on
- * purpose: the aesthetic is flat and outline-only, and a tint, where one is needed, is a
- * color-mix() of a hue at its use.
+ * Structure and scales follow herald's client design (app/client/design); the colors follow
+ * GitHub's Primer (layers/tokens.css). Each tag freezes its token and class names: a page pinned
+ * to a tag keeps the names that tag shipped, and v0.1.0 stays as tagged. Tint tokens (--*-bg)
+ * and shadow tokens are left out on purpose: the aesthetic is flat and outline-only, and a tint,
+ * where one is needed, is a color-mix() of a hue at its use.
  */
 
 @layer tokens, reset, theme, components;

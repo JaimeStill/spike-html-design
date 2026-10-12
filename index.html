@@ -30,7 +30,7 @@
           font-size: var(--text-sm);
 
           & > code {
-            color: var(--color-2);
+            color: var(--fg-2);
           }
         }
 
@@ -52,7 +52,7 @@
         .radius-sample {
           width: var(--space-16);
           height: var(--space-10);
-          border: 1px solid var(--color-1);
+          border: 1px solid var(--fg-1);
           border-radius: var(--sample);
         }
 
@@ -170,7 +170,7 @@
           <div class="radius-sample" style="--sample: var(--radius-lg)"></div>
         </div>
 
-        <h3>Colors</h3>
+        <h3>Tiers</h3>
         <div class="specimen">
           <code>--bg</code>
           <div class="swatch" style="--sample: var(--bg)"></div>
@@ -178,24 +178,46 @@
           <div class="swatch" style="--sample: var(--bg-1)"></div>
           <code>--bg-2</code>
           <div class="swatch" style="--sample: var(--bg-2)"></div>
-          <code>--color</code>
-          <div class="swatch" style="--sample: var(--color)"></div>
-          <code>--color-1</code>
-          <div class="swatch" style="--sample: var(--color-1)"></div>
-          <code>--color-2</code>
-          <div class="swatch" style="--sample: var(--color-2)"></div>
           <code>--divider</code>
           <div class="swatch" style="--sample: var(--divider)"></div>
-          <code>--blue</code>
-          <div class="swatch" style="--sample: var(--blue)"></div>
-          <code>--green</code>
-          <div class="swatch" style="--sample: var(--green)"></div>
+          <code>--fg</code>
+          <div class="swatch" style="--sample: var(--fg)"></div>
+          <code>--fg-1</code>
+          <div class="swatch" style="--sample: var(--fg-1)"></div>
+          <code>--fg-2</code>
+          <div class="swatch" style="--sample: var(--fg-2)"></div>
+        </div>
+
+        <h3>Hues</h3>
+        <div class="specimen">
           <code>--red</code>
           <div class="swatch" style="--sample: var(--red)"></div>
-          <code>--yellow</code>
-          <div class="swatch" style="--sample: var(--yellow)"></div>
           <code>--orange</code>
           <div class="swatch" style="--sample: var(--orange)"></div>
+          <code>--yellow</code>
+          <div class="swatch" style="--sample: var(--yellow)"></div>
+          <code>--green</code>
+          <div class="swatch" style="--sample: var(--green)"></div>
+          <code>--cyan</code>
+          <div class="swatch" style="--sample: var(--cyan)"></div>
+          <code>--blue</code>
+          <div class="swatch" style="--sample: var(--blue)"></div>
+          <code>--purple</code>
+          <div class="swatch" style="--sample: var(--purple)"></div>
+          <code>--magenta</code>
+          <div class="swatch" style="--sample: var(--magenta)"></div>
+        </div>
+
+        <h3>Roles</h3>
+        <div class="specimen">
+          <code>--accent</code>
+          <div class="swatch" style="--sample: var(--accent)"></div>
+          <code>--success</code>
+          <div class="swatch" style="--sample: var(--success)"></div>
+          <code>--warning</code>
+          <div class="swatch" style="--sample: var(--warning)"></div>
+          <code>--danger</code>
+          <div class="swatch" style="--sample: var(--danger)"></div>
         </div>
       </section>
 
@@ -238,7 +260,7 @@ const answer = 42;</code></pre>
               <td>Page surface</td>
             </tr>
             <tr>
-              <td><code>--color</code></td>
+              <td><code>--fg</code></td>
               <td>Body text</td>
             </tr>
           </tbody>
