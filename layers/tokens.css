@@ -5,14 +5,13 @@
  *
  * The custom properties every other layer resolves through. The color tokens come in three
  * kinds: tiers (surfaces, divider, text), hues named for their color, and roles that alias a
- * hue. Each tier and hue pairs its values from Primer's functional light and dark themes
- * (dist/css/functional/themes/light.css and dark.css) through light-dark(), a hue taking its
- * color's display-*-fgColor (--magenta takes display-pink-fgColor); a role holds no color of
- * its own, so a page that overrides a hue in its app layer changes every role on that hue with
- * it.
+ * hue. Each tier and hue pairs a value from Primer's functional light and dark themes
+ * (dist/css/functional/themes/light.css and dark.css) through light-dark(). A hue takes its
+ * color's display-*-fgColor; --magenta takes display-pink-fgColor. A role holds no color of its
+ * own, so a page that overrides a hue in its app layer changes every role on that hue.
  *
  * A data-theme attribute of "light" or "dark" on the root element forces that theme by setting
- * color-scheme; with no attribute the page follows the system scheme, live.
+ * color-scheme. With no attribute, the page follows the system scheme and changes when it does.
  *
  * baseline.css imports this file into the tokens layer. Pages link baseline.css, never this
  * file: linked on its own, its rules would be unlayered.

@@ -17,6 +17,6 @@ The architecture pages that apply, in the architecture repository:
   pinned jsDelivr tag URL, never a branch.
 - A published tag is never changed or re-cut; jsDelivr caches it as immutable.
 - Every hue token is named for the color it shows.
-- A role marks state or interaction; a hue marks a category, never status. On a status page,
-  categories take cyan, purple, magenta and orange first.
+- A role token marks state or interaction; a hue token marks a category, never status. On a
+  page that shows status, categories take cyan, purple, magenta and orange first.
 - A variant is a suffix, never a prefix: `--red-bright`, `.badge-red-bright`.
