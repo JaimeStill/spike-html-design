@@ -2,8 +2,9 @@
  * layers/components.css, the components layer.
  *
  * herald's six component classes (app/client/design/styles), ported from CSS modules to plain
- * classes. Class names are frozen at v0.1.0. Every value is a token, apart from 1px borders and
- * 2px focus outlines, and herald's own em letter spacing, opacity, and transition times.
+ * classes. Each tag freezes the class names it ships, as baseline.css says. Every value is a
+ * token, apart from 1px borders and 2px focus outlines, and herald's own em letter spacing,
+ * opacity, and transition times.
  *
  * Adapted from herald: where herald fills with a tint token (--*-bg), a fill here is a
  * color-mix() of the hue at its use. .badge takes a variant per hue, which says a color and marks

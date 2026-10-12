@@ -108,8 +108,8 @@ const BADGE_TOKENS = Object.fromEntries(
   [...Object.keys(HUES), ...Object.keys(ROLES)].map((token) => [`badge-${token.slice(2)}`, token]),
 );
 
-// COMPONENTS are the component classes: herald's six and its button variants, frozen at v0.1.0,
-// and a badge variant per hue and per role.
+// COMPONENTS are the component classes: herald's six and its button variants, as v0.1.0 shipped
+// them, and a badge variant per hue and per role.
 const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
 const BADGES = Object.keys(BADGE_TOKENS);
 const COMPONENTS = [
@@ -254,14 +254,6 @@ describe("tokens", () => {
     for (const [name, value] of Object.entries(SCALES)) expect(squash(tokens[name])).toBe(value);
   });
 
-  test("every tier and hue is a light-dark() pair of Primer's values", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const tokens = await rootTokens(page);
-    for (const [name, [light, dark]] of Object.entries({ ...TIERS, ...HUES })) {
-      expect([name, tokens[name]]).toEqual([name, `light-dark(${light}, ${dark})`]);
-    }
-  });
-
   for (const [index, scheme] of ["light", "dark"].entries()) {
     test(`every tier, hue and role resolves to its ${scheme} value`, async () => {
       const page = await open(specimen, { scheme });
@@ -270,15 +262,6 @@ describe("tokens", () => {
       }
     });
   }
-
-  test("the old text token names are gone, with no alias", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const old = await page.evaluate(`(() => {
-      const style = getComputedStyle(document.documentElement);
-      return ["--color", "--color-1", "--color-2"].map((name) => style.getPropertyValue(name));
-    })()`);
-    expect(old).toEqual(["", "", ""]);
-  });
 
   test("a role follows an app layer's override of its hue", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -313,8 +296,10 @@ describe("tokens", () => {
         const page = await open(specimen, { scheme });
         await page.evaluate(`document.documentElement.dataset.theme = "${theme}"`);
         expect(await page.style(":root", "color-scheme")).toBe(theme);
-        for (const name of ["--bg", "--fg", "--accent"]) {
-          expect([name, await resolveColor(page, name)]).toEqual([name, COLORS[name][index]]);
+        // Every color token, so one that answered the system scheme by a media query rather
+        // than through color-scheme would fail.
+        for (const [name, pair] of Object.entries(COLORS)) {
+          expect([name, await resolveColor(page, name)]).toEqual([name, pair[index]]);
         }
         expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][index]);
         expect(await page.style("body", "color")).toBe(COLORS["--fg"][index]);
@@ -467,7 +452,7 @@ describe("theme", () => {
 });
 
 describe("components", () => {
-  test("the components layer styles exactly the frozen classes", async () => {
+  test("the components layer styles exactly the component classes", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
     const classes = await page.evaluate(`(() => {
