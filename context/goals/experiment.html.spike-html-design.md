@@ -103,7 +103,7 @@ Release       v0.2.0 (spike-html-design root)
 
 ## Progress
 
-slices 0/6 committed · standards — · spec — · editor —
+slices 6/6 committed (b2200ad, 8c225c4, e5e1bb6, 2ffb27d, 100fa68, 508a28b) · standards 3d7506b · spec no gaps · editor done
 
 ## Decisions
 
@@ -167,10 +167,11 @@ slices 0/6 committed · standards — · spec — · editor —
 - layers: `mise run pin <tag>` runs `scripts/pin.js`, a plain bun script that `bun test` doesn't
   collect; a tag counts as published when it exists locally and on origin.
 - layers: the Pages workflow adds `workflow_dispatch` and a `pages` concurrency group.
-- layers: standards review deferred to themes: the pinned page's hermetic test compares against
-  the working-tree `index.html` and `baseline.css`. Once either changes after v0.1.0, the test
-  must compare against `git show v0.1.0:index.html` and `git show v0.1.0:baseline.css`; otherwise
-  it fails, or renders the v0.1.0 page with newer CSS and misstates evidence 8.
+- layers: standards review deferred to themes (resolved by themes): the pinned page's hermetic
+  test compares against the working-tree `index.html` and `baseline.css`. Once either changes
+  after v0.1.0, the test must compare against `git show v0.1.0:index.html` and `git show
+  v0.1.0:baseline.css`; otherwise it fails, or renders the v0.1.0 page with newer CSS and
+  misstates evidence 8.
 - layers: round 3 (after the first session brief): the source is one file per layer, with
   baseline.css as the root that declares the order and imports each into its layer; rejected one
   file, which herald avoids and gets away with only because its bundler inlines the imports. The
@@ -217,6 +218,21 @@ slices 0/6 committed · standards — · spec — · editor —
 - themes: pinned pages are tested from one table, against `git show <tag>:` once the tag exists
   and the working tree before, with per-tag probes shared by the pin script and the layers
   helper. Resolves layers' "standards review deferred to themes".
+- themes: BUILD: the probes are one per-tag table of (selector, property, value) in
+  `test/layers.js`; its last key is the working tree's, and a tag not yet cut adds its entry
+  last.
+- themes: BUILD: a tag's stylesheet list is `git ls-tree <tag> layers/`, in the pinned test and
+  `scripts/pin.js`; the read-only git helpers live in `test/tags.js`, and the pinned test writes
+  a tag's files to a temp directory to answer intercepted requests.
+- themes: BUILD: `::selection` is a 30% color-mix() of --accent; hover fills stay 15%.
+- themes: BUILD: a role badge reads its role token (`var(--success)`), not the hue.
+- themes: BUILD: the contrast table marks "AA", "AA large", and "fail", judged on the unrounded
+  ratio, and shows them on the success, warning, and danger badges; it is the specimen's last
+  section.
+- themes: BUILD: the data-theme rules follow the `:root` token block.
+- themes: standards review: forced-theme tests over every color token replace the light-dark()
+  declaration test, which depended on the source's structure; the duplicate no-alias test is
+  removed.
 - themes: notes outside the task: Primer's high-contrast and colorblind themes as later themes;
   a LICENSE for this repository.
 
