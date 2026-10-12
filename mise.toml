@@ -20,3 +20,8 @@ bun test --pass-with-no-tests
 [tasks.currency]
 description = "Report every mise tool and workflow action pin behind its latest; writes nothing"
 run = "scripts/currency.sh"
+
+[tasks.pin]
+description = "Check a published tag live: jsDelivr serves its baseline.css immutable and byte-equal, and its pinned page renders the same from file://, a local server, and GitHub Pages; reads the network, writes nothing"
+usage = 'arg "<tag>" help="The published tag to check, as in v0.1.0"'
+run = 'bun "$MISE_PROJECT_ROOT/scripts/pin.js" "$usage_tag"'
