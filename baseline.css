@@ -1,0 +1,24 @@
+/*
+ * baseline.css: one native stylesheet for human-facing HTML artifacts.
+ *
+ * The layer statement comes before any rule and fixes the cascade order. A page that links this
+ * file and then declares its own `@layer app { ... }` gets a layer after all four, so its rules
+ * win over every baseline rule whatever their specificity, with no !important.
+ *
+ * Each layer's rules live in their own file under layers/, imported into the layer by name, the
+ * way herald composes its design index. There is no build: the browser resolves the imports. The
+ * URLs are relative, so a pinned jsDelivr tag serves the layer files from the same tag, and the
+ * root works from file:// and under a Pages subpath alike.
+ *
+ * Structure, token names, and scales follow herald's client design (app/client/design). Token
+ * names are frozen at v0.1.0. herald's tint tokens (--*-bg) and shadow tokens are left out on
+ * purpose: the aesthetic is flat and outline-only, and a tint, where one is needed, is a
+ * color-mix() of a hue at its use.
+ */
+
+@layer tokens, reset, theme, components;
+
+@import url(./layers/tokens.css) layer(tokens);
+@import url(./layers/reset.css) layer(reset);
+@import url(./layers/theme.css) layer(theme);
+@import url(./layers/components.css) layer(components);

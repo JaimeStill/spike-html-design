@@ -1,0 +1,137 @@
+/*
+ * layers/theme.css, the theme layer.
+ *
+ * herald's theme (body surface and text, monospace code), extended to the prose elements an
+ * artifact uses: headings on the text scale, links, lists, tables, blockquote, hr. Everything is
+ * flat: borders in --divider, no fills beyond the page surface, no shadows, no gradients.
+ *
+ * baseline.css imports this file into the theme layer. Pages link baseline.css, never this
+ * file: linked on its own, its rules would be unlayered.
+ */
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--color);
+}
+
+pre,
+code,
+kbd {
+  font-family: var(--font-mono);
+}
+
+/* Vertical rhythm between adjacent prose blocks, which the reset leaves at zero margin. It sits
+   in the theme layer, so any components or app rule that sets a margin replaces it. */
+:where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr)
++ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr) {
+  margin-block-start: var(--space-4);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: var(--text-4xl);
+}
+
+h2 {
+  font-size: var(--text-3xl);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+}
+
+h4 {
+  font-size: var(--text-xl);
+}
+
+h5 {
+  font-size: var(--text-lg);
+}
+
+h6 {
+  font-size: var(--text-base);
+}
+
+a {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+}
+
+ul,
+ol {
+  padding-inline-start: var(--space-6);
+}
+
+li + li {
+  margin-block-start: var(--space-1);
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--divider);
+  text-align: start;
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  color: var(--color-1);
+}
+
+blockquote {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--divider);
+  color: var(--color-1);
+}
+
+hr {
+  border: 0;
+  border-block-start: 1px solid var(--divider);
+}
+
+code,
+kbd {
+  font-size: 0.875em;
+}
+
+kbd {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+}
+
+pre {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+
+  & code {
+    font-size: inherit;
+  }
+}

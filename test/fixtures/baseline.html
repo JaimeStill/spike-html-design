@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>baseline fixture</title>
+    <link rel="stylesheet" href="../../baseline.css" />
+    <style>
+      /* A components-layer rule standing in for the baseline's components, and an app layer the
+         page declares after the stylesheet. The app rules carry equal or lower specificity than
+         the rules they must beat (these components rules, the theme's body rule), and no
+         !important. */
+      @layer components {
+        #specific.probe,
+        .probe {
+          color: rgb(255, 0, 0);
+        }
+      }
+
+      @layer app {
+        .probe {
+          color: rgb(0, 128, 0);
+        }
+
+        body {
+          background-color: rgb(0, 0, 255);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <p class="probe" id="equal">equal specificity</p>
+    <p class="probe" id="specific">higher specificity</p>
+    <img alt="" />
+    <picture></picture>
+    <video><track kind="captions" /></video>
+    <canvas></canvas>
+    <svg aria-hidden="true"></svg>
+    <button type="button">button</button>
+    <input />
+    <select>
+      <option>option</option>
+    </select>
+    <textarea></textarea>
+    <p id="target">target</p>
+  </body>
+</html>

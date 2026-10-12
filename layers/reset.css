@@ -1,0 +1,46 @@
+/*
+ * layers/reset.css, the reset layer.
+ *
+ * herald's reset, unchanged.
+ *
+ * baseline.css imports this file into the reset layer. Pages link baseline.css, never this
+ * file: linked on its own, its rules would be unlayered.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+body {
+  min-height: 100svh;
+  line-height: 1.5;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea,
+option {
+  font-family: var(--font-mono);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :has(:target) {
+    scroll-behavior: smooth;
+  }
+}

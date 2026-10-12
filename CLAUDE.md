@@ -8,7 +8,9 @@ version through jsDelivr. The repository is managed with the marathon workflow; 
 
 - **Standards:** `STANDARDS.md`, with pointers into the architecture repository.
 - **Check:** `mise run check`. It runs browser tests in headless chromium and fails when
-  chromium is missing.
+  chromium is missing. The tests open pages through `test/harness.js`.
+- **Live pin check:** `mise run pin <tag>` checks a published tag against jsDelivr and Pages; it
+  reads the network, so the check never runs it.
 - **Goals:** this spike's tasks live in the coordinator's roadmap,
   `standards-lab/context/roadmap.toml`, under `experiment.html.spike-html-design`. Its goal
   record is `context/goals/experiment.html.spike-html-design.md`.

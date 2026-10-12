@@ -23,7 +23,7 @@ while read -r line; do
 done <<<"$outdated"
 
 # GitHub Actions pinned by tag in the workflows, against each action's latest
-# release. Until the layers task adds a workflow, there are none to scan.
+# release.
 if [ -d .github/workflows ]; then
 	uses=$(grep -rhoE 'uses: *[^ ]+@[^ ]+' .github/workflows | sed -E 's/uses: *//' | sort -u)
 	while IFS=@ read -r action pin; do
