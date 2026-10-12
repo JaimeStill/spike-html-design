@@ -57,7 +57,8 @@ describe("pinned v0.1.0", () => {
     const links = await page.evaluate(`[...document.querySelectorAll("link")]
       .map((l) => [l.rel, l.getAttribute("href")])`);
     expect(links).toEqual([["stylesheet", PINNED]]);
-    // Inline <style> sheets have no href; any @import or second link would add one.
+    // document.styleSheets lists linked and inline sheets but not the baseline's imported layer
+    // files; inline sheets have no href, so a second linked stylesheet is the only way to add one.
     const sheets = await page.evaluate(`[...document.styleSheets].map((s) => s.href)
       .filter(Boolean)`);
     expect(sheets).toEqual([PINNED]);
