@@ -1,8 +1,8 @@
 // harness is the single test seam: a page loaded in headless chromium and queried for computed
 // styles. It wraps Bun.WebView (experimental in bun 1.4.3) with the few capabilities the tests
-// use: open a URL, evaluate in the page, read a computed style, emulate prefers-color-scheme,
-// and answer a request URL prefix from a local file. serve() is a static server for pages that
-// must load over http://.
+// use: open a URL, evaluate in the page, read a computed style, fingerprint a page's resolved
+// styles, emulate media features such as prefers-color-scheme, and answer a request URL prefix
+// from a local file. serve() is a static server for pages that must load over http://.
 //
 // Bun.WebView spawns one chromium per bun process and opens each view as a tab in it, so the
 // first openPage() fixes the browser for the whole test run.
@@ -49,8 +49,44 @@ function spawnView() {
   }
 }
 
+// FINGERPRINT_PROPERTIES are the computed properties fingerprint() records by default: the ones
+// the baseline's layers set, plus the box and text properties a missing or misordered stylesheet
+// would change.
+export const FINGERPRINT_PROPERTIES = [
+  "display",
+  "box-sizing",
+  "color",
+  "background-color",
+  "background-image",
+  "box-shadow",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "line-height",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  "border-top",
+  "border-right",
+  "border-bottom",
+  "border-left",
+  "border-radius",
+  "border-collapse",
+  "text-align",
+  "text-decoration-line",
+  "list-style-type",
+  "width",
+  "height",
+];
+
 class Page {
   #cdpQueue = Promise.resolve();
+  #media = new Map();
   #routes = new Map();
 
   constructor(view) {
@@ -78,10 +114,39 @@ class Page {
     return value;
   }
 
+  // fingerprint resolves to the page's resolved styles: one entry per element of the document,
+  // in document order, keyed by its tag path, with the computed value of each of properties.
+  // The root entry also carries every custom property declared on it. Two loads of a page that
+  // render the same have equal fingerprints.
+  fingerprint(properties = FINGERPRINT_PROPERTIES) {
+    return this.evaluate(`(() => {
+      const properties = ${JSON.stringify(properties)};
+      const path = (el) => el.parentElement
+        ? path(el.parentElement) + " > " + el.localName + ":nth-child(" +
+          ([...el.parentElement.children].indexOf(el) + 1) + ")"
+        : el.localName;
+      return [...document.querySelectorAll("*")].map((el) => {
+        const style = getComputedStyle(el);
+        const names = el === document.documentElement
+          ? [...properties, ...[...style].filter((name) => name.startsWith("--")).sort()]
+          : properties;
+        return [path(el), Object.fromEntries(names.map((n) => [n, style.getPropertyValue(n)]))];
+      });
+    })()`);
+  }
+
   // setScheme emulates prefers-color-scheme: "dark" or "light", or "" to clear it.
   async setScheme(scheme) {
+    await this.setMedia("prefers-color-scheme", scheme);
+  }
+
+  // setMedia emulates one media feature, as in ("prefers-reduced-motion", "reduce"), or clears it
+  // with "". Features set earlier stay emulated.
+  async setMedia(name, value) {
+    this.#media.set(name, value);
+    // setEmulatedMedia replaces the feature list, so each call sends every feature.
     await this.#cdp("Emulation.setEmulatedMedia", {
-      features: [{ name: "prefers-color-scheme", value: scheme }],
+      features: [...this.#media].map(([name, value]) => ({ name, value })),
     });
   }
 
@@ -125,20 +190,23 @@ class Page {
 }
 
 // serve starts a static file server for root on a free localhost port and returns its base URL
-// (ending in "/") and stop(). A directory path answers its index.html; a path outside root or
-// with no file answers 404.
-export function serve(root) {
+// and stop(). `prefix`, a path ending in "/" such as "/project/", serves root under it, the way
+// GitHub Pages serves a project site; the base URL ends in it. A directory path answers its
+// index.html; a path outside root or the prefix, or with no file, answers 404.
+export function serve(root, { prefix = "/" } = {}) {
   const base = resolve(root);
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,
     async fetch(request) {
-      let path = resolve(base, `.${decodeURIComponent(new URL(request.url).pathname)}`);
+      const pathname = decodeURIComponent(new URL(request.url).pathname);
+      if (!pathname.startsWith(prefix)) return new Response(null, { status: 404 });
+      let path = resolve(base, `./${pathname.slice(prefix.length)}`);
       if (path !== base && !path.startsWith(base + sep)) return new Response(null, { status: 404 });
       if (request.url.endsWith("/")) path = resolve(path, "index.html");
       const file = Bun.file(path);
       return (await file.exists()) ? new Response(file) : new Response(null, { status: 404 });
     },
   });
-  return { url: `http://127.0.0.1:${server.port}/`, stop: () => server.stop(true) };
+  return { url: `http://127.0.0.1:${server.port}${prefix}`, stop: () => server.stop(true) };
 }

@@ -47,6 +47,45 @@ describe("harness", () => {
     expect(await page.style("p", "color")).toBe("rgb(16, 15, 15)");
   });
 
+  test("keeps the emulated scheme when another media feature is set", async () => {
+    const page = await open(fileUrl(join(fixtures, "index.html")), { scheme: "dark" });
+    await page.setMedia("prefers-reduced-motion", "reduce");
+    expect(await page.evaluate("matchMedia('(prefers-reduced-motion: reduce)').matches")).toBe(
+      true,
+    );
+    expect(await page.style("p", "color")).toBe("rgb(206, 205, 195)");
+  });
+
+  test("the local server serves under a prefix and answers 404 outside it", async () => {
+    const prefixed = serve(fixtures, { prefix: "/project/" });
+    try {
+      expect(prefixed.url).toEndWith("/project/");
+      expect((await fetch(prefixed.url)).status).toBe(200);
+      expect((await fetch(`${prefixed.url}pinned.css`)).status).toBe(200);
+      expect((await fetch(prefixed.url.replace("/project/", "/pinned.css"))).status).toBe(404);
+    } finally {
+      prefixed.stop();
+    }
+  });
+
+  test("fingerprints every element's resolved styles and the root's custom properties", async () => {
+    const page = await open(fileUrl(join(fixtures, "index.html")), { scheme: "light" });
+    const print = await page.fingerprint(["color"]);
+    expect(print.map(([path]) => path)).toEqual([
+      "html",
+      "html > head:nth-child(1)",
+      "html > head:nth-child(1) > meta:nth-child(1)",
+      "html > head:nth-child(1) > title:nth-child(2)",
+      "html > head:nth-child(1) > style:nth-child(3)",
+      "html > body:nth-child(2)",
+      "html > body:nth-child(2) > p:nth-child(1)",
+    ]);
+    expect(print[0][1]).toEqual({ color: "rgb(0, 0, 0)", "--accent": "rgb(32, 94, 166)" });
+    expect(print.at(-1)[1]).toEqual({ color: "rgb(16, 15, 15)" });
+    await page.setScheme("dark");
+    expect(await page.fingerprint(["color"])).not.toEqual(print);
+  });
+
   test("answers an intercepted URL prefix from a local file", async () => {
     const page = await open(fileUrl(join(fixtures, "pinned.html")), {
       intercept: {
