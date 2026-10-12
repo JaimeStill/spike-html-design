@@ -85,7 +85,7 @@ Release       v0.1.0 (spike-html-design root)
 
 ## Progress
 
-slices 6/7 committed · standards — · spec — · editor — (round 3 reopened: per-layer files)
+slices 7/7 committed · standards — · spec — · editor —
 
 ## Decisions
 
