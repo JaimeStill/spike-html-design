@@ -62,43 +62,61 @@ const SCALES = {
 const rgb = (hex) =>
   `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
 
-// TIERS are the surface, divider and text tokens, name to Primer's [light, dark] values.
+// TIERS are the surface, border and text tokens, name to Flexoki's [light, dark] values.
 const TIERS = {
-  "--bg": ["#ffffff", "#0d1117"],
-  "--bg-1": ["#f6f8fa", "#151b23"],
-  "--bg-2": ["#eff2f5", "#262c36"],
-  "--divider": ["#d1d9e0", "#3d444d"],
-  "--fg": ["#1f2328", "#f0f6fc"],
-  "--fg-1": ["#59636e", "#9198a1"],
-  "--fg-2": ["#818b98", "#656c76"],
+  "--bg": ["#fffcf0", "#100f0f"],
+  "--bg-2": ["#f2f0e5", "#1c1b1a"],
+  "--border": ["#e6e4d9", "#282726"],
+  "--border-2": ["#dad8ce", "#343331"],
+  "--border-3": ["#cecdc3", "#403e3c"],
+  "--fg": ["#100f0f", "#e6e4d9"],
+  "--fg-2": ["#575653", "#b7b5ac"],
+  "--fg-3": ["#878580", "#6f6e69"],
 };
 
-// HUES are the hue tokens, each named for its color, name to Primer's [light, dark] values.
+// HUES are the hue tokens, each named for its color, name to Flexoki's [light, dark] values: its
+// 600 step in light, its 400 step in dark.
 const HUES = {
-  "--red": ["#c50d28", "#f27d83"],
-  "--orange": ["#a24610", "#ed8326"],
-  "--yellow": ["#805900", "#d3910d"],
-  "--green": ["#2b6e3f", "#41b445"],
-  "--cyan": ["#006a80", "#07ace4"],
-  "--blue": ["#005fcc", "#4da0ff"],
-  "--purple": ["#783ae4", "#b687f7"],
-  "--magenta": ["#b12f79", "#e57bb2"],
+  "--red": ["#af3029", "#d14d41"],
+  "--orange": ["#bc5215", "#da702c"],
+  "--yellow": ["#ad8301", "#d0a215"],
+  "--green": ["#66800b", "#879a39"],
+  "--cyan": ["#24837b", "#3aa99f"],
+  "--blue": ["#205ea6", "#4385be"],
+  "--purple": ["#5e409d", "#8b7ec8"],
+  "--magenta": ["#a02f6f", "#ce5d97"],
 };
 
-// ROLES are the role tokens, name to the hue each aliases.
-const ROLES = {
-  "--accent": "--blue",
-  "--success": "--green",
-  "--warning": "--yellow",
-  "--danger": "--red",
-};
+// COLORS are the color facet's tokens, name to the color each resolves to in light and in dark.
+const COLORS = Object.fromEntries(
+  Object.entries({ ...TIERS, ...HUES }).map(([name, pair]) => [name, pair.map(rgb)]),
+);
 
-// COLORS are every color token, name to the color it resolves to in light and in dark; a role
-// resolves to its hue's.
-const COLORS = Object.fromEntries([
-  ...Object.entries({ ...TIERS, ...HUES }).map(([name, pair]) => [name, pair.map(rgb)]),
-  ...Object.entries(ROLES).map(([role, hue]) => [role, HUES[hue].map(rgb)]),
-]);
+// RETIRED are the v0.1.0 and v0.2.0 color token names the color facet dropped: their tiers, the
+// role tokens, and herald's text tiers. None may be declared or read anywhere in the working tree.
+const RETIRED = [
+  "--bg-1",
+  "--divider",
+  "--fg-1",
+  "--color",
+  "--color-1",
+  "--color-2",
+  "--accent",
+  "--success",
+  "--warning",
+  "--danger",
+];
+
+// SOURCES are the working tree's CSS: the stylesheet, its layer files, the specimen and its
+// pinned page, whose style elements read the tokens too, and the test fixtures.
+const SOURCES = [
+  "baseline.css",
+  ...LAYERS.map(layerPath),
+  "index.html",
+  "pinned/v0.3.0.html",
+  "test/fixtures/baseline.html",
+  "test/fixtures/index.html",
+];
 
 // TOOLS are the tools classes: v0.2.0's scroll helpers.
 const TOOLS = ["scroll-y", "scroll-x"];
@@ -257,11 +275,11 @@ describe("layers", () => {
 });
 
 describe("tokens", () => {
-  test("declares exactly the scales, tiers, hues and roles, without shadow and tint tokens", async () => {
+  test("declares exactly the scales, tiers and hues, without role, shadow and tint tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
     const names = Object.keys(await rootTokens(page)).sort();
-    // An exact match, so shadow tokens, --*-bg tints, and bright, black, white or ANSI hues
-    // cannot slip in.
+    // An exact match, so role tokens, shadow tokens, --*-bg tints, and bright, black, white or
+    // ANSI hues cannot slip in.
     expect(names).toEqual([...Object.keys(SCALES), ...Object.keys(COLORS)].sort());
   });
 
@@ -272,7 +290,7 @@ describe("tokens", () => {
   });
 
   for (const [index, scheme] of ["light", "dark"].entries()) {
-    test(`every tier, hue and role resolves to its ${scheme} value`, async () => {
+    test(`every tier and hue resolves to its ${scheme} value`, async () => {
       const page = await open(specimen, { scheme });
       for (const [name, pair] of Object.entries(COLORS)) {
         expect([name, await resolveColor(page, name)]).toEqual([name, pair[index]]);
@@ -280,14 +298,39 @@ describe("tokens", () => {
     });
   }
 
-  test("a role follows an app layer's override of its hue", async () => {
+  test("the color facet's layer declares exactly the sixteen tiers and hues", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const names = await page.evaluate(`(() => {
+      const names = [];
+      const walk = (rules) => {
+        for (const rule of rules) {
+          if (rule.style) names.push(...[...rule.style].filter((name) => name.startsWith("--")));
+          if (rule.cssRules) walk(rule.cssRules);
+        }
+      };
+      walk(${layerSheet("tokens.color")}.cssRules);
+      return names;
+    })()`);
+    expect(Object.keys(COLORS)).toHaveLength(16);
+    expect(names.sort()).toEqual(Object.keys(COLORS).sort());
+  });
+
+  test("no v0.1.0 or v0.2.0 color token name remains in the working tree's CSS", async () => {
+    for (const path of SOURCES) {
+      const text = await Bun.file(join(root, path)).text();
+      // A name ends where the next character can't continue it, so --bg-1 never matches --bg-10.
+      const found = RETIRED.filter((name) => new RegExp(`${name}(?![\\w-])`).test(text));
+      expect([path, found]).toEqual([path, []]);
+    }
+  });
+
+  test("a hue's app layer override reaches only that hue", async () => {
     const page = await open(specimen, { scheme: "light" });
     await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
     expect(await resolveColor(page, "--blue")).toBe("rgb(1, 2, 3)");
-    expect(await resolveColor(page, "--accent")).toBe("rgb(1, 2, 3)");
-    // The other roles keep their own hues.
-    for (const role of ["--success", "--warning", "--danger"]) {
-      expect([role, await resolveColor(page, role)]).toEqual([role, COLORS[role][0]]);
+    for (const name of Object.keys(COLORS).filter((name) => name !== "--blue")) {
+      expect([name, await resolveColor(page, name)]).toEqual([name, COLORS[name][0]]);
     }
   });
 
@@ -416,9 +459,9 @@ describe("elements", () => {
 
   test("styles links, lists, tables, blockquotes and rules in outline", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const [accent] = COLORS["--accent"];
-    const [divider] = COLORS["--divider"];
-    expect(await page.style("#prose a", "color")).toBe(accent);
+    const [blue] = COLORS["--blue"];
+    const [divider] = COLORS["--border"];
+    expect(await page.style("#prose a", "color")).toBe(blue);
     expect(await page.style("#prose a", "text-decoration-line")).toBe("underline");
     expect(await page.style("#prose ul", "padding-inline-start")).toBe("24px");
     expect(await page.style("#prose ol", "padding-inline-start")).toBe("24px");
@@ -432,28 +475,29 @@ describe("elements", () => {
     expect(await page.style("#prose pre", "border-top")).toBe(`1px solid ${divider}`);
   });
 
-  test("links and focus outlines resolve to --accent, not a hue by name", async () => {
+  test("links, focus outlines, the caret and accent-color read --blue by name", async () => {
     const page = await open(specimen, { scheme: "light" });
-    // Override the role alone: a rule that named --blue would keep Primer's blue.
-    await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
+    // Override the hue alone: a rule that read any other token, or a literal, keeps its color.
+    await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
     expect(await page.style("#prose a", "color")).toBe("rgb(1, 2, 3)");
+    expect(await page.style("#prose p", "caret-color")).toBe("rgb(1, 2, 3)");
+    expect(await page.style("#prose p", "accent-color")).toBe("rgb(1, 2, 3)");
     await tabTo(page, "#prose a");
     expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
       "rgb(1, 2, 3) solid 2px",
     );
   });
 
-  test("selected text sits on a translucent mix of --accent", async () => {
+  test("selected text sits on a 30% mix of --blue", async () => {
     const page = await open(specimen, { scheme: "light" });
     const selection = () =>
       page.evaluate(`getComputedStyle(document.querySelector("#prose p"), "::selection")
         .backgroundColor`);
     const fill = tint(await selection());
-    expect(fill?.hue).toBe(COLORS["--accent"][0]);
-    expect(fill.alpha).toBeGreaterThan(0);
-    expect(fill.alpha).toBeLessThan(1);
-    // The mix is of the role: overriding --accent alone moves it.
-    await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
+    expect(fill?.hue).toBe(COLORS["--blue"][0]);
+    expect(fill.alpha).toBeCloseTo(0.3);
+    // The mix reads the hue: overriding --blue alone moves it.
+    await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
     expect(tint(await selection())?.hue).toBe("rgb(1, 2, 3)");
   });
 
@@ -540,6 +584,20 @@ describe("specimen", () => {
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 
+  test("shows every tier and hue with its light and dark values", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .colors > code")]
+      .map((code) => [code.textContent, code.nextElementSibling.nextElementSibling.textContent])`);
+    expect(Object.fromEntries(shown)).toEqual(
+      Object.fromEntries(
+        Object.entries({ ...TIERS, ...HUES }).map(([name, [light, dark]]) => [
+          name,
+          `${light} / ${dark}`,
+        ]),
+      ),
+    );
+  });
+
   test("shows every prose element the elements layer styles", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tags = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "ul", "ol", "li", "blockquote"];
@@ -559,7 +617,7 @@ describe("specimen", () => {
     }
   });
 
-  test("the contrast table has one row per color token but --bg", async () => {
+  test("the contrast table has one row per tier and hue but --bg", async () => {
     const page = await open(specimen, { scheme: "light" });
     const rows = await page.evaluate(`[...document.querySelectorAll("#contrast tbody th code")]
       .map((code) => code.textContent)`);

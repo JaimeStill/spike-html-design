@@ -22,7 +22,7 @@ describe("harness", () => {
   test("reads a computed style and a custom property from file://", async () => {
     const page = await open(fileUrl(join(fixtures, "index.html")), { scheme: "light" });
     expect(await page.style("p", "color")).toBe("rgb(16, 15, 15)");
-    expect(await page.style(":root", "--accent")).toBe("rgb(32, 94, 166)");
+    expect(await page.style(":root", "--blue")).toBe("rgb(32, 94, 166)");
   });
 
   test("reads a computed style from the local server", async () => {
@@ -93,7 +93,7 @@ describe("harness", () => {
       "html > body:nth-child(2)",
       "html > body:nth-child(2) > p:nth-child(1)",
     ]);
-    expect(print[0][1]).toEqual({ color: "rgb(0, 0, 0)", "--accent": "rgb(32, 94, 166)" });
+    expect(print[0][1]).toEqual({ color: "rgb(0, 0, 0)", "--blue": "rgb(32, 94, 166)" });
     expect(print.at(-1)[1]).toEqual({ color: "rgb(16, 15, 15)" });
     await page.setScheme("dark");
     expect(await page.fingerprint(["color"])).not.toEqual(print);

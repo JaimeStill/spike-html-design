@@ -30,8 +30,18 @@
           font-size: var(--text-sm);
 
           & > code {
-            color: var(--fg-2);
+            color: var(--fg-3);
           }
+
+          /* A color row adds a third column: the token's light and dark values. */
+          &.colors {
+            grid-template-columns: max-content max-content 1fr;
+          }
+        }
+
+        .values {
+          font-family: var(--font-mono);
+          color: var(--fg-2);
         }
 
         .font-sample {
@@ -52,14 +62,14 @@
         .radius-sample {
           width: var(--space-16);
           height: var(--space-10);
-          border: 1px solid var(--fg-1);
+          border: 1px solid var(--fg-2);
           border-radius: var(--sample);
         }
 
         .swatch {
           width: var(--space-16);
           height: var(--space-8);
-          border: 1px solid var(--divider);
+          border: 1px solid var(--border);
           border-radius: var(--radius-sm);
           background: var(--sample);
         }
@@ -69,7 +79,7 @@
           max-inline-size: calc(5 * var(--space-16));
           block-size: calc(2 * var(--space-16));
           margin-block-start: var(--space-4);
-          border: 1px solid var(--divider);
+          border: 1px solid var(--border);
 
           &.scroll-x {
             block-size: auto;
@@ -157,53 +167,60 @@
         </div>
 
         <h3>Tiers</h3>
-        <div class="specimen">
+        <p>Each color token shows its swatch in the current scheme, then its light / dark values.</p>
+        <div class="specimen colors">
           <code>--bg</code>
           <div class="swatch" style="--sample: var(--bg)"></div>
-          <code>--bg-1</code>
-          <div class="swatch" style="--sample: var(--bg-1)"></div>
+          <span class="values">#fffcf0 / #100f0f</span>
           <code>--bg-2</code>
           <div class="swatch" style="--sample: var(--bg-2)"></div>
-          <code>--divider</code>
-          <div class="swatch" style="--sample: var(--divider)"></div>
+          <span class="values">#f2f0e5 / #1c1b1a</span>
+          <code>--border</code>
+          <div class="swatch" style="--sample: var(--border)"></div>
+          <span class="values">#e6e4d9 / #282726</span>
+          <code>--border-2</code>
+          <div class="swatch" style="--sample: var(--border-2)"></div>
+          <span class="values">#dad8ce / #343331</span>
+          <code>--border-3</code>
+          <div class="swatch" style="--sample: var(--border-3)"></div>
+          <span class="values">#cecdc3 / #403e3c</span>
           <code>--fg</code>
           <div class="swatch" style="--sample: var(--fg)"></div>
-          <code>--fg-1</code>
-          <div class="swatch" style="--sample: var(--fg-1)"></div>
+          <span class="values">#100f0f / #e6e4d9</span>
           <code>--fg-2</code>
           <div class="swatch" style="--sample: var(--fg-2)"></div>
+          <span class="values">#575653 / #b7b5ac</span>
+          <code>--fg-3</code>
+          <div class="swatch" style="--sample: var(--fg-3)"></div>
+          <span class="values">#878580 / #6f6e69</span>
         </div>
 
         <h3>Hues</h3>
-        <div class="specimen">
+        <div class="specimen colors">
           <code>--red</code>
           <div class="swatch" style="--sample: var(--red)"></div>
+          <span class="values">#af3029 / #d14d41</span>
           <code>--orange</code>
           <div class="swatch" style="--sample: var(--orange)"></div>
+          <span class="values">#bc5215 / #da702c</span>
           <code>--yellow</code>
           <div class="swatch" style="--sample: var(--yellow)"></div>
+          <span class="values">#ad8301 / #d0a215</span>
           <code>--green</code>
           <div class="swatch" style="--sample: var(--green)"></div>
+          <span class="values">#66800b / #879a39</span>
           <code>--cyan</code>
           <div class="swatch" style="--sample: var(--cyan)"></div>
+          <span class="values">#24837b / #3aa99f</span>
           <code>--blue</code>
           <div class="swatch" style="--sample: var(--blue)"></div>
+          <span class="values">#205ea6 / #4385be</span>
           <code>--purple</code>
           <div class="swatch" style="--sample: var(--purple)"></div>
+          <span class="values">#5e409d / #8b7ec8</span>
           <code>--magenta</code>
           <div class="swatch" style="--sample: var(--magenta)"></div>
-        </div>
-
-        <h3>Roles</h3>
-        <div class="specimen">
-          <code>--accent</code>
-          <div class="swatch" style="--sample: var(--accent)"></div>
-          <code>--success</code>
-          <div class="swatch" style="--sample: var(--success)"></div>
-          <code>--warning</code>
-          <div class="swatch" style="--sample: var(--warning)"></div>
-          <code>--danger</code>
-          <div class="swatch" style="--sample: var(--danger)"></div>
+          <span class="values">#a02f6f / #ce5d97</span>
         </div>
       </section>
 
@@ -276,8 +293,8 @@ const answer = 42;</code></pre>
         <h2>Contrast</h2>
         <table>
           <caption>
-            Each color token's WCAG 2 contrast ratio against <code>--bg</code>, from relative
-            luminance, in each theme. AA meets 4.5 for body text; AA large meets 3 for large text
+            Each tier's and hue's WCAG 2 contrast ratio against <code>--bg</code>, from relative
+            luminance, in each scheme. AA meets 4.5 for body text; AA large meets 3 for large text
             and interface parts; fail is below 3. Failures are recorded here, not corrected.
           </caption>
           <thead>
@@ -289,94 +306,79 @@ const answer = 42;</code></pre>
           </thead>
           <tbody>
             <tr>
-              <th scope="row"><code>--bg-1</code></th>
-              <td>1.06 <span>fail</span></td>
-              <td>1.09 <span>fail</span></td>
-            </tr>
-            <tr>
               <th scope="row"><code>--bg-2</code></th>
-              <td>1.12 <span>fail</span></td>
-              <td>1.35 <span>fail</span></td>
+              <td>1.11 <span>fail</span></td>
+              <td>1.11 <span>fail</span></td>
             </tr>
             <tr>
-              <th scope="row"><code>--divider</code></th>
-              <td>1.43 <span>fail</span></td>
-              <td>1.92 <span>fail</span></td>
+              <th scope="row"><code>--border</code></th>
+              <td>1.24 <span>fail</span></td>
+              <td>1.28 <span>fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--border-2</code></th>
+              <td>1.39 <span>fail</span></td>
+              <td>1.52 <span>fail</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--border-3</code></th>
+              <td>1.55 <span>fail</span></td>
+              <td>1.80 <span>fail</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--fg</code></th>
-              <td>15.80 <span>AA</span></td>
-              <td>17.39 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--fg-1</code></th>
-              <td>6.11 <span>AA</span></td>
-              <td>6.50 <span>AA</span></td>
+              <td>18.62 <span>AA</span></td>
+              <td>15.00 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--fg-2</code></th>
-              <td>3.45 <span>AA large</span></td>
-              <td>3.57 <span>AA large</span></td>
+              <td>7.14 <span>AA</span></td>
+              <td>9.31 <span>AA</span></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>--fg-3</code></th>
+              <td>3.59 <span>AA large</span></td>
+              <td>3.75 <span>AA large</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--red</code></th>
-              <td>6.07 <span>AA</span></td>
-              <td>7.24 <span>AA</span></td>
+              <td>6.23 <span>AA</span></td>
+              <td>4.42 <span>AA large</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--orange</code></th>
-              <td>6.14 <span>AA</span></td>
-              <td>7.10 <span>AA</span></td>
+              <td>4.69 <span>AA</span></td>
+              <td>5.77 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--yellow</code></th>
-              <td>6.27 <span>AA</span></td>
-              <td>7.05 <span>AA</span></td>
+              <td>3.39 <span>AA large</span></td>
+              <td>8.08 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--green</code></th>
-              <td>6.17 <span>AA</span></td>
-              <td>7.06 <span>AA</span></td>
+              <td>4.39 <span>AA large</span></td>
+              <td>6.12 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--cyan</code></th>
-              <td>6.23 <span>AA</span></td>
-              <td>7.24 <span>AA</span></td>
+              <td>4.43 <span>AA large</span></td>
+              <td>6.70 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--blue</code></th>
-              <td>5.98 <span>AA</span></td>
-              <td>7.02 <span>AA</span></td>
+              <td>6.36 <span>AA</span></td>
+              <td>4.86 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--purple</code></th>
-              <td>5.96 <span>AA</span></td>
-              <td>7.03 <span>AA</span></td>
+              <td>7.58 <span>AA</span></td>
+              <td>5.39 <span>AA</span></td>
             </tr>
             <tr>
               <th scope="row"><code>--magenta</code></th>
-              <td>5.91 <span>AA</span></td>
-              <td>7.04 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--accent</code></th>
-              <td>5.98 <span>AA</span></td>
-              <td>7.02 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--success</code></th>
-              <td>6.17 <span>AA</span></td>
-              <td>7.06 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--warning</code></th>
-              <td>6.27 <span>AA</span></td>
-              <td>7.05 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--danger</code></th>
-              <td>6.07 <span>AA</span></td>
-              <td>7.24 <span>AA</span></td>
+              <td>6.53 <span>AA</span></td>
+              <td>5.14 <span>AA</span></td>
             </tr>
           </tbody>
         </table>

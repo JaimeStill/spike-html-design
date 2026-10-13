@@ -3,8 +3,9 @@
  *
  * herald's theme (body surface and text, monospace code), extended to the prose elements an
  * artifact uses: headings on the text scale, links, lists, tables, blockquote, hr. Everything is
- * flat: borders in --divider, no fills beyond the page surface, no shadows, no gradients. Links,
- * focus outlines, and selected text take --accent, the role, never a hue by name.
+ * flat: borders in --border, no fills beyond the page surface, no shadows, no gradients. The
+ * layer reads hues by name, as any reader of the color facet does: links, focus outlines,
+ * selected text, the text caret, and form controls' accent all take --blue.
  *
  * baseline.css imports this file into spike-html-design.elements. Pages link baseline.css,
  * never this file: linked on its own, its rules would be unlayered.
@@ -14,12 +15,16 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg);
   color: var(--fg);
+  /* Both inherit, so every text field's caret and every checkbox, radio, range, and progress
+     takes the hue. */
+  caret-color: var(--blue);
+  accent-color: var(--blue);
 }
 
-/* Selected text sits on a translucent mix of the accent, so the text keeps its own color and
+/* Selected text sits on a translucent mix of blue, so the text keeps its own color and
    stays legible in either scheme. */
 ::selection {
-  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background-color: color-mix(in srgb, var(--blue) 30%, transparent);
 }
 
 pre,
@@ -70,7 +75,7 @@ h6 {
 }
 
 a {
-  color: var(--accent);
+  color: var(--blue);
   text-decoration: underline;
   text-underline-offset: 0.2em;
 
@@ -79,7 +84,7 @@ a {
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--blue);
     outline-offset: 2px;
   }
 }
@@ -100,25 +105,25 @@ table {
 th,
 td {
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--divider);
+  border: 1px solid var(--border);
   text-align: start;
   vertical-align: top;
 }
 
 th {
   font-weight: 600;
-  color: var(--fg-1);
+  color: var(--fg-2);
 }
 
 blockquote {
   padding-inline-start: var(--space-4);
-  border-inline-start: 2px solid var(--divider);
-  color: var(--fg-1);
+  border-inline-start: 2px solid var(--border);
+  color: var(--fg-2);
 }
 
 hr {
   border: 0;
-  border-block-start: 1px solid var(--divider);
+  border-block-start: 1px solid var(--border);
 }
 
 code,
@@ -128,13 +133,13 @@ kbd {
 
 kbd {
   padding: 0 var(--space-1);
-  border: 1px solid var(--divider);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 
 pre {
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--divider);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow-x: auto;
 
