@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 3/6 committed · review stop — · standards — · spec — · editor —
+slices 4/6 committed · review stop: waiting on the architect · standards — · spec — · editor —
 
 ## Decisions
 
