@@ -465,6 +465,13 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
 - facets (BUILD): a tag's stylesheet list is every .css file in `git ls-tree -r <tag>` outside
   `test/`, baseline.css first, in the pinned test and `scripts/pin.js`, so a layer file nested
   under `layers/tokens/` is covered. Supersedes themes' `git ls-tree <tag> layers/`.
+- facets (final review, architect): the type ratio runs 1.125 at the narrow end to 1.2 at the
+  wide end, bringing the scale back to Variant A's interface scale; supersedes the 1.25 → 1.333
+  review-stop ratio. Headings map one step down (h1 3xl, h2 2xl, h3 xl, h4 l, h5 m, h6 s); 4xl
+  stays for larger text. Heading levels are told apart by size alone: stylistic treatment
+  (case, tracking, font changes per level) is a template, component, or application concern.
+- facets (final review, architect): heading top margins move one step down: h1/h2 --space-l,
+  h3/h4 --space-m, h5/h6 --space-s; bottom stays --space-2xs.
 
 ## Pending edits
 
