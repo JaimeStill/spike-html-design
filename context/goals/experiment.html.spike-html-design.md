@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 4/6 committed · review stop: waiting on the architect · standards — · spec — · editor —
+slices 4/6 committed · review stop: changes in progress · standards — · spec — · editor —
 
 ## Decisions
 
@@ -394,6 +394,33 @@ slices 4/6 committed · review stop: waiting on the architect · standards — �
 - facets (BUILD, architect): display tests are framed by aspect ratio, not by any one monitor:
   21:9, 16:9, 16:10, 4:3, 1:1, and their portrait mirrors down to 9:21, each at a small and a
   large size. Amends behavior 7's "including 3440×1440".
+- facets (review stop): confirmed: Flexoki tiers and hues in both schemes, the space steps, the
+  radii, and fluid scaling across orientations and display shapes.
+- facets (review stop): --text-m is fixed at 1rem (the reader's default), as are xs and s; only
+  l and above grow. Rejected a smaller fluid body (15→16px).
+- facets (review stop): the type ratio runs 1.25 at the narrow end to 1.333 at the wide end, with
+  the same heading-to-step mapping, to separate heading levels; checked again visually.
+  Rejected skipping steps between headings.
+- facets (review stop): whitespace by proximity in elements: heading top margin by level (h1/h2
+  --space-xl, h3/h4 --space-l, h5/h6 --space-m), bottom --space-2xs; blocks --space-s apart;
+  items in a list or group --space-3xs; a container's first child has no top margin. Written
+  as a whitespace guideline in STANDARDS.md, with sections xl–2xl in the consumer's layout.
+- facets (review stop): --measure is dropped; line length is layout. The specimen uses the full
+  width. Supersedes "the measure is a token only".
+- facets (review stop): two line widths, --line-s and --line-m; adding --line-l later breaks
+  nothing.
+- facets (review stop): border-collapse and border-spacing are border properties the elements
+  layer may set; tables collapse by default. Amends behavior 10's property list.
+- facets (review stop): the behavior test covers reset plus elements against no stylesheet; the
+  reset may change only an explicit list, and leaves dialog and popover margins to chromium so
+  modals center natively. The reset is evaluated against current resets for an optimal set.
+- facets (review stop): the specimen arranges its sections with grids and structural elements in
+  its own, clearly named layer, marked on the page as composition, not baseline: it shows how
+  compositions arrange within the design system, and its rules are never part of the baseline.
+  Each element sample carries its element name as a label.
+- facets (review stop): layout sheets, reusable templates for page categories, sit in their own
+  layer between the foundation and the application; they are the client-layouts goal's, not
+  this task's.
 
 ## Pending edits
 
@@ -403,3 +430,7 @@ slices 4/6 committed · review stop: waiting on the architect · standards — �
 - coordinator · roadmap.toml: facets summary "the lean entry point and its enforced size budget"
   becomes "the lean entry point with its size measured and reported"; the profiles summary adds
   "the enforced size budget for the lean and full entries".
+- coordinator · roadmap.toml, backlog `client-layouts`: layout sheets are reusable templates for
+  page categories, in their own cascade layer between the foundation and the application
+  (consumer order: spike-html-design, layouts, components, app); they own line length (the
+  measure) and aspect-ratio queries.
