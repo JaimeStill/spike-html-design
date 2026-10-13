@@ -154,7 +154,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 0/7 committed · review stop — · standards — · spec — · editor —
+slices 1/7 committed (2b21e96) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
