@@ -44,7 +44,7 @@
         .note {
           margin-block-start: var(--space-s);
           padding: var(--space-xs) var(--space-s);
-          border: var(--line-s) dashed var(--border-3);
+          border: var(--line-s) dashed var(--border-2);
           border-radius: var(--radius-md);
           color: var(--fg-2);
         }
@@ -67,7 +67,7 @@
         .cell {
           min-inline-size: 0;
           padding: var(--space-s);
-          border: var(--line-s) dashed var(--border-3);
+          border: var(--line-s) dashed var(--border-2);
           border-radius: var(--radius-md);
 
           & > .label + * {
@@ -151,6 +151,14 @@
           border-radius: var(--sample);
         }
 
+        /* A scope sample: a container forcing a scheme, framed and padded apart from its cell. */
+        .scope-sample {
+          margin-block-start: var(--space-s);
+          padding: var(--space-xs) var(--space-s);
+          border: var(--line-s) solid var(--border);
+          border-radius: var(--radius-md);
+        }
+
         .swatch {
           width: var(--space-2xl);
           height: var(--space-l);
@@ -186,8 +194,9 @@
       <p>
         The baseline's tokens, every element its elements layer styles, and its tools, rendered
         by <code>baseline.css</code> alone. It follows the system scheme; a
-        <code>data-scheme</code> of <code>light</code> or <code>dark</code> on the root element
-        forces one.
+        <code>data-scheme</code> of <code>light</code> or <code>dark</code> on any element forces
+        one for its subtree, and a <code>data-palette</code> applies a color profile to its
+        subtree.
       </p>
       <aside class="note">
         <p>
@@ -219,22 +228,25 @@
             <section class="cell">
               <p class="label"><code>tokens.color</code></p>
               <h4>Tiers</h4>
-              <p>Surfaces and borders, from the page's surface up, then text, from the strongest down.</p>
+              <p>
+                Surfaces, from the pane up through the page and the element surface to the border
+                and the control boundary, then text, from the strongest down.
+              </p>
               <div class="specimen colors">
+                <code>--bg-0</code>
+                <div class="swatch" style="--sample: var(--bg-0)"></div>
+                <span class="values">#f2f0e5 / #100f0f</span>
                 <code>--bg</code>
                 <div class="swatch" style="--sample: var(--bg)"></div>
-                <span class="values">#fffcf0 / #100f0f</span>
+                <span class="values">#fffcf0 / #1c1b1a</span>
                 <code>--bg-2</code>
                 <div class="swatch" style="--sample: var(--bg-2)"></div>
-                <span class="values">#f2f0e5 / #1c1b1a</span>
+                <span class="values">#e6e4d9 / #282726</span>
                 <code>--border</code>
                 <div class="swatch" style="--sample: var(--border)"></div>
-                <span class="values">#e6e4d9 / #282726</span>
+                <span class="values">#dad8ce / #343331</span>
                 <code>--border-2</code>
                 <div class="swatch" style="--sample: var(--border-2)"></div>
-                <span class="values">#dad8ce / #343331</span>
-                <code>--border-3</code>
-                <div class="swatch" style="--sample: var(--border-3)"></div>
                 <span class="values">#cecdc3 / #403e3c</span>
                 <code>--fg</code>
                 <div class="swatch" style="--sample: var(--fg)"></div>
@@ -276,6 +288,29 @@
                 <code>--magenta</code>
                 <div class="swatch" style="--sample: var(--magenta)"></div>
                 <span class="values">#a02f6f / #ce5d97</span>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>data-scheme</code>, <code>data-palette</code></p>
+              <h4>Scopes</h4>
+              <p>
+                Each container forces a scheme on its subtree, whatever the page's; the one that
+                differs from the page shows it. A scope paints its own surface and text, as the
+                root does.
+              </p>
+              <div class="scope-sample" data-scheme="dark" data-palette="flexoki">
+                <p>
+                  Forced <code>dark</code>: text in <code>--fg</code>, a
+                  <a href="#color">link to the color tokens</a>, and <kbd>Ctrl</kbd>.
+                </p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Dark field" placeholder="Field" /></p>
+              </div>
+              <div class="scope-sample" data-scheme="light" data-palette="flexoki">
+                <p>
+                  Forced <code>light</code>: text in <code>--fg</code>, a
+                  <a href="#color">link to the color tokens</a>, and <kbd>Ctrl</kbd>.
+                </p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Light field" placeholder="Field" /></p>
               </div>
             </section>
           </div>
@@ -1082,98 +1117,98 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
-                    <th scope="col"><code>--border-3</code></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>18.62 <span>AA</span></td>
                     <td>16.74 <span>AA</span></td>
+                    <td>18.62 <span>AA</span></td>
                     <td>15.00 <span>AA</span></td>
                     <td>13.39 <span>AA</span></td>
                     <td>11.98 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>7.14 <span>AA</span></td>
                     <td>6.42 <span>AA</span></td>
+                    <td>7.14 <span>AA</span></td>
                     <td>5.75 <span>AA</span></td>
                     <td>5.14 <span>AA</span></td>
                     <td>4.59 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>3.59 <span>AA large</span></td>
                     <td>3.22 <span>AA large</span></td>
+                    <td>3.59 <span>AA large</span></td>
                     <td>2.89 <span>fail</span></td>
                     <td>2.58 <span>fail</span></td>
                     <td>2.31 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>6.23 <span>AA</span></td>
                     <td>5.61 <span>AA</span></td>
+                    <td>6.23 <span>AA</span></td>
                     <td>5.02 <span>AA</span></td>
                     <td>4.48 <span>AA large</span></td>
                     <td>4.01 <span>AA large</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>4.69 <span>AA</span></td>
                     <td>4.22 <span>AA large</span></td>
+                    <td>4.69 <span>AA</span></td>
                     <td>3.78 <span>AA large</span></td>
                     <td>3.37 <span>AA large</span></td>
                     <td>3.02 <span>AA large</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>3.39 <span>AA large</span></td>
                     <td>3.05 <span>AA large</span></td>
+                    <td>3.39 <span>AA large</span></td>
                     <td>2.73 <span>fail</span></td>
                     <td>2.44 <span>fail</span></td>
                     <td>2.18 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>4.39 <span>AA large</span></td>
                     <td>3.94 <span>AA large</span></td>
+                    <td>4.39 <span>AA large</span></td>
                     <td>3.53 <span>AA large</span></td>
                     <td>3.16 <span>AA large</span></td>
                     <td>2.82 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>4.43 <span>AA large</span></td>
                     <td>3.99 <span>AA large</span></td>
+                    <td>4.43 <span>AA large</span></td>
                     <td>3.57 <span>AA large</span></td>
                     <td>3.19 <span>AA large</span></td>
                     <td>2.85 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>6.36 <span>AA</span></td>
                     <td>5.72 <span>AA</span></td>
+                    <td>6.36 <span>AA</span></td>
                     <td>5.12 <span>AA</span></td>
                     <td>4.57 <span>AA</span></td>
                     <td>4.09 <span>AA large</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>7.58 <span>AA</span></td>
                     <td>6.81 <span>AA</span></td>
+                    <td>7.58 <span>AA</span></td>
                     <td>6.11 <span>AA</span></td>
                     <td>5.45 <span>AA</span></td>
                     <td>4.88 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>6.53 <span>AA</span></td>
                     <td>5.87 <span>AA</span></td>
+                    <td>6.53 <span>AA</span></td>
                     <td>5.26 <span>AA</span></td>
                     <td>4.69 <span>AA</span></td>
                     <td>4.20 <span>AA large</span></td>
@@ -1193,11 +1228,11 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
-                    <th scope="col"><code>--border-3</code></th>
                   </tr>
                 </thead>
                 <tbody>

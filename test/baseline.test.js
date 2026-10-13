@@ -141,13 +141,15 @@ const FIXED = {
 const rgb = (hex) =>
   `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
 
-// TIERS are the surface, border and text tokens, name to Flexoki's [light, dark] values.
+// TIERS are the surface, border and text tokens, name to Flexoki's [light, dark] values: the
+// pane, the page, the element surface, the border and the control boundary, on Flexoki's ladder
+// shifted one step from v0.3.0's, then the text weights, unchanged.
 const TIERS = {
-  "--bg": ["#fffcf0", "#100f0f"],
-  "--bg-2": ["#f2f0e5", "#1c1b1a"],
-  "--border": ["#e6e4d9", "#282726"],
-  "--border-2": ["#dad8ce", "#343331"],
-  "--border-3": ["#cecdc3", "#403e3c"],
+  "--bg-0": ["#f2f0e5", "#100f0f"],
+  "--bg": ["#fffcf0", "#1c1b1a"],
+  "--bg-2": ["#e6e4d9", "#282726"],
+  "--border": ["#dad8ce", "#343331"],
+  "--border-2": ["#cecdc3", "#403e3c"],
   "--fg": ["#100f0f", "#e6e4d9"],
   "--fg-2": ["#575653", "#b7b5ac"],
   "--fg-3": ["#878580", "#6f6e69"],
@@ -167,7 +169,7 @@ const HUES = {
 };
 
 // SURFACES are the color tokens text sits over, the contrast matrices' columns, in order.
-const SURFACES = ["--bg", "--bg-2", "--border", "--border-2", "--border-3"];
+const SURFACES = ["--bg-0", "--bg", "--bg-2", "--border", "--border-2"];
 
 // TEXT are the color tokens drawn as text, the contrast matrices' rows, in order: the text tiers,
 // then the hues.
@@ -216,6 +218,14 @@ const RETIRED = [
   "--measure",
 ];
 
+// RENAMED are the color names v0.4.0 dropped: --border-3, whose readers now read --border-2. The
+// v0.3.0 pinned page still reads it, since it renders against its own tag, so the names are held
+// out of every other source.
+const RENAMED = ["--border-3"];
+
+// PINNED_V030 is the v0.3.0 pinned page, the one source RENAMED's names may remain in.
+const PINNED_V030 = "pinned/v0.3.0.html";
+
 // SOURCES are the working tree's CSS: the stylesheet, its layer files, the specimen and its
 // pinned page, whose style elements read the tokens too, and the test fixtures.
 const SOURCES = [
@@ -257,10 +267,12 @@ function rootTokens(page) {
   })()`);
 }
 
-// resolveColor resolves to the color a color token computes to on an element in the page.
-function resolveColor(page, token) {
+// resolveColor resolves to the color a color token computes to on an element in the page: a new
+// child of the element matching within, the body by default.
+function resolveColor(page, token, within = "body") {
   return page.evaluate(`(() => {
-    const probe = document.body.appendChild(document.createElement("i"));
+    const probe = document.querySelector(${JSON.stringify(within)})
+      .appendChild(document.createElement("i"));
     probe.style.color = "var(${token})";
     const color = getComputedStyle(probe).color;
     probe.remove();
@@ -566,6 +578,17 @@ describe("tokens", () => {
     }
   });
 
+  test("no name v0.4.0 renamed remains outside the v0.3.0 pinned page", async () => {
+    for (const path of SOURCES.filter((path) => path !== PINNED_V030)) {
+      const text = await Bun.file(join(root, path)).text();
+      const found = RENAMED.filter((name) => new RegExp(`${name}(?![\\w-])`).test(text));
+      expect([path, found]).toEqual([path, []]);
+    }
+    // The pin still reads them, so the filter above holds out a page that needs it.
+    const pinned = await Bun.file(join(root, PINNED_V030)).text();
+    expect(RENAMED.filter((name) => pinned.includes(`var(${name})`))).toEqual(RENAMED);
+  });
+
   test("a hue's app layer override reaches only that hue", async () => {
     const page = await open(specimen, { scheme: "light" });
     await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
@@ -627,6 +650,184 @@ describe("tokens", () => {
     expect(await page.style("body", "background-color")).toBe("rgb(1, 2, 3)");
     // The tokens it leaves alone keep the forced scheme.
     expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
+  });
+});
+
+// PROBE_PALETTE is a test profile, "probe": a distinct color for each of the sixteen tokens, name
+// to rgb(). Its block goes into the color sub-layer after the baseline's, as a later profile's
+// would, at the zero specificity a profile's selector has.
+const PROBE_PALETTE = Object.fromEntries(
+  Object.keys(COLORS).map((name, index) => [name, `rgb(1, 2, ${index + 3})`]),
+);
+
+// addProbePalette adds PROBE_PALETTE to the page's color sub-layer, as a profile block.
+function addProbePalette(page) {
+  const tokens = Object.entries(PROBE_PALETTE).map(([name, value]) => `${name}: ${value};`);
+  return addAppStyle(
+    page,
+    `@layer ${PACKAGE}.tokens.color { :where([data-palette="probe"]) { ${tokens.join(" ")} } }`,
+  );
+}
+
+// addScopes appends html to the specimen's main, so its elements sit in the page's flow.
+function addScopes(page, html) {
+  return page.evaluate(
+    `document.querySelector("main").insertAdjacentHTML("beforeend", ${JSON.stringify(html)})`,
+  );
+}
+
+// resolveColors resolves every color token on a new child of the element matching within, name
+// to rgb().
+async function resolveColors(page, within) {
+  const values = {};
+  for (const name of Object.keys(COLORS)) values[name] = await resolveColor(page, name, within);
+  return values;
+}
+
+// schemeColors are COLORS' values in the scheme at index, 0 for light and 1 for dark.
+const schemeColors = (index) =>
+  Object.fromEntries(Object.entries(COLORS).map(([name, pair]) => [name, pair[index]]));
+
+// paint resolves to an element's computed [color, background-color].
+function paint(page, selector) {
+  return page.evaluate(`(() => {
+    const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+    return [style.color, style.backgroundColor];
+  })()`);
+}
+
+// whereOnly reports whether a selector is a single :where() and nothing else: its first
+// parenthesis closes at the selector's last character, so its specificity is zero.
+function whereOnly(selector) {
+  if (!selector.startsWith(":where(")) return false;
+  let depth = 0;
+  for (const [index, char] of [...selector].entries()) {
+    if (char === "(") depth++;
+    if (char === ")" && --depth === 0) return index === selector.length - 1;
+  }
+  return false;
+}
+
+describe("color interface", () => {
+  test("the color facet is exactly sixteen tokens, the five surfaces, three text weights and eight hues, with no --border-3", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const names = Object.keys(await rootTokens(page)).filter((name) => name in COLORS);
+    expect(names.sort()).toEqual(
+      [
+        ...["--bg-0", "--bg", "--bg-2", "--border", "--border-2", "--fg", "--fg-2", "--fg-3"],
+        ...["--red", "--orange", "--yellow", "--green", "--cyan", "--blue", "--purple"],
+        "--magenta",
+      ].sort(),
+    );
+    expect(await page.style(":root", "--border-3")).toBe("");
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`the pane is darker than the page, and the element surface one step from the page toward the text, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      const colors = await resolveColors(page, "body");
+      const [pane, bg, surface, fg] = ["--bg-0", "--bg", "--bg-2", "--fg"].map((name) =>
+        luminance(colors[name]),
+      );
+      expect(pane).toBeLessThan(bg);
+      // Toward the text: between the page and the text, so lighter in dark and darker in light.
+      expect(Math.sign(surface - bg)).toBe(Math.sign(fg - bg));
+      expect(Math.abs(surface - bg)).toBeLessThan(Math.abs(fg - bg));
+      expect(colors).toEqual(schemeColors(index));
+    });
+  }
+
+  test("every rule in the color sub-layer has zero specificity", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const selectors = selectorsOf(await layerRules(page, "tokens.color"));
+    expect(selectors.length).toBeGreaterThan(0);
+    expect(selectors.filter((selector) => !whereOnly(selector))).toEqual([]);
+  });
+
+  test("with no data-palette anywhere Flexoki applies, and a profile named on the root overrides it", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    expect(
+      await page.evaluate("document.querySelector(':root[data-palette], body[data-palette]')"),
+    ).toBe(null);
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+    // A later profile block of the same zero specificity: the default's :where(:root) must not
+    // outrank it on the root.
+    await addProbePalette(page);
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+    await page.evaluate(`document.documentElement.dataset.palette = "probe"`);
+    expect(await resolveColors(page, "body")).toEqual(PROBE_PALETTE);
+    // Naming Flexoki on the root restores it.
+    await page.evaluate(`document.documentElement.dataset.palette = "flexoki"`);
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+  });
+
+  test("a data-palette scope applies its profile to its subtree and paints as the root does", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addProbePalette(page);
+    await addScopes(page, '<div id="scope" data-palette="probe"><p id="inside">Text</p></div>');
+    expect(await resolveColors(page, "#inside")).toEqual(PROBE_PALETTE);
+    // The scope re-sets its own text and surface from the tokens it now holds, and its subtree
+    // inherits the text.
+    expect(await paint(page, "#scope")).toEqual([PROBE_PALETTE["--fg"], PROBE_PALETTE["--bg"]]);
+    expect((await paint(page, "#inside"))[0]).toBe(PROBE_PALETTE["--fg"]);
+    // Outside it, the page keeps Flexoki.
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+  });
+
+  test("nested data-palette scopes: the nearest wins", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addProbePalette(page);
+    await page.evaluate(`document.documentElement.dataset.palette = "probe"`);
+    await addScopes(
+      page,
+      `<div id="outer" data-palette="flexoki"><p id="in-outer">Flexoki</p>
+        <div id="inner" data-palette="probe"><p id="in-inner">Probe</p></div></div>`,
+    );
+    expect(await resolveColors(page, "body")).toEqual(PROBE_PALETTE);
+    expect(await resolveColors(page, "#in-outer")).toEqual(schemeColors(0));
+    expect(await paint(page, "#outer")).toEqual([COLORS["--fg"][0], COLORS["--bg"][0]]);
+    expect(await resolveColors(page, "#in-inner")).toEqual(PROBE_PALETTE);
+    expect(await paint(page, "#inner")).toEqual([PROBE_PALETTE["--fg"], PROBE_PALETTE["--bg"]]);
+  });
+
+  for (const [index, forced] of ["light", "dark"].entries()) {
+    const page = index ? "light" : "dark";
+    test(`data-scheme="${forced}" on a nested element forces the ${forced} scheme for its subtree in a ${page} page`, async () => {
+      const view = await open(specimen, { scheme: page });
+      await addScopes(
+        view,
+        `<div id="forced" data-scheme="${forced}"><p id="in-forced">Forced</p>
+          <div id="back" data-scheme="${page}"><p id="in-back">Back</p></div></div>`,
+      );
+      expect(await view.style("#forced", "color-scheme")).toBe(forced);
+      expect(await view.style("#in-forced", "color-scheme")).toBe(forced);
+      // The tokens are declared on the root alone, yet every one resolves in the forced scheme:
+      // light-dark() resolves where it is read, not where the token is declared.
+      expect(await resolveColors(view, "#in-forced")).toEqual(schemeColors(index));
+      expect(await paint(view, "#forced")).toEqual([COLORS["--fg"][index], COLORS["--bg"][index]]);
+      expect((await paint(view, "#in-forced"))[0]).toBe(COLORS["--fg"][index]);
+      // The page outside keeps the system scheme, and a scope nested inside forces it back.
+      expect(await resolveColors(view, "body")).toEqual(schemeColors(1 - index));
+      expect(await resolveColors(view, "#in-back")).toEqual(schemeColors(1 - index));
+      expect(await paint(view, "#back")).toEqual([
+        COLORS["--fg"][1 - index],
+        COLORS["--bg"][1 - index],
+      ]);
+    });
+  }
+
+  test("a consumer's later layer beats the profile, on the root and on a scope", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.documentElement.dataset.palette = "flexoki"`);
+    await addScopes(page, '<div id="scope" data-palette="flexoki"><p id="inside">Text</p></div>');
+    // Zero specificity too: the later layer wins by order alone.
+    await addAppStyle(page, "@layer app { :where([data-palette]) { --bg: rgb(1, 2, 3); } }");
+    expect(await resolveColor(page, "--bg")).toBe("rgb(1, 2, 3)");
+    expect(await resolveColor(page, "--bg", "#inside")).toBe("rgb(1, 2, 3)");
+    expect(await paint(page, "#scope")).toEqual([COLORS["--fg"][0], "rgb(1, 2, 3)"]);
+    // The tokens it leaves alone keep the profile's values.
+    expect(await resolveColor(page, "--fg", "#inside")).toBe(COLORS["--fg"][0]);
   });
 });
 
@@ -1064,7 +1265,7 @@ describe("elements", () => {
           ${JSON.stringify(pseudo || null)});
         return [style.color, style.backgroundColor, style.borderTopColor];
       })()`);
-    const tiers = ["--fg", "--bg-2", "--border-3"].map((name) => COLORS[name][0]);
+    const tiers = ["--fg", "--bg-2", "--border-2"].map((name) => COLORS[name][0]);
     for (const [selector, pseudo] of controls) {
       expect([selector, await paint(selector, pseudo)]).toEqual([selector, tiers]);
     }
@@ -1664,7 +1865,7 @@ describe("tools", () => {
         await addAppStyle(
           page,
           `@layer app { :root { --bg: rgb(1, 1, 1); --bg-2: rgb(2, 2, 2); --border: rgb(3, 3, 3);
-            --border-3: rgb(4, 4, 4); --fg: rgb(5, 5, 5); --fg-3: rgb(6, 6, 6); --space-3xs: 3px;
+            --border-2: rgb(4, 4, 4); --fg: rgb(5, 5, 5); --fg-3: rgb(6, 6, 6); --space-3xs: 3px;
             --space-s: 7px; --line-s: 3px; --radius-sm: 5px; --font-ui: fantasy;
             --leading-ui: 2; } }`,
         );
@@ -1935,6 +2136,26 @@ describe("specimen", () => {
       ),
     );
   });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`shows a container forced into each scheme, painting it inside a ${scheme} page`, async () => {
+      const page = await open(specimen, { scheme });
+      for (const [forcedIndex, forced] of ["light", "dark"].entries()) {
+        const selector = `#color .scope-sample[data-scheme="${forced}"]`;
+        // Each container paints its forced scheme whatever the page's, so in each page the one
+        // forced the other way shows the scope.
+        expect([forced, await paint(page, selector)]).toEqual([
+          forced,
+          [COLORS["--fg"][forcedIndex], COLORS["--bg"][forcedIndex]],
+        ]);
+        expect([forced, await resolveColors(page, `${selector} p`)]).toEqual([
+          forced,
+          schemeColors(forcedIndex),
+        ]);
+      }
+      expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][index]);
+    });
+  }
 
   test("shows every rendered element and every input type", async () => {
     const page = await open(specimen, { scheme: "light" });

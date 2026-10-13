@@ -31,7 +31,7 @@
 .button {
   display: inline-block;
   padding: var(--space-3xs) var(--space-s);
-  border: var(--line-s) solid var(--border-3);
+  border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-sm);
   background-color: var(--bg-2);
   color: var(--fg);

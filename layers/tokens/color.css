@@ -3,31 +3,54 @@
  *
  * layers/tokens/color.css, the color facet of the tokens layer.
  *
- * The color facet is sixteen tokens of two kinds: tiers (surfaces, borders, text) and hues named
- * for their color. Each pairs a light and a dark value from Flexoki's scale through
- * light-dark(). There are no role tokens: a hue carries no meaning, so a page that wants an
- * accent, a success, or a danger color reads the hue it means by name, or sets its own token in
- * its own layer.
+ * The color facet is sixteen tokens, each a light and a dark value paired through light-dark():
+ * five surfaces, three text weights, and eight hues named for their color. The surfaces, by role:
  *
- * A data-scheme attribute of "light" or "dark" on the root element forces that scheme by setting
- * color-scheme. With no attribute, the page follows the system scheme and changes when it does.
+ *   --bg-0      the pane: a side or tool pane, darker than the page in both schemes
+ *   --bg        the page
+ *   --bg-2      the element surface: one step from the page toward the text
+ *   --border    dividers, containers, and hover fills
+ *   --border-2  control boundaries: text fields, selects, buttons, dialogs, kbd
+ *
+ * --fg, --fg-2 and --fg-3 are text, from the strongest down. There are no role tokens: a hue
+ * carries no meaning, so a page that wants an accent, a success, or a danger color reads the hue
+ * it means by name, or sets its own token in its own layer.
+ *
+ * A profile is one palette's values for the sixteen tokens, applied by data-palette on any
+ * element to its subtree. Each profile is its own block, :where([data-palette="<name>"]), with
+ * zero specificity, so the nearest scope wins by inheritance and a consumer's later layer beats
+ * every profile. Flexoki is the default: its block also matches :where(:root), so it applies
+ * with no attribute anywhere, and a data-palette on the root, matched by a later profile block
+ * of equal (zero) specificity, overrides it.
+ *
+ * A data-scheme attribute of "light" or "dark" on any element forces that scheme for its subtree
+ * by setting color-scheme, which inherits. The tokens hold light-dark() unresolved: a custom
+ * property's value is resolved where a property reads it, against that element's color-scheme,
+ * so a forced container resolves every token to its scheme wherever the tokens were declared.
+ * With no attribute, the page follows the system scheme and changes when it does.
  *
  * baseline.css imports this file into spike-html-design.tokens.color. Pages link baseline.css,
  * never this file: linked on its own, its rules would be unlayered.
  */
 
-:root {
-  /* The page follows the system scheme until something sets color-scheme otherwise; every
-     color token resolves through light-dark() against it. */
+/* The page follows the system scheme until something sets color-scheme otherwise; every color
+   token resolves through light-dark() against it. */
+:where(:root) {
   color-scheme: light dark;
+}
 
-  /* Tiers: two surfaces, three border weights, and three text weights, light on Flexoki's paper
-     and dark on its black. Each line's comment names the Flexoki steps it takes, light / dark. */
-  --bg: light-dark(#fffcf0, #100f0f); /* paper / black */
-  --bg-2: light-dark(#f2f0e5, #1c1b1a); /* base-50 / base-950 */
-  --border: light-dark(#e6e4d9, #282726); /* base-100 / base-900 */
-  --border-2: light-dark(#dad8ce, #343331); /* base-150 / base-850 */
-  --border-3: light-dark(#cecdc3, #403e3c); /* base-200 / base-800 */
+/* Flexoki, the default profile: on the root with no attribute, and on any element that names
+   it. Each line's comment names the Flexoki steps it takes, light / dark. */
+:where(:root, [data-palette="flexoki"]) {
+  /* Surfaces: Flexoki's ladder, with the page on paper in light and on base-950 in dark, so
+     the pane sits one step below it in both. */
+  --bg-0: light-dark(#f2f0e5, #100f0f); /* base-50 / black */
+  --bg: light-dark(#fffcf0, #1c1b1a); /* paper / base-950 */
+  --bg-2: light-dark(#e6e4d9, #282726); /* base-100 / base-900 */
+  --border: light-dark(#dad8ce, #343331); /* base-150 / base-850 */
+  --border-2: light-dark(#cecdc3, #403e3c); /* base-200 / base-800 */
+
+  /* Text, from the strongest down. */
   --fg: light-dark(#100f0f, #e6e4d9); /* black / base-100 */
   --fg-2: light-dark(#575653, #b7b5ac); /* base-700 / base-300 */
   --fg-3: light-dark(#878580, #6f6e69); /* base-500 / base-600 */
@@ -44,12 +67,21 @@
   --magenta: light-dark(#a02f6f, #ce5d97);
 }
 
-/* The data-scheme hook: each forces color-scheme, so every light-dark() token resolves to that
-   scheme's value whatever the system scheme. */
-:root[data-scheme="light"] {
+/* The data-scheme hook: each forces color-scheme on its element, and its subtree inherits it,
+   so every light-dark() token read there resolves to that scheme's value whatever the system
+   scheme. */
+:where([data-scheme="light"]) {
   color-scheme: light;
 }
 
-:root[data-scheme="dark"] {
+:where([data-scheme="dark"]) {
   color-scheme: dark;
+}
+
+/* A scope paints as the root does. Text color inherits as a resolved color, so a container that
+   names a palette or forces a scheme re-sets its own color and background from the tokens it now
+   resolves, and its subtree inherits those. */
+:where([data-palette], [data-scheme]) {
+  background-color: var(--bg);
+  color: var(--fg);
 }

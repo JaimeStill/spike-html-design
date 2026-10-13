@@ -49,6 +49,16 @@ export const PROBES = {
     ["#prose h1", "font-weight", "600"],
     ["#tools .scroll-x", "overflow-x", "auto"],
   ],
+  // The working tree, to be cut as v0.4.0: Flexoki's ladder shifted one step, so the color probe
+  // reads the new --bg pair; the other five probes are v0.3.0's.
+  "v0.4.0": [
+    [":root", "--bg", "light-dark(#fffcf0, #1c1b1a)"],
+    [":root", "--line-s", "1px"],
+    [":root", "--text-m", "1rem"],
+    ["body", "box-sizing", "border-box"],
+    ["#prose h1", "font-weight", "600"],
+    ["#tools .scroll-x", "overflow-x", "auto"],
+  ],
 };
 
 // CURRENT is the tag whose probes the working tree answers.

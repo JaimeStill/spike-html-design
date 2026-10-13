@@ -23,8 +23,9 @@
  * Fonts and leadings read the type facet's role tokens, spacing reads the space scale, and
  * border and outline widths read the line tokens. Colors read tiers and hues by name: links,
  * focus outlines, selected text, the caret and form controls' accent take --blue; the native
- * button is neutral, built from tiers alone. Everything is flat: borders, no shadows, no
- * gradients.
+ * button is neutral, built from tiers alone. Control boundaries (text fields, selects, buttons,
+ * dialogs, kbd) take --border-2; dividers and containers take --border. Everything is flat:
+ * borders, no shadows, no gradients.
  *
  * baseline.css imports this file into spike-html-design.elements. Pages link baseline.css,
  * never this file: linked on its own, its rules would be unlayered.
@@ -231,7 +232,7 @@
 
 :where(kbd) {
   padding: 0 var(--space-3xs);
-  border: var(--line-s) solid var(--border-3);
+  border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-sm);
 }
 
@@ -319,7 +320,7 @@
   textarea
 ) {
   padding: var(--space-3xs) var(--space-2xs);
-  border: var(--line-s) solid var(--border-3);
+  border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-sm);
   background-color: var(--bg);
   color: var(--fg);
@@ -330,11 +331,12 @@
 }
 
 /* The native button, the button-type inputs and the file input's button are neutral: text on
-   the second surface, an outline in the strongest border, and a fill one tier up on hover. */
+   the element surface, --bg-2, an outline in the control boundary, --border-2, and a fill one
+   tier up, --border, on hover. */
 :where(button, input[type="button"], input[type="submit"], input[type="reset"]),
 ::file-selector-button {
   padding: var(--space-3xs) var(--space-s);
-  border: var(--line-s) solid var(--border-3);
+  border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-sm);
   background-color: var(--bg-2);
   color: var(--fg);
@@ -382,7 +384,7 @@
 
 :where(dialog) {
   padding: var(--space-m);
-  border: var(--line-s) solid var(--border-3);
+  border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-md);
   background-color: var(--bg);
   color: var(--fg);
