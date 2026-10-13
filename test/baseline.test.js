@@ -1670,6 +1670,38 @@ describe("specimen", () => {
     expect(INPUT_TYPES.filter((type) => !shown.types.includes(type))).toEqual([]);
   });
 
+  test("labels every element sample with the elements it shows, and every element is labeled", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const cells = await page.evaluate(`[...document.querySelectorAll("#elements .cell")]
+      .map((cell) => {
+        const label = cell.querySelector(":scope > .label");
+        // A label names a cell's elements, or a row's name its sample's.
+        const names = [...(label?.querySelectorAll("code") ?? []),
+          ...cell.querySelectorAll(".rows > code")];
+        const named = names
+          .flatMap((code) => [...code.textContent.matchAll(/<([a-z0-9]+)>/g)].map((m) => m[1]));
+        const shown = new Set([...cell.querySelectorAll("*")]
+          .filter((el) => !label?.contains(el) && !names.includes(el))
+          .map((el) => el.localName));
+        return { named, missing: named.filter((tag) => !shown.has(tag)) };
+      })`);
+    expect(cells.length).toBeGreaterThan(0);
+    // Each cell's label names only elements its samples hold.
+    expect(cells.flatMap(({ missing }) => missing)).toEqual([]);
+    // Every rendered element is named by some label, but the page's own body and main.
+    const named = new Set(cells.flatMap(({ named }) => named));
+    expect(TAGS.filter((tag) => !["body", "main"].includes(tag) && !named.has(tag))).toEqual([]);
+  });
+
+  test("keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const rules = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
+      .map((rule) => rule.nameList ? [...rule.nameList] : rule.name)`);
+    expect(rules).toEqual([[PACKAGE, "specimen"], "specimen"]);
+    const note = await page.evaluate(`document.querySelector("body > header .note").textContent`);
+    expect(squash(note)).toContain("is composition");
+  });
+
   test("shows every tools class", async () => {
     const page = await open(specimen, { scheme: "light" });
     for (const name of TOOLS) {
