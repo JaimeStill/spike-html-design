@@ -1,0 +1,9 @@
+{
+  "name": "spike-html-design",
+  "version": "0.3.0",
+  "description": "A native, layered CSS baseline for human-facing HTML artifacts",
+  "style": "./baseline.css",
+  "exports": {
+    ".": "./baseline.css"
+  }
+}

@@ -190,15 +190,16 @@ class Page {
   }
 }
 
-// serve starts a static file server for root on a free localhost port and returns its base URL
-// and stop(). `prefix`, a path ending in "/" such as "/project/", serves root under it, the way
-// GitHub Pages serves a project site; the base URL ends in it. A directory path answers its
-// index.html; a path outside root or the prefix, or with no file, answers 404.
-export function serve(root, { prefix = "/" } = {}) {
+// serve starts a static file server for root on localhost and returns its base URL and stop().
+// `prefix`, a path ending in "/" such as "/project/", serves root under it, the way GitHub Pages
+// serves a project site; the base URL ends in it. `port` fixes the port; the default, 0, takes
+// a free one. A directory path answers its index.html; a path outside root or the prefix, or
+// with no file, answers 404.
+export function serve(root, { prefix = "/", port = 0 } = {}) {
   const base = resolve(root);
   const server = Bun.serve({
     hostname: "127.0.0.1",
-    port: 0,
+    port,
     async fetch(request) {
       const pathname = decodeURIComponent(new URL(request.url).pathname);
       if (!pathname.startsWith(prefix)) return new Response(null, { status: 404 });

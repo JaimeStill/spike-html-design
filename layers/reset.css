@@ -3,8 +3,8 @@
  *
  * herald's reset, unchanged.
  *
- * baseline.css imports this file into the reset layer. Pages link baseline.css, never this
- * file: linked on its own, its rules would be unlayered.
+ * baseline.css imports this file into spike-html-design.reset. Pages link baseline.css, never
+ * this file: linked on its own, its rules would be unlayered.
  */
 
 *,

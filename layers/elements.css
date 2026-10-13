@@ -1,13 +1,13 @@
 /*
- * layers/theme.css, the theme layer.
+ * layers/elements.css, the elements layer.
  *
  * herald's theme (body surface and text, monospace code), extended to the prose elements an
  * artifact uses: headings on the text scale, links, lists, tables, blockquote, hr. Everything is
  * flat: borders in --divider, no fills beyond the page surface, no shadows, no gradients. Links,
  * focus outlines, and selected text take --accent, the role, never a hue by name.
  *
- * baseline.css imports this file into the theme layer. Pages link baseline.css, never this
- * file: linked on its own, its rules would be unlayered.
+ * baseline.css imports this file into spike-html-design.elements. Pages link baseline.css,
+ * never this file: linked on its own, its rules would be unlayered.
  */
 
 body {
@@ -29,7 +29,7 @@ kbd {
 }
 
 /* Vertical rhythm between adjacent prose blocks, which the reset leaves at zero margin. It sits
-   in the theme layer, so any components or app rule that sets a margin replaces it. */
+   in the elements layer, so any tools or app rule that sets a margin replaces it. */
 :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr)
 + :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr) {
   margin-block-start: var(--space-4);

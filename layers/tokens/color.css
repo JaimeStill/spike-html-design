@@ -1,0 +1,60 @@
+/*
+ * Colors derived from @primer/primitives (MIT, GitHub Inc.), https://github.com/primer/primitives
+ *
+ * layers/tokens/color.css, the color facet of the tokens layer.
+ *
+ * The color tokens come in three kinds: tiers (surfaces, divider, text), hues named for their
+ * color, and roles that alias a hue. Each tier and hue pairs a value from Primer's functional
+ * light and dark themes (dist/css/functional/themes/light.css and dark.css) through
+ * light-dark(). A hue takes its color's display-*-fgColor; --magenta takes display-pink-fgColor.
+ * A role holds no color of its own, so a page that overrides a hue in its app layer changes
+ * every role on that hue.
+ *
+ * A data-scheme attribute of "light" or "dark" on the root element forces that scheme by setting
+ * color-scheme. With no attribute, the page follows the system scheme and changes when it does.
+ *
+ * baseline.css imports this file into spike-html-design.tokens.color. Pages link baseline.css,
+ * never this file: linked on its own, its rules would be unlayered.
+ */
+
+:root {
+  /* The page follows the system scheme until something sets color-scheme otherwise; every
+     color token resolves through light-dark() against it. */
+  color-scheme: light dark;
+
+  /* Tiers: three surfaces, the divider, and three text weights, from Primer's bgColor,
+     borderColor and fgColor. */
+  --bg: light-dark(#ffffff, #0d1117);
+  --bg-1: light-dark(#f6f8fa, #151b23);
+  --bg-2: light-dark(#eff2f5, #262c36);
+  --divider: light-dark(#d1d9e0, #3d444d);
+  --fg: light-dark(#1f2328, #f0f6fc);
+  --fg-1: light-dark(#59636e, #9198a1);
+  --fg-2: light-dark(#818b98, #656c76);
+
+  /* Hues: one token per color, named for the color, never for a meaning. */
+  --red: light-dark(#c50d28, #f27d83);
+  --orange: light-dark(#a24610, #ed8326);
+  --yellow: light-dark(#805900, #d3910d);
+  --green: light-dark(#2b6e3f, #41b445);
+  --cyan: light-dark(#006a80, #07ace4);
+  --blue: light-dark(#005fcc, #4da0ff);
+  --purple: light-dark(#783ae4, #b687f7);
+  --magenta: light-dark(#b12f79, #e57bb2);
+
+  /* Roles: a meaning, resolved through a hue. */
+  --accent: var(--blue);
+  --success: var(--green);
+  --warning: var(--yellow);
+  --danger: var(--red);
+}
+
+/* The data-scheme hook: each forces color-scheme, so every light-dark() token resolves to that
+   scheme's value whatever the system scheme. */
+:root[data-scheme="light"] {
+  color-scheme: light;
+}
+
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+}

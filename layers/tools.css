@@ -1,0 +1,21 @@
+/*
+ * layers/tools.css, the tools layer.
+ *
+ * Opt-in classes a page adds to native elements, which may change layout. For now it holds
+ * v0.2.0's scroll helpers: each scrolls its overflow on one axis, with a stable gutter.
+ *
+ * baseline.css imports this file into spike-html-design.tools. Pages link baseline.css, never
+ * this file: linked on its own, its rules would be unlayered.
+ */
+
+.scroll-y {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-inline-end: var(--space-2);
+}
+
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+  padding-block-end: var(--space-2);
+}

@@ -2,9 +2,18 @@
 // stylesheet's layer files: the layer names, and per tag a probe that tells a page whose layer
 // files all loaded from one whose root loaded but an import did not.
 
-// LAYERS are the working tree's cascade layers, in cascade order, each imported from
-// layers/<name>.css. A tag's own layer files are read from the tag, not from here.
-export const LAYERS = ["tokens", "reset", "theme", "components"];
+// PACKAGE is the working tree's one top-level layer, named for the package.
+export const PACKAGE = "spike-html-design";
+
+// LAYERS are the working tree's nested layers under PACKAGE, in cascade order, each a dotted
+// name below it. A tag's own layer files are read from the tag, not from here.
+export const LAYERS = ["tokens.color", "tokens.space", "tokens.type", "reset", "elements", "tools"];
+
+// layerPath returns the file a nested layer is imported from: the path its name spells under
+// layers/, as in layers/tokens/color.css for tokens.color.
+export function layerPath(layer) {
+  return `layers/${layer.replaceAll(".", "/")}.css`;
+}
 
 // PROBES holds, per tag, one computed style per layer, on that tag's specimen markup, that only
 // that layer's file sets and that no color scheme changes, as [selector, property, value when
@@ -26,6 +35,17 @@ export const PROBES = {
     ["body", "box-sizing", "border-box"],
     ["#prose h1", "font-size", "36px"],
     ["#components .card", "display", "flex"],
+  ],
+  // One probe per nested layer file. The components layer is gone, so its probe is too; the
+  // tools probe reads a scroll helper. Unstyled, the six read "", "", "", "content-box", "32px",
+  // and "visible".
+  "v0.3.0": [
+    [":root", "--bg", "light-dark(#ffffff, #0d1117)"],
+    [":root", "--space-1", "0.25rem"],
+    [":root", "--text-xs", "0.75rem"],
+    ["body", "box-sizing", "border-box"],
+    ["#prose h1", "font-size", "36px"],
+    ["#tools .scroll-x", "overflow-x", "auto"],
   ],
 };
 

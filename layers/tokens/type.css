@@ -1,0 +1,26 @@
+/*
+ * layers/tokens/type.css, the type facet of the tokens layer.
+ *
+ * The font stacks and the text scale, herald's fixed values carried over from v0.2.0 until the
+ * type facet's role fonts and fluid scale replace them.
+ *
+ * baseline.css imports this file into spike-html-design.tokens.type. Pages link baseline.css,
+ * never this file: linked on its own, its rules would be unlayered.
+ */
+
+:root {
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+    sans-serif;
+  --font-mono:
+    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+}

@@ -1,7 +1,7 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
-import { LAYERS, LOADED, layersLoaded } from "./layers.js";
+import { LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
 
 const root = dirname(import.meta.dir);
 const specimen = fileUrl(join(root, "index.html"));
@@ -100,29 +100,8 @@ const COLORS = Object.fromEntries([
   ...Object.entries(ROLES).map(([role, hue]) => [role, HUES[hue].map(rgb)]),
 ]);
 
-// VARIANTS are the hues the button and badge variants take, as they did at v0.1.0.
-const VARIANTS = ["blue", "green", "red", "yellow", "orange"];
-
-// BADGE_TOKENS are the badge variants, class to the token it shows: one per hue and one per role.
-const BADGE_TOKENS = Object.fromEntries(
-  [...Object.keys(HUES), ...Object.keys(ROLES)].map((token) => [`badge-${token.slice(2)}`, token]),
-);
-
-// COMPONENTS are the component classes: herald's six and its button variants, as v0.1.0 shipped
-// them, and a badge variant per hue and per role.
-const BUTTONS = ["btn-blue", "btn-green", "btn-red", "btn-yellow", "btn-muted"];
-const BADGES = Object.keys(BADGE_TOKENS);
-const COMPONENTS = [
-  "btn",
-  ...BUTTONS,
-  "card",
-  "input",
-  "label",
-  "badge",
-  ...BADGES,
-  "scroll-y",
-  "scroll-x",
-];
+// TOOLS are the tools classes: v0.2.0's scroll helpers.
+const TOOLS = ["scroll-y", "scroll-x"];
 
 // rootTokens resolves to every custom property declared on :root, name to computed value.
 function rootTokens(page) {
@@ -182,12 +161,20 @@ function contrast(a, b) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// mark is the badge a contrast ratio earns in the specimen's table: AA at 4.5 for body text,
+// mark is the mark a contrast ratio earns in the specimen's table: AA at 4.5 for body text,
 // AA large at 3 for large text and interface parts, fail below 3.
 function mark(ratio) {
-  if (ratio >= 4.5) return { text: "AA", badge: "badge-success" };
-  if (ratio >= 3) return { text: "AA large", badge: "badge-warning" };
-  return { text: "fail", badge: "badge-danger" };
+  if (ratio >= 4.5) return "AA";
+  if (ratio >= 3) return "AA large";
+  return "fail";
+}
+
+// layerSheet resolves to a page-side expression for the sheet a nested layer's import loads,
+// from the baseline linked by a page served over http, since chromium hides a file:// stylesheet's
+// rules from the page.
+function layerSheet(layer) {
+  return `[...[...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css")).cssRules]
+    .find((r) => r.layerName === ${JSON.stringify(`${PACKAGE}.${layer}`)}).styleSheet`;
 }
 
 // tabTo presses Tab, a trusted keyboard event, until the element matching selector has focus,
@@ -201,7 +188,7 @@ async function tabTo(page, selector) {
 }
 
 describe("layers", () => {
-  test("the stylesheet declares the four layers, then imports each one's file", async () => {
+  test("the stylesheet declares the package layer's nested layers, then imports each one's file", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
     const rules = await page.evaluate(`(() => {
@@ -215,25 +202,55 @@ describe("layers", () => {
         loaded: rule.styleSheet ? rule.styleSheet.cssRules.length > 0 : undefined,
       }));
     })()`);
-    // An exact match: the root holds the statement and the four imports, and no rule of its own.
+    // An exact match: the root holds the statement and one import per nested layer, each
+    // straight into its layer, and no rule of its own.
+    const nested = LAYERS.map((layer) => `${PACKAGE}.${layer}`);
     expect(rules).toEqual([
-      { type: "CSSLayerStatementRule", names: LAYERS },
-      ...LAYERS.map((layer) => ({
+      { type: "CSSLayerStatementRule", names: nested },
+      ...LAYERS.map((layer, index) => ({
         type: "CSSImportRule",
-        layer,
-        href: `./layers/${layer}.css`,
+        layer: nested[index],
+        href: `./${layerPath(layer)}`,
         loaded: true,
       })),
     ]);
   });
 
-  test("a page's app layer overrides components rules of equal and higher specificity", async () => {
+  test("every layer file is imported one hop deep: no layer file imports another", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const imports = await page.evaluate(
+      `[${LAYERS.map(
+        (layer) => `[...${layerSheet(layer)}.cssRules].filter((r) => r.href !== undefined).length`,
+      )}]`,
+    );
+    expect(imports).toEqual(LAYERS.map(() => 0));
+  });
+
+  test("the page's layers cascade as the package layer, its nested layers in order, then app", async () => {
+    // A rule in each layer sets the same custom property to the layer's name, in reverse cascade
+    // order, so only the cascade, never source order, decides which one wins.
+    const page = await open(fixture, { scheme: "light" });
+    const order = [...LAYERS.map((layer) => `${PACKAGE}.${layer}`), "app"];
+    const winners = [];
+    for (const index of order.keys()) {
+      const css = order
+        .slice(0, index + 1)
+        .reverse()
+        .map((name) => `@layer ${name} { #equal { --winner: "${name}"; } }`)
+        .join("\n");
+      await addAppStyle(page, css);
+      winners.push(JSON.parse(await page.style("#equal", "--winner")));
+    }
+    expect(winners).toEqual(order);
+  });
+
+  test("a page's app layer overrides tools rules of equal and higher specificity", async () => {
     const page = await open(fixture, { scheme: "light" });
     expect(await page.style("#equal", "color")).toBe("rgb(0, 128, 0)");
     expect(await page.style("#specific", "color")).toBe("rgb(0, 128, 0)");
   });
 
-  test("a page's app layer overrides the theme", async () => {
+  test("a page's app layer overrides the elements layer", async () => {
     const page = await open(fixture, { scheme: "light" });
     expect(await page.style("body", "background-color")).toBe("rgb(0, 0, 255)");
   });
@@ -274,9 +291,9 @@ describe("tokens", () => {
     }
   });
 
-  test("with no data-theme the page follows a live change of the system scheme", async () => {
+  test("with no data-scheme the page follows a live change of the system scheme", async () => {
     const page = await open(specimen, { scheme: "dark" });
-    expect(await page.evaluate("document.documentElement.hasAttribute('data-theme')")).toBe(false);
+    expect(await page.evaluate("document.documentElement.hasAttribute('data-scheme')")).toBe(false);
     expect(await page.style(":root", "color-scheme")).toBe("light dark");
     expect(await resolveColor(page, "--bg")).toBe(COLORS["--bg"][1]);
     expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
@@ -290,12 +307,12 @@ describe("tokens", () => {
     expect(await page.evaluate("window.unreloaded === true")).toBe(true);
   });
 
-  for (const [index, theme] of ["light", "dark"].entries()) {
+  for (const [index, forced] of ["light", "dark"].entries()) {
     for (const scheme of ["light", "dark"]) {
-      test(`data-theme="${theme}" forces the ${theme} theme under a ${scheme} system`, async () => {
+      test(`data-scheme="${forced}" forces the ${forced} scheme under a ${scheme} system`, async () => {
         const page = await open(specimen, { scheme });
-        await page.evaluate(`document.documentElement.dataset.theme = "${theme}"`);
-        expect(await page.style(":root", "color-scheme")).toBe(theme);
+        await page.evaluate(`document.documentElement.dataset.scheme = "${forced}"`);
+        expect(await page.style(":root", "color-scheme")).toBe(forced);
         // Every color token, so one that answered the system scheme by a media query rather
         // than through color-scheme would fail.
         for (const [name, pair] of Object.entries(COLORS)) {
@@ -307,15 +324,24 @@ describe("tokens", () => {
     }
   }
 
-  test("an app layer's token override still wins under a forced theme", async () => {
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`data-theme no longer forces a scheme, under a ${scheme} system`, async () => {
+      const page = await open(specimen, { scheme });
+      await page.evaluate(`document.documentElement.dataset.theme = "${index ? "light" : "dark"}"`);
+      expect(await page.style(":root", "color-scheme")).toBe("light dark");
+      expect(await resolveColor(page, "--bg")).toBe(COLORS["--bg"][index]);
+    });
+  }
+
+  test("an app layer's token override still wins under a forced scheme", async () => {
     const page = await open(specimen, { scheme: "light" });
-    await page.evaluate(`document.documentElement.dataset.theme = "dark"`);
-    // A plain :root rule, less specific than :root[data-theme]: the later layer wins anyway.
+    await page.evaluate(`document.documentElement.dataset.scheme = "dark"`);
+    // A plain :root rule, less specific than :root[data-scheme]: the later layer wins anyway.
     await addAppStyle(page, "@layer app { :root { --bg: rgb(1, 2, 3); } }");
     expect(await page.style(":root", "color-scheme")).toBe("dark");
     expect(await resolveColor(page, "--bg")).toBe("rgb(1, 2, 3)");
     expect(await page.style("body", "background-color")).toBe("rgb(1, 2, 3)");
-    // The tokens it leaves alone keep the forced theme.
+    // The tokens it leaves alone keep the forced scheme.
     expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
   });
 });
@@ -370,7 +396,7 @@ describe("reset", () => {
   });
 });
 
-describe("theme", () => {
+describe("elements", () => {
   test("sets the body in the sans stack and code, pre and kbd in the mono stack", async () => {
     const page = await open(specimen, { scheme: "light" });
     expect(await page.style("body", "font-family")).toBe(SANS);
@@ -411,13 +437,10 @@ describe("theme", () => {
     // Override the role alone: a rule that named --blue would keep Primer's blue.
     await addAppStyle(page, "@layer app { :root { --accent: rgb(1, 2, 3); } }");
     expect(await page.style("#prose a", "color")).toBe("rgb(1, 2, 3)");
-    for (const target of ["#prose a", "#components .btn:not(:disabled)", "#components .input"]) {
-      await tabTo(page, target);
-      expect([
-        target,
-        await page.evaluate(`getComputedStyle(document.activeElement).outline`),
-      ]).toEqual([target, "rgb(1, 2, 3) solid 2px"]);
-    }
+    await tabTo(page, "#prose a");
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
+      "rgb(1, 2, 3) solid 2px",
+    );
   });
 
   test("selected text sits on a translucent mix of --accent", async () => {
@@ -440,10 +463,10 @@ describe("theme", () => {
     expect(await page.style("#prose hr + p", "margin-top")).toBe("16px");
   });
 
-  test("draws no shadows and no gradients, on prose or components", async () => {
+  test("draws no shadows and no gradients, on prose or tools", async () => {
     const page = await open(specimen, { scheme: "light" });
-    // The check is only as wide as the page: it must hold every component class.
-    const shown = COMPONENTS.map((name) => `!!document.querySelector("#components .${name}")`);
+    // The check is only as wide as the page: it must hold every tools class.
+    const shown = TOOLS.map((name) => `!!document.querySelector("#tools .${name}")`);
     expect(await page.evaluate(`[${shown}].every(Boolean)`)).toBe(true);
     const styles = (await page.fingerprint(["box-shadow", "background-image"])).map(([, s]) => s);
     expect(new Set(styles.map((s) => s["box-shadow"]))).toEqual(new Set(["none"]));
@@ -451,14 +474,11 @@ describe("theme", () => {
   });
 });
 
-describe("components", () => {
-  test("the components layer styles exactly the component classes", async () => {
+describe("tools", () => {
+  test("the tools layer styles exactly the tools classes", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
     const classes = await page.evaluate(`(() => {
-      const sheet = [...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css"));
-      // The components layer is the sheet its import loads, not a block in the root.
-      const layer = [...sheet.cssRules].find((r) => r.layerName === "components").styleSheet;
       const selectors = [];
       const walk = (rules) => {
         for (const rule of rules) {
@@ -466,148 +486,29 @@ describe("components", () => {
           if (rule.cssRules) walk(rule.cssRules);
         }
       };
-      walk(layer.cssRules);
+      walk(${layerSheet("tools")}.cssRules);
       return [...new Set(selectors.join(" ").match(/\\.[\\w-]+/g))].map((c) => c.slice(1));
     })()`);
-    expect(classes.sort()).toEqual([...COMPONENTS].sort());
+    expect(classes.sort()).toEqual([...TOOLS].sort());
   });
 
-  test("buttons, inputs, labels and cards resolve from tokens", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const [bg, bg1, color, color1, divider] = ["--bg", "--bg-1", "--fg", "--fg-1", "--divider"].map(
-      (token) => COLORS[token][0],
-    );
-    const expected = {
-      ".btn": {
-        padding: "4px 12px",
-        "border-top": `1px solid ${divider}`,
-        "border-radius": "4px",
-        "background-color": bg,
-        color,
-        "font-size": "12px",
-        "font-family": MONO,
-        cursor: "pointer",
-      },
-      ".input": {
-        padding: "8px 12px",
-        "border-top": `1px solid ${divider}`,
-        "border-radius": "4px",
-        "background-color": bg1,
-        color,
-        "font-size": "14px",
-        "font-family": MONO,
-      },
-      ".label": {
-        "font-size": "12px",
-        "font-family": MONO,
-        color: color1,
-        "text-transform": "uppercase",
-      },
-      ".card": {
-        display: "flex",
-        "flex-direction": "column",
-        gap: "12px",
-        padding: "16px",
-        "background-color": bg1,
-        "border-top": `1px solid ${divider}`,
-        "border-radius": "8px",
-      },
-    };
-    for (const [selector, styles] of Object.entries(expected)) {
-      for (const [property, value] of Object.entries(styles)) {
-        expect([selector, property, await page.style(`#components ${selector}`, property)]).toEqual(
-          [selector, property, value],
-        );
-      }
-    }
-  });
-
-  test("each button variant takes its color token, in both schemes", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const tokens = {
-      ...Object.fromEntries(VARIANTS.map((h) => [`btn-${h}`, `--${h}`])),
-      "btn-muted": "--fg-2",
-    };
-    for (const scheme of [0, 1]) {
-      if (scheme) await page.setScheme("dark");
-      for (const variant of BUTTONS) {
-        const value = COLORS[tokens[variant]][scheme];
-        const selector = `#components .${variant}:not(:disabled)`;
-        expect([variant, await page.style(selector, "color")]).toEqual([variant, value]);
-        expect([variant, await page.style(selector, "border-top-color")]).toEqual([variant, value]);
-      }
-    }
-  });
-
-  test("a disabled button keeps the plain button's colors, dimmed", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    expect(await page.style("#components .btn:disabled", "color")).toBe(COLORS["--fg"][0]);
-    expect(await page.style("#components .btn:disabled", "opacity")).toBe("0.4");
-  });
-
-  test("each badge variant is its token on a translucent mix of that token, in both schemes", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    for (const scheme of [0, 1]) {
-      if (scheme) await page.setScheme("dark");
-      for (const [variant, token] of Object.entries(BADGE_TOKENS)) {
-        const selector = `#components .badge.${variant}`;
-        const value = COLORS[token][scheme];
-        expect([variant, await page.style(selector, "color")]).toEqual([variant, value]);
-        const fill = tint(await page.style(selector, "background-color"));
-        expect([variant, fill?.hue]).toEqual([variant, value]);
-        expect(fill.alpha).toBeGreaterThan(0);
-        expect(fill.alpha).toBeLessThan(1);
-      }
-    }
-    expect(await page.style("#components .badge", "font-weight")).toBe("600");
-    expect(await page.style("#components .badge", "padding")).toBe("4px 8px");
-  });
-
-  test("a role badge follows an app layer's override of its hue", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    await addAppStyle(page, "@layer app { :root { --green: rgb(1, 2, 3); } }");
-    const selector = "#components .badge.badge-success";
-    expect(await page.style(selector, "color")).toBe("rgb(1, 2, 3)");
-    expect(tint(await page.style(selector, "background-color"))?.hue).toBe("rgb(1, 2, 3)");
-    // A role badge on another hue keeps it.
-    expect(await page.style("#components .badge.badge-danger", "color")).toBe(COLORS["--red"][0]);
-  });
-
-  test("a hovered color button fills with a translucent mix of its hue", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const selector = "#components .btn-red";
-    expect(await page.style(selector, "background-color")).toBe(COLORS["--bg"][0]);
-    const [x, y] = await page.evaluate(`(() => {
-      const button = document.querySelector(${JSON.stringify(selector)});
-      button.scrollIntoView({ block: "center" });
-      const box = button.getBoundingClientRect();
-      return [box.x + box.width / 2, box.y + box.height / 2];
+  test("no other layer styles a class", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const others = LAYERS.filter((layer) => layer !== "tools");
+    const selectors = await page.evaluate(`(() => {
+      const selectors = [];
+      const walk = (rules) => {
+        for (const rule of rules) {
+          if (rule.selectorText) selectors.push(rule.selectorText);
+          if (rule.cssRules) walk(rule.cssRules);
+        }
+      };
+      for (const sheet of [${others.map(layerSheet)}]) walk(sheet.cssRules);
+      return selectors;
     })()`);
-    // A real pointer move through CDP, so :hover matches as it would under a mouse.
-    await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
-    // Skip the background transition to its end.
-    await page.evaluate(`document.querySelector(${JSON.stringify(selector)})
-      .getAnimations().forEach((a) => a.finish())`);
-    const fill = tint(await page.style(selector, "background-color"));
-    expect(fill?.hue).toBe(COLORS["--red"][0]);
-    expect(fill.alpha).toBeLessThan(1);
+    expect(selectors.length).toBeGreaterThan(0);
+    expect(selectors.filter((selector) => /\.[A-Za-z_-]/.test(selector))).toEqual([]);
   });
-
-  for (const selector of [".btn", ".input"]) {
-    test(`${selector} shows a 2px accent outline on keyboard focus`, async () => {
-      const page = await open(specimen, { scheme: "light" });
-      const target = `#components ${selector}:not(:disabled)`;
-      expect(await page.style(target, "outline-style")).toBe("none");
-      await tabTo(page, target);
-      expect(await page.evaluate(`document.activeElement.matches(":focus-visible")`)).toBe(true);
-      expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
-        `${COLORS["--accent"][0]} solid 2px`,
-      );
-      expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineOffset`)).toBe(
-        "2px",
-      );
-    });
-  }
 
   test("scroll-y and scroll-x scroll their overflow on one axis", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -615,7 +516,7 @@ describe("components", () => {
       ["y", "overflow-y", "Height", "padding-right"],
       ["x", "overflow-x", "Width", "padding-bottom"],
     ]) {
-      const selector = `#components .scroll-${axis}`;
+      const selector = `#tools .scroll-${axis}`;
       expect(await page.style(selector, overflow)).toBe("auto");
       expect(await page.style(selector, "scrollbar-gutter")).toBe("stable");
       expect(await page.style(selector, padding)).toBe("8px");
@@ -639,7 +540,7 @@ describe("specimen", () => {
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 
-  test("shows every prose element the theme styles", async () => {
+  test("shows every prose element the elements layer styles", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tags = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "ul", "ol", "li", "blockquote"];
     tags.push("pre", "code", "kbd", "table", "th", "td", "hr");
@@ -648,43 +549,13 @@ describe("specimen", () => {
     }
   });
 
-  test("shows every component class", async () => {
+  test("shows every tools class", async () => {
     const page = await open(specimen, { scheme: "light" });
-    for (const name of COMPONENTS) {
-      expect([
+    for (const name of TOOLS) {
+      expect([name, await page.evaluate(`!!document.querySelector("#tools .${name}")`)]).toEqual([
         name,
-        await page.evaluate(`!!document.querySelector("#components .${name}")`),
-      ]).toEqual([name, true]);
-    }
-  });
-
-  test("sets the four roles beside the eight hues under the usage rule", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const rule =
-      "A role marks state or interaction; a hue marks a category and never implies status. On a " +
-      "page that shows status, categories draw first from the hues no role uses (cyan, purple, " +
-      "magenta, orange), leaving red, green and yellow for status.";
-    expect(
-      squash(await page.evaluate(`document.querySelector("#usage p").textContent`)).trim(),
-    ).toBe(rule);
-    // Each token row names its token and shows that token's badge.
-    const rows = await page.evaluate(`[...document.querySelectorAll("#usage .specimen > code")]
-      .map((code) => [code.textContent, code.nextElementSibling.querySelector(".badge").className])`);
-    expect(rows.map(([token]) => token).sort()).toEqual(
-      [...Object.keys(ROLES), ...Object.keys(HUES)].sort(),
-    );
-    for (const [token, className] of rows) {
-      expect([token, className]).toEqual([token, `badge badge-${token.slice(2)}`]);
-    }
-    // The status sample marks state with roles and categories with hues no role uses.
-    const sample = await page.evaluate(`[...document.querySelectorAll("#usage .card .row")]
-      .map((row) => [...row.querySelectorAll(".badge")].map((b) => b.classList[1]))`);
-    const free = ["badge-cyan", "badge-purple", "badge-magenta", "badge-orange"];
-    const roles = Object.keys(ROLES).map((r) => `badge-${r.slice(2)}`);
-    expect(sample.length).toBeGreaterThan(0);
-    for (const [category, state] of sample) {
-      expect(free).toContain(category);
-      expect(roles).toContain(state);
+        true,
+      ]);
     }
   });
 
@@ -704,23 +575,21 @@ describe("specimen", () => {
   for (const [index, scheme] of ["light", "dark"].entries()) {
     test(`the contrast table's ${scheme} column matches each ratio recomputed in chromium`, async () => {
       const page = await open(specimen, { scheme });
-      // The table is static: each cell is the ratio as written, then its mark badge.
+      // The table is static: each cell is the ratio as written, then its mark.
       const cells = await page.evaluate(`[...document.querySelectorAll("#contrast tbody tr")]
         .map((row) => {
           const cell = row.cells[${index + 1}];
-          const badge = cell.querySelector(".badge");
           return {
             token: row.querySelector("th code").textContent,
             ratio: cell.firstChild.textContent.trim(),
-            text: badge?.textContent,
-            badge: badge?.classList[1],
+            mark: cell.querySelector("span")?.textContent,
           };
         })`);
       const bg = await resolveColor(page, "--bg");
       expect(bg).toBe(COLORS["--bg"][index]);
       for (const { token, ...cell } of cells) {
         const ratio = contrast(await resolveColor(page, token), bg);
-        expect([token, cell]).toEqual([token, { ratio: ratio.toFixed(2), ...mark(ratio) }]);
+        expect([token, cell]).toEqual([token, { ratio: ratio.toFixed(2), mark: mark(ratio) }]);
       }
     });
   }

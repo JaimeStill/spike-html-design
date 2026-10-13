@@ -68,6 +68,19 @@ describe("harness", () => {
     }
   });
 
+  test("the local server takes a fixed port when given one", async () => {
+    const probe = serve(fixtures);
+    const port = Number(new URL(probe.url).port);
+    probe.stop();
+    const fixed = serve(fixtures, { port });
+    try {
+      expect(fixed.url).toBe(`http://127.0.0.1:${port}/`);
+      expect((await fetch(fixed.url)).status).toBe(200);
+    } finally {
+      fixed.stop();
+    }
+  });
+
   test("fingerprints every element's resolved styles and the root's custom properties", async () => {
     const page = await open(fileUrl(join(fixtures, "index.html")), { scheme: "light" });
     const print = await page.fingerprint(["color"]);
