@@ -1,7 +1,5 @@
 /*
- * Colors from Flexoki (MIT, Steph Ango), https://stephango.com/flexoki
- *
- * layers/tokens/color.css, the color facet of the tokens layer.
+ * layers/tokens/color.css, the color facet of the tokens layer: its contract, with no values.
  *
  * The color facet is sixteen tokens, each a light and a dark value paired through light-dark():
  * five surfaces, three text weights, and eight hues named for their color. The surfaces, by role:
@@ -16,12 +14,13 @@
  * carries no meaning, so a page that wants an accent, a success, or a danger color reads the hue
  * it means by name, or sets its own token in its own layer.
  *
- * A profile is one palette's values for the sixteen tokens, applied by data-palette on any
- * element to its subtree. Each profile is its own block, :where([data-palette="<name>"]), with
- * zero specificity, so the nearest scope wins by inheritance and a consumer's later layer beats
- * every profile. Flexoki is the default: its block also matches :where(:root), so it applies
- * with no attribute anywhere, and a data-palette on the root, matched by a later profile block
- * of equal (zero) specificity, overrides it.
+ * A profile is one palette's values for the sixteen tokens, each in its own file under
+ * layers/tokens/color/, imported into this same sub-layer and applied by data-palette on any
+ * element to its subtree. Each profile is one block, :where([data-palette="<name>"]), with zero
+ * specificity, so the nearest scope wins by inheritance and a consumer's later layer beats every
+ * profile. Flexoki is the default: its block also matches :where(:root), so it applies with no
+ * attribute anywhere, and a data-palette on the root, matched by a later profile block of equal
+ * (zero) specificity, overrides it. This file declares no token: every value is a profile's.
  *
  * A data-scheme attribute of "light" or "dark" on any element forces that scheme for its subtree
  * by setting color-scheme, which inherits. The tokens hold light-dark() unresolved: a custom
@@ -29,42 +28,15 @@
  * so a forced container resolves every token to its scheme wherever the tokens were declared.
  * With no attribute, the page follows the system scheme and changes when it does.
  *
- * baseline.css imports this file into spike-html-design.tokens.color. Pages link baseline.css,
- * never this file: linked on its own, its rules would be unlayered.
+ * baseline.css imports this file into spike-html-design.tokens.color, then Flexoki's file,
+ * layers/tokens/color/flexoki.css, into the same sub-layer. Pages link baseline.css, never this
+ * file: linked on its own, its rules would be unlayered.
  */
 
 /* The page follows the system scheme until something sets color-scheme otherwise; every color
    token resolves through light-dark() against it. */
 :where(:root) {
   color-scheme: light dark;
-}
-
-/* Flexoki, the default profile: on the root with no attribute, and on any element that names
-   it. Each line's comment names the Flexoki steps it takes, light / dark. */
-:where(:root, [data-palette="flexoki"]) {
-  /* Surfaces: Flexoki's ladder, with the page on paper in light and on base-950 in dark, so
-     the pane sits one step below it in both. */
-  --bg-0: light-dark(#f2f0e5, #100f0f); /* base-50 / black */
-  --bg: light-dark(#fffcf0, #1c1b1a); /* paper / base-950 */
-  --bg-2: light-dark(#e6e4d9, #282726); /* base-100 / base-900 */
-  --border: light-dark(#dad8ce, #343331); /* base-150 / base-850 */
-  --border-2: light-dark(#cecdc3, #403e3c); /* base-200 / base-800 */
-
-  /* Text, from the strongest down. */
-  --fg: light-dark(#100f0f, #e6e4d9); /* black / base-100 */
-  --fg-2: light-dark(#575653, #b7b5ac); /* base-700 / base-300 */
-  --fg-3: light-dark(#878580, #6f6e69); /* base-500 / base-600 */
-
-  /* Hues: one token per color, named for the color, never for a meaning; Flexoki's 600 step in
-     light and its 400 step in dark. */
-  --red: light-dark(#af3029, #d14d41);
-  --orange: light-dark(#bc5215, #da702c);
-  --yellow: light-dark(#ad8301, #d0a215);
-  --green: light-dark(#66800b, #879a39);
-  --cyan: light-dark(#24837b, #3aa99f);
-  --blue: light-dark(#205ea6, #4385be);
-  --purple: light-dark(#5e409d, #8b7ec8);
-  --magenta: light-dark(#a02f6f, #ce5d97);
 }
 
 /* The data-scheme hook: each forces color-scheme on its element, and its subtree inherits it,

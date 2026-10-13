@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
-import { LAYERS, layerPath, layersLoaded, loaded } from "./layers.js";
+import { IMPORTS, layersLoaded, loaded } from "./layers.js";
 import { show, stylesheets, tagExists } from "./tags.js";
 
 const root = dirname(import.meta.dir);
@@ -46,7 +46,7 @@ async function markup(path) {
 // it after merge.
 function reference(tag) {
   if (!tagExists(tag)) {
-    return { dir: root, files: ["baseline.css", ...LAYERS.map(layerPath)] };
+    return { dir: root, files: ["baseline.css", ...IMPORTS.map(([, path]) => path)] };
   }
   const dir = join(scratch, tag);
   const files = stylesheets(tag);

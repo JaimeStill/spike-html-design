@@ -15,9 +15,20 @@ export function layerPath(layer) {
   return `layers/${layer.replaceAll(".", "/")}.css`;
 }
 
-// PROBES holds, per tag, one computed style per layer, on that tag's specimen markup, that only
-// that layer's file sets and that no color scheme changes, as [selector, property, value when
-// every layer file loaded]. A tag's entry never changes once the tag is cut: a page pinned to it
+// DEFAULT_PROFILE is the color profile the lean entry imports into tokens.color after the facet's
+// own file: Flexoki, in the directory the facet's file name spells.
+export const DEFAULT_PROFILE = "layers/tokens/color/flexoki.css";
+
+// IMPORTS are the working tree's lean entry's imports, in order, each [nested layer, file]: every
+// nested layer's own file, and the default profile right after the color facet's.
+export const IMPORTS = LAYERS.flatMap((layer) => [
+  [layer, layerPath(layer)],
+  ...(layer === "tokens.color" ? [[layer, DEFAULT_PROFILE]] : []),
+]);
+
+// PROBES holds, per tag, one computed style per layer file, on that tag's specimen markup, that
+// only that file sets and that no color scheme changes, as [selector, property, value when every
+// layer file loaded]. A tag's entry never changes once the tag is cut: a page pinned to it
 // keeps rendering its values whatever the working tree later renames or retunes. The last entry
 // is the working tree's, the tag it will be cut as; add the next tag's entry when a change to
 // the working tree would change a probe.
@@ -49,9 +60,12 @@ export const PROBES = {
     ["#prose h1", "font-weight", "600"],
     ["#tools .scroll-x", "overflow-x", "auto"],
   ],
-  // The working tree, to be cut as v0.4.0: Flexoki's ladder shifted one step, so the color probe
-  // reads the new --bg pair; the other five probes are v0.3.0's.
+  // The working tree, to be cut as v0.4.0: Flexoki's ladder shifted one step, and its values moved
+  // to their own profile file, so the color probe reads the new --bg pair from Flexoki's file and
+  // a new probe reads the facet's own file's color-scheme; the other five probes are v0.3.0's.
+  // Unstyled, the color-scheme probe reads "normal".
   "v0.4.0": [
+    [":root", "color-scheme", "light dark"],
     [":root", "--bg", "light-dark(#fffcf0, #1c1b1a)"],
     [":root", "--line-s", "1px"],
     [":root", "--text-m", "1rem"],

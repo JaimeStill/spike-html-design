@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
 import { CURRENT } from "./layers.js";
+import { COLOR_PROFILES, profilePath } from "./profiles.js";
 
 const root = dirname(import.meta.dir);
 const pkg = await Bun.file(join(root, "package.json")).json();
@@ -26,6 +27,17 @@ describe("package", () => {
   test("exports the lean entry as the package root, and names it its style", () => {
     expect(pkg.exports["."]).toBe("./baseline.css");
     expect(pkg.style).toBe("./baseline.css");
+  });
+
+  test("exports each color profile's file as ./profiles/<name>, and nothing else beside the root", () => {
+    const profiles = Object.keys(COLOR_PROFILES);
+    expect(Object.keys(pkg.exports)).toEqual([
+      ".",
+      ...profiles.map((name) => `./profiles/${name}`),
+    ]);
+    for (const name of profiles) {
+      expect([name, pkg.exports[`./profiles/${name}`]]).toEqual([name, `./${profilePath(name)}`]);
+    }
   });
 
   test("every export resolves to an existing file", async () => {

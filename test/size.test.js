@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
 import { brotli, entries, imports, measure, table } from "../scripts/size.js";
-import { LAYERS, layerPath } from "./layers.js";
+import { IMPORTS } from "./layers.js";
 
 const root = dirname(import.meta.dir);
 
@@ -10,11 +10,11 @@ describe("size report", () => {
     expect(await entries()).toEqual(["baseline.css"]);
   });
 
-  test("covers exactly the lean entry and the layer files it imports, in cascade order", async () => {
+  test("covers exactly the lean entry and the files it imports, in cascade order", async () => {
     const report = await measure("baseline.css");
     expect(report.files.map((file) => file.path)).toEqual([
       "baseline.css",
-      ...LAYERS.map(layerPath),
+      ...IMPORTS.map(([, path]) => path),
     ]);
   });
 

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en" data-palette="catppuccin">
+  <head>
+    <meta charset="utf-8" />
+    <title>profile consumer fixture</title>
+    <link rel="stylesheet" href="../../baseline.css" />
+    <style>
+      /* A consumer of the lean entry adding one profile: it imports the file the package's
+         ./profiles/catppuccin export names into the color sub-layer, after the entry, and
+         selects it on the root with data-palette. */
+      @import url(../../layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
+    </style>
+  </head>
+  <body>
+    <p>Catppuccin on the root.</p>
+    <div id="kanagawa" data-palette="kanagawa"><p>Kanagawa, not imported.</p></div>
+  </body>
+</html>

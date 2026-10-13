@@ -16,12 +16,17 @@ import { brotliCompressSync, constants } from "node:zlib";
 const root = dirname(import.meta.dir);
 
 // entries returns the package's CSS entries, as repository paths: every target its exports map
-// names that ends in .css, whatever the map's nesting of conditions, once each.
+// names that ends in .css, whatever the map's nesting of conditions, once each, but the profiles.
+// A profile export (./profiles/<name>) is one file a page imports beside an entry, not an entry,
+// so its size counts where an entry imports it.
 export async function entries(dir = root) {
   const pkg = await Bun.file(join(dir, "package.json")).json();
   const targets = (exports) =>
     typeof exports === "string" ? [exports] : Object.values(exports).flatMap(targets);
-  const css = targets(pkg.exports).filter((path) => path.endsWith(".css"));
+  const exported = Object.entries(pkg.exports).filter(([key]) => !key.startsWith("./profiles/"));
+  const css = exported
+    .flatMap(([, target]) => targets(target))
+    .filter((path) => path.endsWith(".css"));
   return [...new Set(css.map((path) => normalize(path)))];
 }
 
