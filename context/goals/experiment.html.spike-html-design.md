@@ -1,14 +1,14 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
-- **Task:** facets
-- **Branch:** facets
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] layers
 2. [x] themes
-3. [ ] facets
+3. [x] facets
 4. [ ] profiles
 5. [ ] preferences
 6. [ ] keys
@@ -118,10 +118,6 @@ Out of scope  Kanagawa, Tokyo Night, Catppuccin, profile attribute scopes and pr
               (validate); @function, @mixin, if().
 Door          one-way for tag v0.3.0, which jsDelivr caches as immutable; two-way otherwise.
 Release       v0.3.0
-
-## Progress
-
-slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10:16 fixed; hooks amended) · editor ✓
 
 ## Decisions
 
