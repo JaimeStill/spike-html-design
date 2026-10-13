@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 5/6 committed · review stop ✓ · standards — · spec — · editor —
+slices 6/6 committed · review stop ✓ · standards — · spec — · editor —
 
 ## Decisions
 
@@ -424,6 +424,9 @@ slices 5/6 committed · review stop ✓ · standards — · spec — · editor �
 - facets (review stop): the architect accepted the design layer after a second look as the
   starting point, adjusted as issues surface. Workbench layout feedback waits for profiles'
   comparison grid and its review stop; the specimen layer is composition, not baseline.
+- facets (BUILD, accepted by the architect): the button variant treatment is keyed on the class
+  prefix: a variant is named `button-<name>` and sets only --button-color; CSS can't test
+  whether a custom property is set, so a hook set on any other class does nothing.
 
 ## Pending edits
 
