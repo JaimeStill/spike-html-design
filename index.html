@@ -14,20 +14,20 @@
         main {
           max-width: 60rem;
           margin-inline: auto;
-          padding: var(--space-8) var(--space-6);
+          padding: var(--space-l) var(--space-m);
         }
 
         section {
-          margin-block-start: var(--space-12);
+          margin-block-start: var(--space-xl);
         }
 
         .specimen {
           display: grid;
           grid-template-columns: max-content 1fr;
-          gap: var(--space-2) var(--space-6);
+          gap: var(--space-2xs) var(--space-m);
           align-items: center;
-          margin-block-start: var(--space-4);
-          font-size: var(--text-sm);
+          margin-block-start: var(--space-s);
+          font-size: var(--text-s);
 
           & > code {
             color: var(--fg-3);
@@ -40,7 +40,7 @@
         }
 
         .values {
-          font-family: var(--font-mono);
+          font-family: var(--font-code);
           color: var(--fg-2);
         }
 
@@ -48,38 +48,58 @@
           font-family: var(--sample);
         }
 
+        /* A fluid token's progress, 0 to 1, as a share of the bar's track. */
+        .fluid-sample {
+          inline-size: calc(var(--sample) * 100%);
+          block-size: var(--space-s);
+          background: var(--blue);
+        }
+
         .space-sample {
           width: var(--sample);
-          height: var(--space-4);
-          border: 1px solid var(--blue);
+          height: var(--space-s);
+          border: var(--line-s) solid var(--blue);
+        }
+
+        .line-sample {
+          border-block-start: var(--sample) solid var(--fg-2);
         }
 
         .text-sample {
           font-size: var(--sample);
-          line-height: 1.25;
+          line-height: var(--leading-heading);
+        }
+
+        .leading-sample {
+          max-inline-size: 20ch;
+          line-height: var(--sample);
+        }
+
+        .measure-sample {
+          max-inline-size: var(--sample);
         }
 
         .radius-sample {
-          width: var(--space-16);
-          height: var(--space-10);
-          border: 1px solid var(--fg-2);
+          width: var(--space-2xl);
+          height: var(--space-xl);
+          border: var(--line-s) solid var(--fg-2);
           border-radius: var(--sample);
         }
 
         .swatch {
-          width: var(--space-16);
-          height: var(--space-8);
-          border: 1px solid var(--border);
+          width: var(--space-2xl);
+          height: var(--space-l);
+          border: var(--line-s) solid var(--border);
           border-radius: var(--radius-sm);
           background: var(--sample);
         }
 
         /* Bounded boxes, so the scroll samples overflow. */
         .scroll-sample {
-          max-inline-size: calc(5 * var(--space-16));
-          block-size: calc(2 * var(--space-16));
-          margin-block-start: var(--space-4);
-          border: 1px solid var(--border);
+          max-inline-size: calc(5 * var(--space-2xl));
+          block-size: calc(2 * var(--space-2xl));
+          margin-block-start: var(--space-s);
+          border: var(--line-s) solid var(--border);
 
           &.scroll-x {
             block-size: auto;
@@ -103,125 +123,192 @@
 
       <section id="tokens">
         <h2>Tokens</h2>
+        <p>
+          Each token shows a sample that reads it. The space and type samples are fluid: resize
+          the window, or emulate a display, and they move between their smallest value below a
+          22.5rem display and their largest above 80rem.
+        </p>
 
-        <h3>Font stacks</h3>
-        <div class="specimen">
-          <code>--font-sans</code>
-          <span class="font-sample" style="--sample: var(--font-sans)">The quick brown fox</span>
-          <code>--font-mono</code>
-          <span class="font-sample" style="--sample: var(--font-mono)">The quick brown fox</span>
-        </div>
+        <section id="color">
+          <h3>Color</h3>
+          <p>Each color token shows its swatch in the current scheme, then its light / dark values.</p>
+          <h4>Tiers</h4>
+          <p>Each color token shows its swatch in the current scheme, then its light / dark values.</p>
+          <div class="specimen colors">
+            <code>--bg</code>
+            <div class="swatch" style="--sample: var(--bg)"></div>
+            <span class="values">#fffcf0 / #100f0f</span>
+            <code>--bg-2</code>
+            <div class="swatch" style="--sample: var(--bg-2)"></div>
+            <span class="values">#f2f0e5 / #1c1b1a</span>
+            <code>--border</code>
+            <div class="swatch" style="--sample: var(--border)"></div>
+            <span class="values">#e6e4d9 / #282726</span>
+            <code>--border-2</code>
+            <div class="swatch" style="--sample: var(--border-2)"></div>
+            <span class="values">#dad8ce / #343331</span>
+            <code>--border-3</code>
+            <div class="swatch" style="--sample: var(--border-3)"></div>
+            <span class="values">#cecdc3 / #403e3c</span>
+            <code>--fg</code>
+            <div class="swatch" style="--sample: var(--fg)"></div>
+            <span class="values">#100f0f / #e6e4d9</span>
+            <code>--fg-2</code>
+            <div class="swatch" style="--sample: var(--fg-2)"></div>
+            <span class="values">#575653 / #b7b5ac</span>
+            <code>--fg-3</code>
+            <div class="swatch" style="--sample: var(--fg-3)"></div>
+            <span class="values">#878580 / #6f6e69</span>
+          </div>
 
-        <h3>Spacing</h3>
-        <div class="specimen">
-          <code>--space-1</code>
-          <div class="space-sample" style="--sample: var(--space-1)"></div>
-          <code>--space-2</code>
-          <div class="space-sample" style="--sample: var(--space-2)"></div>
-          <code>--space-3</code>
-          <div class="space-sample" style="--sample: var(--space-3)"></div>
-          <code>--space-4</code>
-          <div class="space-sample" style="--sample: var(--space-4)"></div>
-          <code>--space-5</code>
-          <div class="space-sample" style="--sample: var(--space-5)"></div>
-          <code>--space-6</code>
-          <div class="space-sample" style="--sample: var(--space-6)"></div>
-          <code>--space-8</code>
-          <div class="space-sample" style="--sample: var(--space-8)"></div>
-          <code>--space-10</code>
-          <div class="space-sample" style="--sample: var(--space-10)"></div>
-          <code>--space-12</code>
-          <div class="space-sample" style="--sample: var(--space-12)"></div>
-          <code>--space-16</code>
-          <div class="space-sample" style="--sample: var(--space-16)"></div>
-        </div>
+          <h4>Hues</h4>
+          <div class="specimen colors">
+            <code>--red</code>
+            <div class="swatch" style="--sample: var(--red)"></div>
+            <span class="values">#af3029 / #d14d41</span>
+            <code>--orange</code>
+            <div class="swatch" style="--sample: var(--orange)"></div>
+            <span class="values">#bc5215 / #da702c</span>
+            <code>--yellow</code>
+            <div class="swatch" style="--sample: var(--yellow)"></div>
+            <span class="values">#ad8301 / #d0a215</span>
+            <code>--green</code>
+            <div class="swatch" style="--sample: var(--green)"></div>
+            <span class="values">#66800b / #879a39</span>
+            <code>--cyan</code>
+            <div class="swatch" style="--sample: var(--cyan)"></div>
+            <span class="values">#24837b / #3aa99f</span>
+            <code>--blue</code>
+            <div class="swatch" style="--sample: var(--blue)"></div>
+            <span class="values">#205ea6 / #4385be</span>
+            <code>--purple</code>
+            <div class="swatch" style="--sample: var(--purple)"></div>
+            <span class="values">#5e409d / #8b7ec8</span>
+            <code>--magenta</code>
+            <div class="swatch" style="--sample: var(--magenta)"></div>
+            <span class="values">#a02f6f / #ce5d97</span>
+          </div>
+        </section>
 
-        <h3>Text</h3>
-        <div class="specimen">
-          <code>--text-xs</code>
-          <span class="text-sample" style="--sample: var(--text-xs)">Specimen</span>
-          <code>--text-sm</code>
-          <span class="text-sample" style="--sample: var(--text-sm)">Specimen</span>
-          <code>--text-base</code>
-          <span class="text-sample" style="--sample: var(--text-base)">Specimen</span>
-          <code>--text-lg</code>
-          <span class="text-sample" style="--sample: var(--text-lg)">Specimen</span>
-          <code>--text-xl</code>
-          <span class="text-sample" style="--sample: var(--text-xl)">Specimen</span>
-          <code>--text-2xl</code>
-          <span class="text-sample" style="--sample: var(--text-2xl)">Specimen</span>
-          <code>--text-3xl</code>
-          <span class="text-sample" style="--sample: var(--text-3xl)">Specimen</span>
-          <code>--text-4xl</code>
-          <span class="text-sample" style="--sample: var(--text-4xl)">Specimen</span>
-        </div>
+        <section id="space">
+          <h3>Space</h3>
 
-        <h3>Radii</h3>
-        <div class="specimen">
-          <code>--radius-sm</code>
-          <div class="radius-sample" style="--sample: var(--radius-sm)"></div>
-          <code>--radius-md</code>
-          <div class="radius-sample" style="--sample: var(--radius-md)"></div>
-          <code>--radius-lg</code>
-          <div class="radius-sample" style="--sample: var(--radius-lg)"></div>
-        </div>
+          <h4>Progress and base</h4>
+          <p>
+            The facet's progress through the display range, as a share of the bar, and the fluid
+            base every step multiplies.
+          </p>
+          <div class="specimen">
+            <code>--space-fluid</code>
+            <div class="fluid-sample" style="--sample: var(--space-fluid)"></div>
+            <code>--space-base</code>
+            <div class="space-sample" style="--sample: var(--space-base)"></div>
+          </div>
 
-        <h3>Tiers</h3>
-        <p>Each color token shows its swatch in the current scheme, then its light / dark values.</p>
-        <div class="specimen colors">
-          <code>--bg</code>
-          <div class="swatch" style="--sample: var(--bg)"></div>
-          <span class="values">#fffcf0 / #100f0f</span>
-          <code>--bg-2</code>
-          <div class="swatch" style="--sample: var(--bg-2)"></div>
-          <span class="values">#f2f0e5 / #1c1b1a</span>
-          <code>--border</code>
-          <div class="swatch" style="--sample: var(--border)"></div>
-          <span class="values">#e6e4d9 / #282726</span>
-          <code>--border-2</code>
-          <div class="swatch" style="--sample: var(--border-2)"></div>
-          <span class="values">#dad8ce / #343331</span>
-          <code>--border-3</code>
-          <div class="swatch" style="--sample: var(--border-3)"></div>
-          <span class="values">#cecdc3 / #403e3c</span>
-          <code>--fg</code>
-          <div class="swatch" style="--sample: var(--fg)"></div>
-          <span class="values">#100f0f / #e6e4d9</span>
-          <code>--fg-2</code>
-          <div class="swatch" style="--sample: var(--fg-2)"></div>
-          <span class="values">#575653 / #b7b5ac</span>
-          <code>--fg-3</code>
-          <div class="swatch" style="--sample: var(--fg-3)"></div>
-          <span class="values">#878580 / #6f6e69</span>
-        </div>
+          <h4>Scale</h4>
+          <div class="specimen">
+            <code>--space-3xs</code>
+            <div class="space-sample" style="--sample: var(--space-3xs)"></div>
+            <code>--space-2xs</code>
+            <div class="space-sample" style="--sample: var(--space-2xs)"></div>
+            <code>--space-xs</code>
+            <div class="space-sample" style="--sample: var(--space-xs)"></div>
+            <code>--space-s</code>
+            <div class="space-sample" style="--sample: var(--space-s)"></div>
+            <code>--space-m</code>
+            <div class="space-sample" style="--sample: var(--space-m)"></div>
+            <code>--space-l</code>
+            <div class="space-sample" style="--sample: var(--space-l)"></div>
+            <code>--space-xl</code>
+            <div class="space-sample" style="--sample: var(--space-xl)"></div>
+            <code>--space-2xl</code>
+            <div class="space-sample" style="--sample: var(--space-2xl)"></div>
+            <code>--space-3xl</code>
+            <div class="space-sample" style="--sample: var(--space-3xl)"></div>
+          </div>
 
-        <h3>Hues</h3>
-        <div class="specimen colors">
-          <code>--red</code>
-          <div class="swatch" style="--sample: var(--red)"></div>
-          <span class="values">#af3029 / #d14d41</span>
-          <code>--orange</code>
-          <div class="swatch" style="--sample: var(--orange)"></div>
-          <span class="values">#bc5215 / #da702c</span>
-          <code>--yellow</code>
-          <div class="swatch" style="--sample: var(--yellow)"></div>
-          <span class="values">#ad8301 / #d0a215</span>
-          <code>--green</code>
-          <div class="swatch" style="--sample: var(--green)"></div>
-          <span class="values">#66800b / #879a39</span>
-          <code>--cyan</code>
-          <div class="swatch" style="--sample: var(--cyan)"></div>
-          <span class="values">#24837b / #3aa99f</span>
-          <code>--blue</code>
-          <div class="swatch" style="--sample: var(--blue)"></div>
-          <span class="values">#205ea6 / #4385be</span>
-          <code>--purple</code>
-          <div class="swatch" style="--sample: var(--purple)"></div>
-          <span class="values">#5e409d / #8b7ec8</span>
-          <code>--magenta</code>
-          <div class="swatch" style="--sample: var(--magenta)"></div>
-          <span class="values">#a02f6f / #ce5d97</span>
-        </div>
+          <h4>Lines</h4>
+          <div class="specimen">
+            <code>--line-s</code>
+            <div class="line-sample" style="--sample: var(--line-s)"></div>
+            <code>--line-m</code>
+            <div class="line-sample" style="--sample: var(--line-m)"></div>
+          </div>
+
+          <h4>Radii</h4>
+          <div class="specimen">
+            <code>--radius-base</code>
+            <div class="radius-sample" style="--sample: var(--radius-base)"></div>
+            <code>--radius-sm</code>
+            <div class="radius-sample" style="--sample: var(--radius-sm)"></div>
+            <code>--radius-md</code>
+            <div class="radius-sample" style="--sample: var(--radius-md)"></div>
+            <code>--radius-lg</code>
+            <div class="radius-sample" style="--sample: var(--radius-lg)"></div>
+            <code>--radius-full</code>
+            <div class="radius-sample" style="--sample: var(--radius-full)"></div>
+          </div>
+        </section>
+
+        <section id="type">
+          <h3>Type</h3>
+
+          <h4>Progress</h4>
+          <div class="specimen">
+            <code>--type-fluid</code>
+            <div class="fluid-sample" style="--sample: var(--type-fluid)"></div>
+          </div>
+
+          <h4>Scale</h4>
+          <div class="specimen">
+            <code>--text-xs</code>
+            <span class="text-sample" style="--sample: var(--text-xs)">Specimen</span>
+            <code>--text-s</code>
+            <span class="text-sample" style="--sample: var(--text-s)">Specimen</span>
+            <code>--text-m</code>
+            <span class="text-sample" style="--sample: var(--text-m)">Specimen</span>
+            <code>--text-l</code>
+            <span class="text-sample" style="--sample: var(--text-l)">Specimen</span>
+            <code>--text-xl</code>
+            <span class="text-sample" style="--sample: var(--text-xl)">Specimen</span>
+            <code>--text-2xl</code>
+            <span class="text-sample" style="--sample: var(--text-2xl)">Specimen</span>
+            <code>--text-3xl</code>
+            <span class="text-sample" style="--sample: var(--text-3xl)">Specimen</span>
+            <code>--text-4xl</code>
+            <span class="text-sample" style="--sample: var(--text-4xl)">Specimen</span>
+          </div>
+
+          <h4>Fonts</h4>
+          <div class="specimen">
+            <code>--font-body</code>
+            <span class="font-sample" style="--sample: var(--font-body)">The quick brown fox</span>
+            <code>--font-heading</code>
+            <span class="font-sample" style="--sample: var(--font-heading)">The quick brown fox</span>
+            <code>--font-ui</code>
+            <span class="font-sample" style="--sample: var(--font-ui)">The quick brown fox</span>
+            <code>--font-code</code>
+            <span class="font-sample" style="--sample: var(--font-code)">The quick brown fox</span>
+          </div>
+
+          <h4>Leading</h4>
+          <div class="specimen">
+            <code>--leading-body</code>
+            <span class="leading-sample" style="--sample: var(--leading-body)">Two lines of text, set at the leading the token names, wrap here.</span>
+            <code>--leading-heading</code>
+            <span class="leading-sample" style="--sample: var(--leading-heading)">Two lines of text, set at the leading the token names, wrap here.</span>
+            <code>--leading-ui</code>
+            <span class="leading-sample" style="--sample: var(--leading-ui)">Two lines of text, set at the leading the token names, wrap here.</span>
+            <code>--leading-code</code>
+            <span class="leading-sample" style="--sample: var(--leading-code)">Two lines of text, set at the leading the token names, wrap here.</span>
+          </div>
+
+          <h4>Measure</h4>
+          <div class="specimen">
+            <code>--measure</code>
+            <span class="measure-sample" style="--sample: var(--measure)">A line of body text runs to the measure and wraps there, so the eye finds the start of the next line without hunting for it. The measure is in ch, so it follows the font size it is set in.</span>
+          </div>
+        </section>
       </section>
 
       <section id="prose">
@@ -233,7 +320,7 @@
         <h5>Heading five</h5>
         <h6>Heading six</h6>
         <p>
-          A paragraph of body text in the sans stack, with <a href="#prose">a link to this section</a>,
+          A paragraph of body text in the body font, with <a href="#prose">a link to this section</a>,
           <strong>strong text</strong>, <em>emphasis</em>, inline <code>code</code>, and a key,
           <kbd>T</kbd>.
         </p>
@@ -248,7 +335,7 @@
         <blockquote>
           <p>A blockquote, set off by a rule at its start edge.</p>
         </blockquote>
-        <pre><code>// A preformatted block in the mono stack.
+        <pre><code>// A preformatted block in the code font.
 const answer = 42;</code></pre>
         <table>
           <thead>

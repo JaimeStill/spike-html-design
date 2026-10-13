@@ -1,8 +1,8 @@
 // harness is the single test seam: a page loaded in headless chromium and queried for computed
 // styles. It wraps Bun.WebView (experimental in bun 1.4.3) with the few capabilities the tests
 // use: open a URL, evaluate in the page, read a computed style, fingerprint a page's resolved
-// styles, emulate media features such as prefers-color-scheme, and answer a request URL prefix
-// from a local file. serve() is a static server for pages that must load over http://.
+// styles, emulate media features such as prefers-color-scheme and the viewport's size, and answer
+// a request URL prefix from a local file. serve() is a static server for pages that must load over http://.
 //
 // Bun.WebView spawns one chromium per bun process and opens each view as a tab in it, so the
 // first openPage() fixes the browser for the whole test run.
@@ -17,16 +17,18 @@ export function fileUrl(path) {
 
 // openPage opens url in a new tab of a headless chromium the harness spawns itself and resolves
 // to a Page once the page has loaded. Options set up the tab before the first load:
-// `scheme` emulates prefers-color-scheme ("dark" or "light"), and `intercept` maps URL prefixes
-// to the local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. It throws
-// when chromium is not on PATH or won't start.
-export async function openPage(url, { scheme, intercept } = {}) {
+// `scheme` emulates prefers-color-scheme ("dark" or "light"), `viewport` emulates the viewport's
+// size in CSS px, as in { width: 1440, height: 900 }, and `intercept` maps URL prefixes to the
+// local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. It throws when
+// chromium is not on PATH or won't start.
+export async function openPage(url, { scheme, viewport, intercept } = {}) {
   const page = new Page(spawnView());
   try {
     // about:blank first: a view has no CDP session until its first navigation, and emulation
     // and interception must be in place before the page under test loads.
     await page.view.navigate("about:blank");
     if (scheme) await page.setScheme(scheme);
+    if (viewport) await page.setViewport(viewport);
     for (const [prefix, path] of Object.entries(intercept ?? {}))
       await page.intercept(prefix, path);
     await page.goto(url);
@@ -148,6 +150,18 @@ class Page {
     // setEmulatedMedia replaces the feature list, so each call sends every feature.
     await this.#cdp("Emulation.setEmulatedMedia", {
       features: [...this.#media].map(([name, value]) => ({ name, value })),
+    });
+  }
+
+  // setViewport emulates the viewport's size, { width, height } in CSS px at a device scale of 1,
+  // as a desktop window of that size would give. Viewport units and media queries follow it at
+  // once, without a reload.
+  async setViewport({ width, height }) {
+    await this.#cdp("Emulation.setDeviceMetricsOverride", {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: false,
     });
   }
 

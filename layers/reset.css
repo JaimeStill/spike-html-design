@@ -1,7 +1,8 @@
 /*
  * layers/reset.css, the reset layer.
  *
- * herald's reset, unchanged.
+ * herald's reset, reading the type facet's role tokens: the body's leading, and the interface
+ * font and leading for form controls and buttons.
  *
  * baseline.css imports this file into spike-html-design.reset. Pages link baseline.css, never
  * this file: linked on its own, its rules would be unlayered.
@@ -19,7 +20,7 @@
 
 body {
   min-height: 100svh;
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
 
 img,
@@ -36,7 +37,8 @@ input,
 select,
 textarea,
 option {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
+  line-height: var(--leading-ui);
 }
 
 @media (prefers-reduced-motion: no-preference) {

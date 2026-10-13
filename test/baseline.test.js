@@ -31,31 +31,94 @@ const SANS =
 const MONO =
   'ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace';
 
-// SCALES are herald's colorless tokens, name to declared value.
-const SCALES = {
-  "--font-sans": SANS,
-  "--font-mono": MONO,
-  "--space-1": "0.25rem",
-  "--space-2": "0.5rem",
-  "--space-3": "0.75rem",
-  "--space-4": "1rem",
-  "--space-5": "1.25rem",
-  "--space-6": "1.5rem",
-  "--space-8": "2rem",
-  "--space-10": "2.5rem",
-  "--space-12": "3rem",
-  "--space-16": "4rem",
-  "--text-xs": "0.75rem",
-  "--text-sm": "0.875rem",
-  "--text-base": "1rem",
-  "--text-lg": "1.125rem",
-  "--text-xl": "1.25rem",
-  "--text-2xl": "1.5rem",
-  "--text-3xl": "1.875rem",
-  "--text-4xl": "2.25rem",
-  "--radius-sm": "0.25rem",
-  "--radius-md": "0.5rem",
-  "--radius-lg": "0.75rem",
+// SPACE_STEPS are the space scale's steps, name to its multiple of the fluid space base.
+const SPACE_STEPS = {
+  "--space-3xs": 0.25,
+  "--space-2xs": 0.5,
+  "--space-xs": 0.75,
+  "--space-s": 1,
+  "--space-m": 1.5,
+  "--space-l": 2,
+  "--space-xl": 3,
+  "--space-2xl": 4,
+  "--space-3xl": 6,
+};
+
+// SPACE_BASE is the fluid space base's [smallest, largest] value, in rem.
+const SPACE_BASE = [1, 1.125];
+
+// TEXT_STEPS are the text scale's tokens, name to its step on the modular scale.
+const TEXT_STEPS = {
+  "--text-xs": -2,
+  "--text-s": -1,
+  "--text-m": 0,
+  "--text-l": 1,
+  "--text-xl": 2,
+  "--text-2xl": 3,
+  "--text-3xl": 4,
+  "--text-4xl": 5,
+};
+
+// FLUID are the fluid tokens, name to [smallest, largest] value in rem: the space base and each
+// step's multiple of it, and each text step from 1rem × 1.2^n to 1.125rem × 1.25^n, rounded to
+// the four decimals the type facet states them in.
+const FLUID = {
+  "--space-base": SPACE_BASE,
+  ...Object.fromEntries(
+    Object.entries(SPACE_STEPS).map(([name, k]) => [name, SPACE_BASE.map((rem) => rem * k)]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(TEXT_STEPS).map(([name, n]) => [
+      name,
+      [1.2 ** n, 1.125 * 1.25 ** n].map((rem) => Number(rem.toFixed(4))),
+    ]),
+  ),
+};
+
+// SPACE is the space facet's token set, name to kind: how a test resolves the token's value.
+const SPACE = {
+  "--space-fluid": "number",
+  "--space-base": "length",
+  ...Object.fromEntries(Object.keys(SPACE_STEPS).map((name) => [name, "length"])),
+  "--line-s": "length",
+  "--line-m": "length",
+  "--radius-base": "length",
+  "--radius-sm": "length",
+  "--radius-md": "length",
+  "--radius-lg": "length",
+  "--radius-full": "length",
+};
+
+// TYPE is the type facet's token set, name to kind.
+const TYPE = {
+  "--type-fluid": "number",
+  ...Object.fromEntries(Object.keys(TEXT_STEPS).map((name) => [name, "length"])),
+  "--font-body": "raw",
+  "--font-heading": "raw",
+  "--font-ui": "raw",
+  "--font-code": "raw",
+  "--leading-body": "number",
+  "--leading-heading": "number",
+  "--leading-ui": "number",
+  "--leading-code": "number",
+  "--measure": "length",
+};
+
+// FIXED are the type and space tokens no display size changes, name to declared value.
+const FIXED = {
+  "--font-body": SANS,
+  "--font-heading": MONO,
+  "--font-ui": MONO,
+  "--font-code": MONO,
+  "--leading-body": "1.5",
+  "--leading-heading": "1.2",
+  "--leading-ui": "1.25",
+  "--leading-code": "1.5",
+  "--measure": "68ch",
+  "--line-s": "1px",
+  "--line-m": "2px",
+  "--radius-base": "0.375rem",
+  "--radius-full": "9999px",
 };
 
 // rgb converts a #rrggbb hex to the rgb() a computed color reads as.
@@ -92,8 +155,20 @@ const COLORS = Object.fromEntries(
   Object.entries({ ...TIERS, ...HUES }).map(([name, pair]) => [name, pair.map(rgb)]),
 );
 
-// RETIRED are the v0.1.0 and v0.2.0 color token names the color facet dropped: their tiers, the
-// role tokens, and herald's text tiers. None may be declared or read anywhere in the working tree.
+// FACETS are the tokens layer's facets, sub-layer to its token set, name to kind.
+const FACETS = {
+  "tokens.color": Object.fromEntries(Object.keys(COLORS).map((name) => [name, "color"])),
+  "tokens.space": SPACE,
+  "tokens.type": TYPE,
+};
+
+// TOKENS are every token the baseline declares, name to kind.
+const TOKENS = Object.assign({}, ...Object.values(FACETS));
+
+// RETIRED are the v0.1.0 and v0.2.0 token names the facets dropped: the color tiers, the role
+// tokens, and herald's text tiers; herald's numbered space steps, its font stacks, and the text
+// steps the type facet renamed. None may be declared or read anywhere in the working tree. The
+// kept text names (--text-xs, --text-xl, --text-2xl to --text-4xl) are not among them.
 const RETIRED = [
   "--bg-1",
   "--divider",
@@ -105,6 +180,12 @@ const RETIRED = [
   "--success",
   "--warning",
   "--danger",
+  ...[1, 2, 3, 4, 5, 6, 8, 10, 12, 16].map((step) => `--space-${step}`),
+  "--font-sans",
+  "--font-mono",
+  "--text-sm",
+  "--text-base",
+  "--text-lg",
 ];
 
 // SOURCES are the working tree's CSS: the stylesheet, its layer files, the specimen and its
@@ -139,6 +220,54 @@ function resolveColor(page, token) {
     probe.remove();
     return color;
   })()`);
+}
+
+// resolveToken resolves to a token's value as an element in the page computes it, by its kind:
+// a color to its rgb(), a length to px and a number to a number, each through a registered
+// custom property, so viewport units, rem, progress() and calc() are all resolved, and any other
+// token to its declared value with whitespace squashed.
+async function resolveToken(page, name, kind = TOKENS[name]) {
+  if (kind === "color") return resolveColor(page, name);
+  if (kind === "raw") return squash(await page.style(":root", name));
+  return resolveAs(page, kind, `var(${name})`);
+}
+
+// resolveAs resolves a CSS value of kind "length" (to px) or "number" in the page, as an element
+// in the root, outside the body, computes it, and resolves to the number. Outside the body, a
+// font the type facet sets on the body never changes a ch or em length.
+function resolveAs(page, kind, value) {
+  const syntax = kind === "length" ? "<length>" : "<number>";
+  const property = `--resolved-${kind}`;
+  return page.evaluate(`(() => {
+    // A property registers once per document; a second resolve finds it registered.
+    try {
+      CSS.registerProperty({ name: "${property}", syntax: "${syntax}", inherits: false,
+        initialValue: "0" });
+    } catch {}
+    const probe = document.documentElement.appendChild(document.createElement("i"));
+    probe.style.setProperty("${property}", ${JSON.stringify(value)});
+    const value = Number.parseFloat(getComputedStyle(probe).getPropertyValue("${property}"));
+    probe.remove();
+    return value;
+  })()`);
+}
+
+// resolveAll resolves every token of tokens, name to kind, to its value in the page.
+async function resolveAll(page, tokens = TOKENS) {
+  const values = {};
+  for (const [name, kind] of Object.entries(tokens)) {
+    values[name] = await resolveToken(page, name, kind);
+  }
+  return values;
+}
+
+// fluid is the px a fluid token of [smallest, largest] rem resolves to in a viewport of width by
+// height px, with a root font size of rem px: the range 22.5rem to 80rem, measured as
+// min(100vi, 100svb * 16 / 9), with progress clamped to 0..1.
+function fluid([min, max], { width, height }, rem = 16) {
+  const size = Math.min(width, (height * 16) / 9);
+  const progress = Math.min(Math.max((size - 22.5 * rem) / (57.5 * rem), 0), 1);
+  return (min + (max - min) * progress) * rem;
 }
 
 // addAppStyle appends css to the page in a style element, after the baseline, as an artifact's
@@ -275,18 +404,20 @@ describe("layers", () => {
 });
 
 describe("tokens", () => {
-  test("declares exactly the scales, tiers and hues, without role, shadow and tint tokens", async () => {
+  test("declares exactly the color, space and type tokens, without role, shadow and tint tokens", async () => {
     const page = await open(specimen, { scheme: "light" });
     const names = Object.keys(await rootTokens(page)).sort();
     // An exact match, so role tokens, shadow tokens, --*-bg tints, and bright, black, white or
     // ANSI hues cannot slip in.
-    expect(names).toEqual([...Object.keys(SCALES), ...Object.keys(COLORS)].sort());
+    expect(names).toEqual(Object.keys(TOKENS).sort());
   });
 
-  test("the font stacks and scales carry herald's values", async () => {
+  test("the fonts, leadings, measure, lines and radius base carry their declared values", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tokens = await rootTokens(page);
-    for (const [name, value] of Object.entries(SCALES)) expect(squash(tokens[name])).toBe(value);
+    for (const [name, value] of Object.entries(FIXED)) {
+      expect([name, squash(tokens[name])]).toEqual([name, value]);
+    }
   });
 
   for (const [index, scheme] of ["light", "dark"].entries()) {
@@ -298,25 +429,67 @@ describe("tokens", () => {
     });
   }
 
-  test("the color facet's layer declares exactly the sixteen tiers and hues", async () => {
-    // Over http, since chromium hides a file:// stylesheet's rules from the page.
-    const page = await open(server.url, { scheme: "light" });
-    const names = await page.evaluate(`(() => {
-      const names = [];
-      const walk = (rules) => {
-        for (const rule of rules) {
-          if (rule.style) names.push(...[...rule.style].filter((name) => name.startsWith("--")));
-          if (rule.cssRules) walk(rule.cssRules);
-        }
-      };
-      walk(${layerSheet("tokens.color")}.cssRules);
-      return names;
-    })()`);
+  for (const [facet, tokens] of Object.entries(FACETS)) {
+    test(`the ${facet} sub-layer declares exactly its facet's tokens, and reads only those`, async () => {
+      // Over http, since chromium hides a file:// stylesheet's rules from the page.
+      const page = await open(server.url, { scheme: "light" });
+      const { names, reads } = await page.evaluate(`(() => {
+        const names = [];
+        const reads = [];
+        const walk = (rules) => {
+          for (const rule of rules) {
+            if (rule.style) {
+              for (const name of rule.style) {
+                if (!name.startsWith("--")) continue;
+                names.push(name);
+                const value = rule.style.getPropertyValue(name);
+                reads.push(...[...value.matchAll(/var\\((--[\\w-]+)/g)].map((m) => m[1]));
+              }
+            }
+            if (rule.cssRules) walk(rule.cssRules);
+          }
+        };
+        walk(${layerSheet(facet)}.cssRules);
+        return { names, reads };
+      })()`);
+      expect(names.sort()).toEqual(Object.keys(tokens).sort());
+      // A facet that read another facet's token would change when that facet's profile swaps.
+      expect(reads.filter((name) => !(name in tokens))).toEqual([]);
+    });
+  }
+
+  test("the color facet holds sixteen tokens", () => {
     expect(Object.keys(COLORS)).toHaveLength(16);
-    expect(names.sort()).toEqual(Object.keys(COLORS).sort());
   });
 
-  test("no v0.1.0 or v0.2.0 color token name remains in the working tree's CSS", async () => {
+  test("every fluid token's bounds are rem, never px, and it interpolates with progress()", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const declared = await page.evaluate(`(() => {
+      const declared = {};
+      for (const sheet of [${["tokens.space", "tokens.type"].map(layerSheet)}]) {
+        for (const rule of sheet.cssRules) {
+          for (const name of rule.style ?? []) declared[name] = rule.style.getPropertyValue(name);
+        }
+      }
+      return declared;
+    })()`);
+    // Each fluid token reads its facet's progress, or the space base that does; the progress
+    // tokens measure the two-axis bound over the range.
+    for (const facet of ["space", "type"]) {
+      expect(squash(declared[`--${facet}-fluid`])).toBe(
+        "progress(min(100vi, 100svb * 16 / 9), 22.5rem, 80rem)",
+      );
+    }
+    for (const name of Object.keys(FLUID)) {
+      expect([
+        name,
+        /var\(--(space|type)-fluid\)|var\(--space-base\)/.test(declared[name]),
+      ]).toEqual([name, true]);
+      expect([name, declared[name].includes("px")]).toEqual([name, false]);
+    }
+  });
+
+  test("no v0.1.0 or v0.2.0 token name remains in the working tree's CSS", async () => {
     for (const path of SOURCES) {
       const text = await Bun.file(join(root, path)).text();
       // A name ends where the next character can't continue it, so --bg-1 never matches --bg-10.
@@ -389,6 +562,177 @@ describe("tokens", () => {
   });
 });
 
+// VIEWPORTS are emulated displays, named, as { width, height } in CSS px.
+const VIEWPORTS = {
+  narrow: { width: 320, height: 800 },
+  phone: { width: 360, height: 800 },
+  laptop: { width: 1024, height: 768 },
+  desktop: { width: 1440, height: 900 },
+  ultrawide: { width: 3440, height: 1440 },
+  short: { width: 844, height: 390 },
+  tall: { width: 844, height: 1200 },
+};
+
+// resolveFluid resolves every fluid token on page, name to px.
+async function resolveFluid(page) {
+  const values = {};
+  for (const name of Object.keys(FLUID)) values[name] = await resolveToken(page, name, "length");
+  return values;
+}
+
+// expectFluid expects each fluid token's resolved px to be its formula's value at viewport and
+// root font size rem, to a hundredth of a px.
+function expectFluid(values, viewport, rem = 16) {
+  for (const [name, bounds] of Object.entries(FLUID)) {
+    expect([name, values[name]]).toEqual([name, expect.closeTo(fluid(bounds, viewport, rem), 2)]);
+  }
+}
+
+describe("fluid space and type", () => {
+  for (const name of ["narrow", "phone"]) {
+    test(`hold their smallest value at or below the range, on a ${name} display`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
+      const values = await resolveFluid(page);
+      for (const [token, [min]] of Object.entries(FLUID)) {
+        expect([token, values[token]]).toEqual([token, expect.closeTo(min * 16, 2)]);
+      }
+    });
+  }
+
+  for (const name of ["desktop", "ultrawide"]) {
+    test(`hold their largest value above the range, on a ${name} display`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
+      const values = await resolveFluid(page);
+      for (const [token, [, max]] of Object.entries(FLUID)) {
+        expect([token, values[token]]).toEqual([token, expect.closeTo(max * 16, 2)]);
+      }
+    });
+  }
+
+  test("lie strictly between their bounds mid-range, as the formula gives", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.laptop });
+    const values = await resolveFluid(page);
+    for (const [name, [min, max]] of Object.entries(FLUID)) {
+      expect([name, values[name] > min * 16 && values[name] < max * 16]).toEqual([name, true]);
+    }
+    expectFluid(values, VIEWPORTS.laptop);
+  });
+
+  test("follow a resize without a reload", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.narrow });
+    await page.setViewport(VIEWPORTS.laptop);
+    expectFluid(await resolveFluid(page), VIEWPORTS.laptop);
+  });
+
+  test("read smaller in a short, wide window than in a tall one of the same width", async () => {
+    const short = await resolveFluid(
+      await open(specimen, { scheme: "light", viewport: VIEWPORTS.short }),
+    );
+    const tall = await resolveFluid(
+      await open(specimen, { scheme: "light", viewport: VIEWPORTS.tall }),
+    );
+    expectFluid(short, VIEWPORTS.short);
+    expectFluid(tall, VIEWPORTS.tall);
+    for (const name of Object.keys(FLUID)) {
+      expect([name, short[name] < tall[name]]).toEqual([name, true]);
+    }
+  });
+
+  test("scale with the root font size, which shifts the range, as browser zoom does", async () => {
+    // Browser zoom by z shrinks the viewport, in CSS px, by z and scales every CSS px by z on
+    // screen, while 1rem stays 16 CSS px. Doubling the root font size at a fixed viewport gives
+    // the same tokens in screen px, since every bound is rem: at 200% zoom a 1440px window is a
+    // 720px viewport, and a token there, doubled, is the token at 1440px with a 32px root. So a
+    // 32px root stands for 200% zoom, and for a user's 32px default font size alike.
+    const zoomed = await open(specimen, { scheme: "light", viewport: VIEWPORTS.desktop });
+    await zoomed.evaluate(`document.documentElement.style.fontSize = "32px"`);
+    const values = await resolveFluid(zoomed);
+    expectFluid(values, VIEWPORTS.desktop, 32);
+    const half = await resolveFluid(
+      await open(specimen, { scheme: "light", viewport: { width: 720, height: 450 } }),
+    );
+    for (const [name, [min, max]] of Object.entries(FLUID)) {
+      expect([name, values[name]]).toEqual([name, expect.closeTo(half[name] * 2, 2)]);
+      // The range shifted: 1440px is past 80rem at 16px but inside it at 32px, so each token is
+      // more than twice its smallest value and less than twice its largest.
+      expect([name, values[name] > min * 32 && values[name] < max * 32]).toEqual([name, true]);
+    }
+  });
+});
+
+describe("radius", () => {
+  test("derives sm, md and lg from the radius base, and full from none", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const radii = () =>
+      resolveAll(
+        page,
+        Object.fromEntries(
+          ["sm", "md", "lg", "full"].map((size) => [`--radius-${size}`, "length"]),
+        ),
+      );
+    expect(await radii()).toEqual({
+      "--radius-sm": expect.closeTo(4, 2),
+      "--radius-md": 6,
+      "--radius-lg": expect.closeTo(8, 2),
+      "--radius-full": 9999,
+    });
+    await addAppStyle(page, "@layer app { :root { --radius-base: 0.75rem; } }");
+    expect(await radii()).toEqual({
+      "--radius-sm": expect.closeTo(8, 2),
+      "--radius-md": 12,
+      "--radius-lg": expect.closeTo(16, 2),
+      "--radius-full": 9999,
+    });
+  });
+});
+
+// PROFILES are test profiles, one per fluid facet: css that restates some of a facet's values in
+// its own sub-layer, after the baseline's rules there, as a profile would, and the tokens it
+// changes, directly or through what they read.
+const PROFILES = {
+  "tokens.space": {
+    changes: [
+      "--space-base",
+      ...Object.keys(SPACE_STEPS),
+      "--line-s",
+      "--radius-base",
+      "--radius-sm",
+      "--radius-md",
+      "--radius-lg",
+    ],
+    css: `:root {
+    --space-base: calc(2rem + (3rem - 2rem) * var(--space-fluid));
+    --line-s: 3px;
+    --radius-base: 1rem;
+  }`,
+  },
+  "tokens.type": {
+    changes: ["--text-m", "--text-4xl", "--font-body", "--leading-body"],
+    css: `:root {
+    --text-m: calc(2rem + (3rem - 2rem) * var(--type-fluid));
+    --text-4xl: calc(4rem + (6rem - 4rem) * var(--type-fluid));
+    --font-body: serif;
+    --leading-body: 2;
+  }`,
+  },
+};
+
+describe("facet independence", () => {
+  for (const [facet, { css, changes }] of Object.entries(PROFILES)) {
+    test(`a profile in ${facet} changes only that facet's tokens`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.laptop });
+      const before = await resolveAll(page);
+      await addAppStyle(page, `@layer ${PACKAGE}.${facet} { ${css} }`);
+      const after = await resolveAll(page);
+      const changed = Object.keys(TOKENS).filter((name) => after[name] !== before[name]);
+      // Exactly what the profile restated, and what reads it, moved: every other token of its
+      // own facet, and every color, space or type token of the others, kept its value.
+      expect(changed.sort()).toEqual([...changes].sort());
+      expect(changed.filter((name) => !(name in FACETS[facet]))).toEqual([]);
+    });
+  }
+});
+
 describe("reset", () => {
   test("sizes every box, pseudo-elements included, by its border", async () => {
     const page = await open(fixture, { scheme: "light" });
@@ -405,7 +749,8 @@ describe("reset", () => {
   });
 
   test("zeroes margins and sets the body's line height and minimum height", async () => {
-    const page = await open(fixture, { scheme: "light" });
+    // Below the range, so the body's text is --text-m's smallest value, 16px.
+    const page = await open(fixture, { scheme: "light", viewport: VIEWPORTS.narrow });
     for (const selector of ["body", "p", "button"]) {
       expect(await page.style(selector, "margin")).toBe("0px");
     }
@@ -422,11 +767,15 @@ describe("reset", () => {
     }
   });
 
-  test("sets form controls in the mono stack", async () => {
+  test("sets form controls in the interface font and leading", async () => {
     const page = await open(fixture, { scheme: "light" });
+    await addAppStyle(page, "@layer app { :root { --font-ui: serif; --leading-ui: 3; } }");
     for (const selector of ["button", "input", "select", "textarea", "option"]) {
-      expect(await page.style(selector, "font-family")).toBe(MONO);
+      expect([selector, await page.style(selector, "font-family")]).toEqual([selector, "serif"]);
     }
+    const size = await page.style("button", "font-size");
+    const leading = await page.style("button", "line-height");
+    expect(Number.parseFloat(leading)).toBeCloseTo(Number.parseFloat(size) * 3, 2);
   });
 
   test("scrolls to anchors smoothly only without reduced motion", async () => {
@@ -440,22 +789,65 @@ describe("reset", () => {
 });
 
 describe("elements", () => {
-  test("sets the body in the sans stack and code, pre and kbd in the mono stack", async () => {
+  test("sets the body, headings, and code, pre and kbd in their role fonts", async () => {
     const page = await open(specimen, { scheme: "light" });
     expect(await page.style("body", "font-family")).toBe(SANS);
+    for (const selector of ["pre", "code", "kbd", "#prose h1", "#prose h6"]) {
+      expect([selector, await page.style(selector, "font-family")]).toEqual([selector, MONO]);
+    }
+    // Each reads its role's token by name, not a stack that happens to match.
+    await addAppStyle(
+      page,
+      "@layer app { :root { --font-body: serif; --font-heading: cursive; --font-code: fantasy; } }",
+    );
+    expect(await page.style("body", "font-family")).toBe("serif");
+    expect(await page.style("#prose h2", "font-family")).toBe("cursive");
     for (const selector of ["pre", "code", "kbd"]) {
-      expect(await page.style(selector, "font-family")).toBe(MONO);
+      expect([selector, await page.style(selector, "font-family")]).toEqual([selector, "fantasy"]);
     }
   });
 
-  test("sets headings on the text scale", async () => {
+  test("sets the body, headings and pre at their role leadings", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const sizes = { h1: "36px", h2: "30px", h3: "24px", h4: "20px", h5: "18px", h6: "16px" };
-    for (const [selector, size] of Object.entries(sizes)) {
-      expect(await page.style(`#prose ${selector}`, "font-size")).toBe(size);
-      expect(await page.style(`#prose ${selector}`, "font-weight")).toBe("600");
+    for (const [selector, token] of [
+      ["body", "--leading-body"],
+      ["#prose h3", "--leading-heading"],
+      ["#prose pre", "--leading-code"],
+    ]) {
+      const [size, leading] = [
+        await page.style(selector, "font-size"),
+        await page.style(selector, "line-height"),
+      ];
+      const ratio = Number.parseFloat(leading) / Number.parseFloat(size);
+      expect([selector, ratio]).toEqual([
+        selector,
+        expect.closeTo(await resolveToken(page, token), 2),
+      ]);
     }
   });
+
+  for (const name of ["narrow", "laptop", "ultrawide"]) {
+    test(`sets the body and headings on the text scale, on a ${name} display`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
+      const sizes = {
+        body: "--text-m",
+        "#prose h1": "--text-4xl",
+        "#prose h2": "--text-3xl",
+        "#prose h3": "--text-2xl",
+        "#prose h4": "--text-xl",
+        "#prose h5": "--text-l",
+        "#prose h6": "--text-m",
+      };
+      for (const [selector, token] of Object.entries(sizes)) {
+        const size = Number.parseFloat(await page.style(selector, "font-size"));
+        expect([selector, size]).toEqual([
+          selector,
+          expect.closeTo(fluid(FLUID[token], VIEWPORTS[name]), 2),
+        ]);
+        if (selector !== "body") expect(await page.style(selector, "font-weight")).toBe("600");
+      }
+    });
+  }
 
   test("styles links, lists, tables, blockquotes and rules in outline", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -463,8 +855,9 @@ describe("elements", () => {
     const [divider] = COLORS["--border"];
     expect(await page.style("#prose a", "color")).toBe(blue);
     expect(await page.style("#prose a", "text-decoration-line")).toBe("underline");
-    expect(await page.style("#prose ul", "padding-inline-start")).toBe("24px");
-    expect(await page.style("#prose ol", "padding-inline-start")).toBe("24px");
+    const indent = `${await resolveToken(page, "--space-m")}px`;
+    expect(await page.style("#prose ul", "padding-inline-start")).toBe(indent);
+    expect(await page.style("#prose ol", "padding-inline-start")).toBe(indent);
     expect(await page.style("#prose table", "border-collapse")).toBe("collapse");
     for (const cell of ["th", "td"]) {
       expect(await page.style(`#prose ${cell}`, "border-top")).toBe(`1px solid ${divider}`);
@@ -502,9 +895,24 @@ describe("elements", () => {
   });
 
   test("spaces adjacent prose blocks", async () => {
+    // Above the range, so --space-s is its largest value, 18px.
+    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.desktop });
+    expect(await page.style("#prose h1", "margin-top")).toBe("18px");
+    expect(await page.style("#prose hr + p", "margin-top")).toBe("18px");
+  });
+
+  test("draws borders and outlines at the line widths", async () => {
     const page = await open(specimen, { scheme: "light" });
-    expect(await page.style("#prose h1", "margin-top")).toBe("16px");
-    expect(await page.style("#prose hr + p", "margin-top")).toBe("16px");
+    await addAppStyle(page, "@layer app { :root { --line-s: 3px; --line-m: 5px; } }");
+    for (const selector of ["#prose th", "#prose td", "#prose pre", "#prose kbd"]) {
+      expect([selector, await page.style(selector, "border-top-width")]).toEqual([selector, "3px"]);
+    }
+    expect(await page.style("#prose hr", "border-top-width")).toBe("3px");
+    expect(await page.style("#prose blockquote", "border-left-width")).toBe("5px");
+    await tabTo(page, "#prose a");
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineWidth`)).toBe(
+      "5px",
+    );
   });
 
   test("draws no shadows and no gradients, on prose or tools", async () => {
@@ -555,7 +963,8 @@ describe("tools", () => {
   });
 
   test("scroll-y and scroll-x scroll their overflow on one axis", async () => {
-    const page = await open(specimen, { scheme: "light" });
+    // Below the range, so --space-2xs is its smallest value, 8px.
+    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.narrow });
     for (const [axis, overflow, size, padding] of [
       ["y", "overflow-y", "Height", "padding-right"],
       ["x", "overflow-x", "Width", "padding-bottom"],
@@ -579,8 +988,7 @@ describe("specimen", () => {
     const page = await open(specimen, { scheme: "light" });
     const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .specimen > code")]
       .map((code) => [code.textContent, code.nextElementSibling.style.getPropertyValue("--sample")])`);
-    const names = [...Object.keys(SCALES), ...Object.keys(COLORS)];
-    expect(shown.map(([name]) => name).sort()).toEqual(names.sort());
+    expect(shown.map(([name]) => name).sort()).toEqual(Object.keys(TOKENS).sort());
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 

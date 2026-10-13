@@ -37,14 +37,16 @@ export const PROBES = {
     ["#components .card", "display", "flex"],
   ],
   // One probe per nested layer file. The components layer is gone, so its probe is too; the
-  // color probe reads Flexoki's --bg pair, and the tools probe reads a scroll helper. Unstyled,
-  // the six read "", "", "", "content-box", "32px", and "visible".
+  // color probe reads Flexoki's --bg pair, the space and type probes read tokens that no display
+  // size changes, the elements probe reads the heading weight, since heading sizes are fluid, and
+  // the tools probe reads a scroll helper. Unstyled, the six read "", "", "", "content-box",
+  // "700", and "visible".
   "v0.3.0": [
     [":root", "--bg", "light-dark(#fffcf0, #100f0f)"],
-    [":root", "--space-1", "0.25rem"],
-    [":root", "--text-xs", "0.75rem"],
+    [":root", "--line-s", "1px"],
+    [":root", "--measure", "68ch"],
     ["body", "box-sizing", "border-box"],
-    ["#prose h1", "font-size", "36px"],
+    ["#prose h1", "font-weight", "600"],
     ["#tools .scroll-x", "overflow-x", "auto"],
   ],
 };

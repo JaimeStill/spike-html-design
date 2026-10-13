@@ -56,6 +56,19 @@ describe("harness", () => {
     expect(await page.style("p", "color")).toBe("rgb(206, 205, 195)");
   });
 
+  test("emulates the viewport's size, then changes it without a reload", async () => {
+    const fixture = fileUrl(join(fixtures, "index.html"));
+    const size = "[innerWidth, innerHeight]";
+    const page = await open(fixture, { viewport: { width: 320, height: 800 } });
+    expect(await page.evaluate(size)).toEqual([320, 800]);
+    expect(await page.evaluate("matchMedia('(width: 320px)').matches")).toBe(true);
+    await page.evaluate("window.unreloaded = true");
+    await page.setViewport({ width: 3440, height: 1440 });
+    expect(await page.evaluate(size)).toEqual([3440, 1440]);
+    expect(await page.evaluate("matchMedia('(width: 3440px)').matches")).toBe(true);
+    expect(await page.evaluate("window.unreloaded === true")).toBe(true);
+  });
+
   test("the local server serves under a prefix and answers 404 outside it", async () => {
     const prefixed = serve(fixtures, { prefix: "/project/" });
     try {

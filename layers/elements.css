@@ -1,9 +1,11 @@
 /*
  * layers/elements.css, the elements layer.
  *
- * herald's theme (body surface and text, monospace code), extended to the prose elements an
- * artifact uses: headings on the text scale, links, lists, tables, blockquote, hr. Everything is
- * flat: borders in --border, no fills beyond the page surface, no shadows, no gradients. The
+ * herald's theme (body surface and text, code in the code font), extended to the prose elements
+ * an artifact uses: headings on the text scale, links, lists, tables, blockquote, hr. Fonts and
+ * leadings read the type facet's role tokens, spacing reads the space scale, and border and
+ * outline widths read the line tokens. Everything is flat: borders in --border, no fills beyond
+ * the page surface, no shadows, no gradients. The
  * layer reads hues by name, as any reader of the color facet does: links, focus outlines,
  * selected text, the text caret, and form controls' accent all take --blue.
  *
@@ -12,7 +14,9 @@
  */
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
+  /* The text scale's base step, so body text grows with the display as the headings do. */
+  font-size: var(--text-m);
   background-color: var(--bg);
   color: var(--fg);
   /* Both inherit, so every text field's caret and every checkbox, radio, range, and progress
@@ -30,14 +34,18 @@ body {
 pre,
 code,
 kbd {
-  font-family: var(--font-mono);
+  font-family: var(--font-code);
+}
+
+pre {
+  line-height: var(--leading-code);
 }
 
 /* Vertical rhythm between adjacent prose blocks, which the reset leaves at zero margin. It sits
    in the elements layer, so any tools or app rule that sets a margin replaces it. */
 :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr)
 + :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr) {
-  margin-block-start: var(--space-4);
+  margin-block-start: var(--space-s);
 }
 
 h1,
@@ -46,8 +54,9 @@ h3,
 h4,
 h5,
 h6 {
+  font-family: var(--font-heading);
   font-weight: 600;
-  line-height: 1.25;
+  line-height: var(--leading-heading);
 }
 
 h1 {
@@ -67,11 +76,11 @@ h4 {
 }
 
 h5 {
-  font-size: var(--text-lg);
+  font-size: var(--text-l);
 }
 
 h6 {
-  font-size: var(--text-base);
+  font-size: var(--text-m);
 }
 
 a {
@@ -84,18 +93,18 @@ a {
   }
 
   &:focus-visible {
-    outline: 2px solid var(--blue);
+    outline: var(--line-m) solid var(--blue);
     outline-offset: 2px;
   }
 }
 
 ul,
 ol {
-  padding-inline-start: var(--space-6);
+  padding-inline-start: var(--space-m);
 }
 
 li + li {
-  margin-block-start: var(--space-1);
+  margin-block-start: var(--space-3xs);
 }
 
 table {
@@ -104,8 +113,8 @@ table {
 
 th,
 td {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border);
+  padding: var(--space-3xs) var(--space-xs);
+  border: var(--line-s) solid var(--border);
   text-align: start;
   vertical-align: top;
 }
@@ -116,14 +125,14 @@ th {
 }
 
 blockquote {
-  padding-inline-start: var(--space-4);
-  border-inline-start: 2px solid var(--border);
+  padding-inline-start: var(--space-s);
+  border-inline-start: var(--line-m) solid var(--border);
   color: var(--fg-2);
 }
 
 hr {
   border: 0;
-  border-block-start: 1px solid var(--border);
+  border-block-start: var(--line-s) solid var(--border);
 }
 
 code,
@@ -132,14 +141,14 @@ kbd {
 }
 
 kbd {
-  padding: 0 var(--space-1);
-  border: 1px solid var(--border);
+  padding: 0 var(--space-3xs);
+  border: var(--line-s) solid var(--border);
   border-radius: var(--radius-sm);
 }
 
 pre {
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
+  padding: var(--space-xs) var(--space-s);
+  border: var(--line-s) solid var(--border);
   border-radius: var(--radius-sm);
   overflow-x: auto;
 
