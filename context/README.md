@@ -34,9 +34,9 @@ package and through a pinned CDN URL, and extended by other packages?
 
 ## The decision it changes
 
-Whether the baseline graduates, and where: the architecture layer, beside docs-site's diagram
-and voice standards, or its own standards-lab repository. spike-html-artifacts and
-spike-html-go-wasm link to it. Its packaging, a git-tag package that other packages extend, is
+Whether the baseline graduates, and where: the architecture layer, beside the diagram and voice
+standards, or its own standards-lab repository. experiment.html's later spikes
+(spike-html-components, spike-html-hosting, spike-html-go-wasm, spike-html-apps) link to it. Its packaging, a git-tag package that other packages extend, is
 also an input to v1.client.
 
 ## The evidence
@@ -85,9 +85,9 @@ also an input to v1.client.
 - **Releases.** One minor tag per task, v0.1.0 to v0.6.0. A tag is never changed or re-cut. The
   token names change at v0.3.0 with no aliases; earlier tags keep their names.
 - **Not here.** Components such as a badge or a card belong to consumer packages, which declare
-  their own later layers. Layouts and a layout engine are the backlog goal `client-layouts`, and
-  motion is a later facet. The section tree with reading progress belongs to
-  spike-html-artifacts, as do the screenshot review script and the HTML briefs themselves.
+  their own later layers. Layouts and a layout engine are spike-html-components' and then
+  v1.client's, and motion is a later facet. The section tree with reading progress belongs to
+  spike-html-hosting, as does the screenshot review script.
 
 ## Capabilities
 
@@ -151,7 +151,8 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
    size measured and reported, the specimen's section per layer and facet, `mise run serve`,
    and a visual review after the tokens and elements render; v0.3.0 (evidence 1, 2, 4).
 4. `profiles`: Kanagawa, Tokyo Night, and Catppuccin, preview containers, the specimen's grid of
-   every profile and scheme, the full entry point, the enforced size budget, contrast per
+   every profile and scheme with the workbench layout reworked (the architect's screenshots of
+   what fails are the plan round's input), the full entry point, the enforced size budget, contrast per
    profile, and a planned visual review after the grid renders; v0.4.0 (evidence 3, 5).
 5. `preferences`: the profile registry, the T theming menu, persistence, and the flash
    measurement; v0.5.0 (evidence 6).
