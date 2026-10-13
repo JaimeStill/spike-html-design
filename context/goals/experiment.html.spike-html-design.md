@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** facets
+- **Branch:** facets
 
 ## Tasks
 
@@ -13,6 +13,115 @@
 5. [ ] preferences
 6. [ ] keys
 7. [ ] validate
+
+## Task brief · experiment.html.spike-html-design · facets
+
+Problem       v0.2.0 is four flat layers: Primer colors, herald's fixed scales, role tokens,
+              and components inside the foundation. The spike's question now needs a
+              foundation of swappable facets consumed as a package: one nested package layer;
+              color, space, and type token interfaces; an elements layer that changes no
+              native element's behavior; opt-in tools; and a package.json. profiles,
+              preferences, and validate all build on it. (Evidence 1, 2, 4.)
+
+Behaviors
+  1. The lean entry, at the same URL as v0.2.0's stylesheet, declares one top-level layer,
+     spike-html-design, with nested layers in order: tokens (color, space, type), reset,
+     elements, tools. It imports every file directly into its nested layer (one hop).
+  2. A consumer's own later layer, and its unlayered CSS, beat any foundation rule of any
+     specificity with no !important; a fixture shows it against an elements rule and a
+     tools variant.
+  3. Color: tiers --bg, --bg-2, --border, --border-2, --border-3, --fg, --fg-2, --fg-3 and
+     hues --red, --orange, --yellow, --green, --cyan, --blue, --purple, --magenta, each
+     resolving to a Flexoki value under each scheme. Starting values: surfaces and borders
+     from the reviewed variant A, text from variant B, hues 600 light / 400 dark; tuned at
+     the review stop. No role tokens (no --accent, --success, --warning, --danger), and no
+     v0.2.0 token name remains.
+  4. Scheme: with no data-scheme attribute the page follows the system scheme, live;
+     data-scheme="light" or "dark" forces it; data-theme has no effect.
+  5. Space: --space-3xs to --space-3xl (nine steps); --line-s and --line-m (px); and
+     --radius-sm, --radius-md, --radius-lg, --radius-full derived from one radius base, so
+     changing the base rescales every radius but full.
+  6. Type: --text-xs to --text-4xl (eight steps); --font-body (sans), --font-heading,
+     --font-ui, --font-code (mono; system stacks); --leading-body, --leading-heading,
+     --leading-ui, --leading-code; and --measure.
+  7. Every fluid space and type token interpolates with progress() between rem endpoints
+     over 22.5rem to 80rem of min(100vi, 100svb * 16 / 9): it holds its smallest value
+     below the range and its largest above it, follows browser zoom, and a short, wide
+     window reads smaller than its width alone gives. Viewport emulation in the check
+     proves each case, including 3440×1440.
+  8. A test profile applied to one facet's sub-layer changes only that facet's tokens.
+  9. The elements layer styles every rendered HTML element, plus ::file-selector-button,
+     ::marker, ::placeholder, and ::backdrop, with zero-specificity selectors and no
+     classes. It reads hues and tiers directly: links, focus outlines, selection, caret,
+     and accent-color use blue; the native button is neutral.
+ 10. For every element of a fixture covering every rendered element, a page with only the
+     tokens and elements layers has the same computed layout properties as the same page
+     with no stylesheet: display, position, float, overflow, visibility, inline and block
+     sizes with min and max, flex and grid properties, white-space, list-style-position,
+     appearance, pointer-events, user-select.
+ 11. Tools ships four opt-in families, open for extension through one hook per family:
+     - buttons: .button, a base class that gives any element (such as a link) the native
+       button's look, and .button-<hue> for all eight hues, outline style, read through
+       --button-color, on .button or a native button;
+     - scroll: .scroll-x, .scroll-y;
+     - forms: .field, .field-grow;
+     - tables: .table-full, .table-striped.
+     A consumer adds a variant in its own layer by setting a family's hook, and it renders
+     with that family's treatment.
+ 12. The components layer and its classes (badge, card, input, label, btn) are gone.
+ 13. A package.json names spike-html-design at 0.3.0, exports the lean entry, has no
+     dependencies, and every export resolves to a published file.
+ 14. The check reports each entry's raw size and per-file brotli sum, and enforces no number.
+ 15. The specimen is a workbench with a section per layer and facet showing every token
+     with a resolving sample, every element, and every tools class; Flexoki's contrast
+     table (every tier and hue against --bg, each scheme) is recomputed by the check.
+ 16. The specimen renders the same from file:// and from a local server under the Pages
+     subpath.
+ 17. A v0.3.0 pinned page is the specimen linking the @v0.3.0 jsDelivr lean entry; its
+     hermetic test and the live pin check cover every stylesheet file the tag publishes,
+     wherever it sits; v0.1.0 and v0.2.0 pinned pages still pass against their own tags.
+ 18. mise run serve serves the working tree on localhost under the Pages subpath.
+ 19. README, STANDARDS.md, and the goal record describe v0.3.0: hues are named for color
+     and carry no meaning; semantic variants are the consumer's, through hooks or its own
+     layers; the feature policy is Baseline Newly available plus non-Baseline as
+     progressive enhancement; no px in fluid bounds, and aspect-ratio queries are
+     layout's; fluid tokens need progress(); sizes are reported, enforced from profiles on.
+
+Test seams    the harness page: a page in headless chromium, read for computed styles under
+              emulated media and viewport size; the check's size report over the published
+              files.
+
+Slices
+  1. Skeleton: nested layers with one-hop imports, components removed, data-scheme,
+     package.json, mise run serve, pin tooling listing every published file, the v0.3.0
+     probe entry and pinned page. Demo: check passes; serve shows the specimen.
+  2. Color facet: Flexoki tiers and hues, the scheme hook, the contrast table. Demo: the
+     specimen in both schemes.
+  3. Space and type facets: progress() scales with the two-axis bound, lines, radius, font
+     and leading roles, measure; viewport emulation in the harness; facet-independence
+     test. Demo: the specimen at emulated displays.
+  4. Elements layer over every element, with the behavior test and the specimen's element
+     sections. Demo: the workbench.
+  ── REVIEW STOP: the architect views the served workbench and profiles it across
+     emulated displays and the 3440×1440 ultrawide; starting values for type, space,
+     radius, leading, measure, and Flexoki's tier and hue steps are confirmed or changed
+     before tools is built ──
+  5. Tools layer: four families with hooks, the .button base, the extension fixture, the
+     specimen's tools section.
+  6. Size report, docs (README, STANDARDS.md, goal record), pinned page re-synced with the
+     final specimen.
+
+Out of scope  Kanagawa, Tokyo Night, Catppuccin, profile attribute scopes and preview
+              containers (profiles); the full entry and an enforced budget (profiles); JS
+              modules, registry, preferences, keys; components; layouts and aspect-ratio
+              media queries (client-layouts); motion; bundling; the git-tag install proof
+              (validate); @function, @mixin, if().
+Door          one-way for tag v0.3.0, which jsDelivr caches as immutable; two-way otherwise.
+Release       v0.3.0
+
+## Progress
+
+slices 0/6 committed · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -248,9 +357,42 @@
   C's sentence-case mono headings, 17px sans prose, and 4/6/8px radius; B's labeled panel with
   its h2 on the frame as a future component. Chromium blocks ES module scripts on file://, so
   preferences and validate settle how an artifact opened from disk runs the SDK.
+- facets: the package and its top-level cascade layer are named spike-html-design; the lean entry
+  stays baseline.css; the entry imports every file straight into its nested layer, one hop deep.
+- facets: hues only; no role tokens. Elements and tools read hues explicitly, and semantic
+  variants are the consumer's: rules are open for extension, closed for modification. Supersedes
+  themes' roles and its hue-and-role usage rule. Rejected an --accent read at each use.
+- facets: feature policy: Baseline Newly available, plus non-Baseline features only as
+  progressive enhancement (a browser without them still renders a correct page). Rejected
+  Widely-only (drops light-dark()) and chromium-only (@function, if() unstyle other engines).
+- facets: fluid tokens interpolate with progress() between rem endpoints over 22.5rem to 80rem of
+  min(100vi, 100svb * 16 / 9); no px in fluid bounds; aspect-ratio queries belong to layout. A
+  starting point the architect profiles across emulated displays. Rejected cqi (needs
+  containment), aspect-ratio breakpoints for sizing (a ratio can't tell a phone from a TV), and
+  clamp() with precomputed slopes.
+- facets: data-scheme replaces data-theme for forcing light or dark.
+- facets: t-shirt step names for space and type; the space facet's lines are border and outline
+  widths (--line-s, --line-m, px); line heights live in type, keyed by font role.
+- facets: starting points for the review stop, not decisions: type 16px at ratio 1.2 to 18px at
+  1.25 over eight steps; space from its own 16–18px base at 0.25–6 times; radius from a 0.375rem
+  base (sm 2/3, lg 4/3, full); leading 1.5 / 1.2 / 1.25 / 1.5; measure 68ch; Flexoki tiers with
+  variant A's surfaces and borders and variant B's text, hues 600 light / 400 dark.
+- facets: mono heading and ui fonts, sans body, mono code; system stacks only.
+- facets: the elements behavior test compares tokens and elements alone against no stylesheet.
+- facets: elements covers every rendered element; tools ships buttons, scroll, forms, and
+  tables, unprefixed, each family open for extension through one hook property; .button is a
+  base class plus eight outline hue variants; the native button is neutral. Rejected filled
+  variants (wait for a consumer) and dialog, details, and media tools (layout or motion).
+- facets: the measure is a token only; capping width is layout.
+- facets: facets reports sizes and enforces none; the budget is enforced from profiles on.
+  Supersedes the packaging line "the check enforces a compressed byte budget per entry from
+  facets on".
 
 ## Pending edits
 
 - coordinator · html-artifacts.md, "Style baseline": rewritten at the answer to describe the
   faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
   replaces the layers and themes edits to "Style baseline", "Palette", and "Themes").
+- coordinator · roadmap.toml: facets summary "the lean entry point and its enforced size budget"
+  becomes "the lean entry point with its size measured and reported"; the profiles summary adds
+  "the enforced size budget for the lean and full entries".
