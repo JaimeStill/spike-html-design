@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>extension fixture</title>
+    <link rel="stylesheet" href="../../baseline.css" />
+    <style>
+      /* A consumer extending the baseline as a package's consumer would: it declares its own
+         layer, app, after the package layer, and adds to the tools families only by setting
+         their hooks. Its overrides carry lower specificity than the tools rules they beat and
+         equal specificity to the elements rules, which have none, and no !important. */
+      @layer spike-html-design, app;
+
+      @layer app {
+        /* A semantic variant, named by the consumer: the hook alone. */
+        .button-danger {
+          --button-color: var(--red);
+        }
+
+        /* A striped table re-colored through its hook. */
+        .stripe-blue {
+          --table-stripe: color-mix(in srgb, var(--blue) 15%, transparent);
+        }
+
+        /* Zero specificity, against the tools variant's (0,2,0) and the elements link rule. */
+        :where(#app-variant),
+        :where(#app-link) {
+          border-color: rgb(0, 128, 0);
+          color: rgb(0, 128, 0);
+        }
+      }
+    </style>
+    <style>
+      /* Unlayered consumer CSS, at the same zero specificity. */
+      :where(#unlayered-variant),
+      :where(#unlayered-link) {
+        border-color: rgb(128, 0, 128);
+        color: rgb(128, 0, 128);
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      <button type="button" id="danger" class="button-danger">Danger</button>
+      <a id="danger-link" class="button button-danger" href="#danger">Danger</a>
+      <button type="button" id="app-variant" class="button-red">App layer</button>
+      <button type="button" id="unlayered-variant" class="button-red">Unlayered</button>
+      <a id="app-link" href="#danger">App layer</a>
+      <a id="unlayered-link" href="#danger">Unlayered</a>
+    </p>
+    <table id="striped" class="table-striped stripe-blue">
+      <tbody>
+        <tr>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td>3</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

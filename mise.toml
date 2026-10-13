@@ -6,7 +6,7 @@ jq = "1.8.2"
 shellcheck = "0.11.0"
 
 [tasks.check]
-description = "Lint and format-check the CSS, JS, scripts, and workflows, and run the tests in headless chromium; writes nothing"
+description = "Lint and format-check the CSS, JS, scripts, and workflows, run the tests in headless chromium, and report each CSS entry's size; writes nothing"
 run = '''
 set -eu
 cd "$MISE_PROJECT_ROOT"
@@ -15,6 +15,7 @@ biome ci --no-errors-on-unmatched .
 shellcheck scripts/*.sh
 if [ -d .github/workflows ]; then actionlint; fi
 bun test --pass-with-no-tests
+bun scripts/size.js
 '''
 
 [tasks.currency]
@@ -25,3 +26,12 @@ run = "scripts/currency.sh"
 description = "Check a published tag live: jsDelivr serves its baseline.css and layer files immutable and byte-equal, and its pinned page renders the same from file://, a local server, and GitHub Pages; reads the network, writes nothing"
 usage = 'arg "<tag>" help="The published tag to check, as in v0.1.0"'
 run = 'bun "$MISE_PROJECT_ROOT/scripts/pin.js" "$usage_tag"'
+
+[tasks.size]
+description = "Report each CSS entry's files with their raw and brotli-11 sizes, and the totals; enforces no budget, writes nothing"
+run = 'bun "$MISE_PROJECT_ROOT/scripts/size.js"'
+
+[tasks.serve]
+description = "Serve the working tree on localhost under the Pages subpath, /spike-html-design/, and print its URL; runs until interrupted, writes nothing"
+usage = 'flag "--port <port>" default="8000" help="The localhost port to serve on"'
+run = 'bun "$MISE_PROJECT_ROOT/scripts/serve.js" "$usage_port"'

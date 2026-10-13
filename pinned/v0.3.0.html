@@ -1,0 +1,1305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spike-html-design pinned v0.3.0</title>
+    <!-- The consumer proof for tag v0.3.0: the specimen's markup, linking the baseline by its
+         pinned jsDelivr URL, as a page on another origin would. Only this link and the title
+         differ from index.html at v0.3.0; the tests hold the rest identical. Never edit it
+         after the tag: a later tag gets its own page beside it. -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.3.0/baseline.css"
+    />
+    <style>
+      /* The specimen's own composition: the page's gutters, the grids of cells, the cells and
+         their labels, and the token samples. It sits in its own layer, specimen, declared after
+         the baseline's package layer, as an artifact's own layers would be; none of it is the
+         baseline, and the baseline's layers hold nothing that serves this page. Cells are dashed
+         and labeled, so the composition reads apart from the baseline it frames. Samples read
+         the token they show from --sample. */
+      @layer spike-html-design, specimen;
+
+      @layer specimen {
+        /* The page: full width, with gutters, and sections apart as a consumer's layout sets
+           them. */
+        body > header,
+        main {
+          padding-inline: var(--space-m);
+        }
+
+        body > header {
+          padding-block-start: var(--space-l);
+        }
+
+        main {
+          padding-block-end: var(--space-2xl);
+        }
+
+        main > section {
+          margin-block-start: var(--space-2xl);
+        }
+
+        main section section {
+          margin-block-start: var(--space-xl);
+        }
+
+        /* The note that names the composition, dashed as the cells are. */
+        .note {
+          margin-block-start: var(--space-s);
+          padding: var(--space-xs) var(--space-s);
+          border: var(--line-s) dashed var(--border-3);
+          border-radius: var(--radius-md);
+          color: var(--fg-2);
+        }
+
+        /* A grid of cells, as many columns as fit. */
+        .cells {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+          gap: var(--space-m);
+          align-items: start;
+          margin-block-start: var(--space-m);
+
+          &.wide {
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 36rem), 1fr));
+          }
+        }
+
+        /* A cell: a dashed frame, with its label first. What follows the label is the
+           baseline's; the first sample sits flush under the label. */
+        .cell {
+          min-inline-size: 0;
+          padding: var(--space-s);
+          border: var(--line-s) dashed var(--border-3);
+          border-radius: var(--radius-md);
+
+          & > .label + * {
+            margin-block-start: 0;
+          }
+        }
+
+        .label {
+          margin-block-end: var(--space-xs);
+          font-size: var(--text-s);
+          color: var(--fg-3);
+        }
+
+        /* Rows of a name and its sample: a token or an element, then what it renders. */
+        .specimen,
+        .rows {
+          display: grid;
+          grid-template-columns: max-content 1fr;
+          gap: var(--space-2xs) var(--space-m);
+          align-items: center;
+          margin-block-start: var(--space-s);
+
+          & > code {
+            color: var(--fg-3);
+          }
+        }
+
+        .specimen {
+          font-size: var(--text-s);
+
+          /* A color row adds a third column: the token's light and dark values. */
+          &.colors {
+            grid-template-columns: max-content max-content 1fr;
+          }
+        }
+
+        .rows {
+          align-items: baseline;
+        }
+
+        .values {
+          font-family: var(--font-code);
+          color: var(--fg-2);
+        }
+
+        .font-sample {
+          font-family: var(--sample);
+        }
+
+        /* A fluid token's progress, 0 to 1, as a share of the bar's track. */
+        .fluid-sample {
+          inline-size: calc(var(--sample) * 100%);
+          block-size: var(--space-s);
+          background: var(--blue);
+        }
+
+        .space-sample {
+          width: var(--sample);
+          height: var(--space-s);
+          border: var(--line-s) solid var(--blue);
+        }
+
+        .line-sample {
+          border-block-start: var(--sample) solid var(--fg-2);
+        }
+
+        .text-sample {
+          font-size: var(--sample);
+          line-height: var(--leading-heading);
+        }
+
+        .leading-sample {
+          max-inline-size: 20ch;
+          line-height: var(--sample);
+        }
+
+        .radius-sample {
+          width: var(--space-2xl);
+          height: var(--space-xl);
+          border: var(--line-s) solid var(--fg-2);
+          border-radius: var(--sample);
+        }
+
+        .swatch {
+          width: var(--space-2xl);
+          height: var(--space-l);
+          border: var(--line-s) solid var(--border);
+          border-radius: var(--radius-sm);
+          background: var(--sample);
+        }
+
+        /* A row of button samples, wrapping with a gap between lines. */
+        .sample-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-2xs);
+        }
+
+        /* Bounded boxes, so the scroll samples overflow. */
+        .scroll-sample {
+          max-inline-size: calc(5 * var(--space-2xl));
+          block-size: calc(2 * var(--space-2xl));
+          border: var(--line-s) solid var(--border);
+
+          &.scroll-x {
+            block-size: auto;
+            white-space: nowrap;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>spike-html-design</h1>
+      <p>
+        The baseline's tokens, every element its elements layer styles, and its tools, rendered
+        by <code>baseline.css</code> alone. It follows the system scheme; a
+        <code>data-scheme</code> of <code>light</code> or <code>dark</code> on the root element
+        forces one.
+      </p>
+      <aside class="note">
+        <p>
+          This page is a workbench. Its arrangement, the full-width grids, the dashed cells and
+          their labels, is composition, in the page's own <code>specimen</code> layer after the
+          baseline: it shows how a composition arranges within the design system, and none of it
+          is the baseline. What sits inside each cell, under its label, is the baseline alone.
+        </p>
+      </aside>
+    </header>
+
+    <main>
+      <section id="tokens">
+        <header>
+          <h2>Tokens</h2>
+          <p>
+            Each token shows a sample that reads it. The fluid samples move between their
+            smallest value below a 22.5rem display and their largest above 80rem: resize the
+            window, or emulate a display.
+          </p>
+        </header>
+
+        <section id="color">
+          <header>
+            <h3>Color</h3>
+            <p>Each color token shows its swatch in the current scheme, then its light / dark values.</p>
+          </header>
+          <div class="cells wide">
+            <section class="cell">
+              <p class="label"><code>tokens.color</code></p>
+              <h4>Tiers</h4>
+              <p>Surfaces and borders, from the page's surface up, then text, from the strongest down.</p>
+              <div class="specimen colors">
+                <code>--bg</code>
+                <div class="swatch" style="--sample: var(--bg)"></div>
+                <span class="values">#fffcf0 / #100f0f</span>
+                <code>--bg-2</code>
+                <div class="swatch" style="--sample: var(--bg-2)"></div>
+                <span class="values">#f2f0e5 / #1c1b1a</span>
+                <code>--border</code>
+                <div class="swatch" style="--sample: var(--border)"></div>
+                <span class="values">#e6e4d9 / #282726</span>
+                <code>--border-2</code>
+                <div class="swatch" style="--sample: var(--border-2)"></div>
+                <span class="values">#dad8ce / #343331</span>
+                <code>--border-3</code>
+                <div class="swatch" style="--sample: var(--border-3)"></div>
+                <span class="values">#cecdc3 / #403e3c</span>
+                <code>--fg</code>
+                <div class="swatch" style="--sample: var(--fg)"></div>
+                <span class="values">#100f0f / #e6e4d9</span>
+                <code>--fg-2</code>
+                <div class="swatch" style="--sample: var(--fg-2)"></div>
+                <span class="values">#575653 / #b7b5ac</span>
+                <code>--fg-3</code>
+                <div class="swatch" style="--sample: var(--fg-3)"></div>
+                <span class="values">#878580 / #6f6e69</span>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.color</code></p>
+              <h4>Hues</h4>
+              <p>Named for their color; they carry no meaning.</p>
+              <div class="specimen colors">
+                <code>--red</code>
+                <div class="swatch" style="--sample: var(--red)"></div>
+                <span class="values">#af3029 / #d14d41</span>
+                <code>--orange</code>
+                <div class="swatch" style="--sample: var(--orange)"></div>
+                <span class="values">#bc5215 / #da702c</span>
+                <code>--yellow</code>
+                <div class="swatch" style="--sample: var(--yellow)"></div>
+                <span class="values">#ad8301 / #d0a215</span>
+                <code>--green</code>
+                <div class="swatch" style="--sample: var(--green)"></div>
+                <span class="values">#66800b / #879a39</span>
+                <code>--cyan</code>
+                <div class="swatch" style="--sample: var(--cyan)"></div>
+                <span class="values">#24837b / #3aa99f</span>
+                <code>--blue</code>
+                <div class="swatch" style="--sample: var(--blue)"></div>
+                <span class="values">#205ea6 / #4385be</span>
+                <code>--purple</code>
+                <div class="swatch" style="--sample: var(--purple)"></div>
+                <span class="values">#5e409d / #8b7ec8</span>
+                <code>--magenta</code>
+                <div class="swatch" style="--sample: var(--magenta)"></div>
+                <span class="values">#a02f6f / #ce5d97</span>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="space">
+          <header>
+            <h3>Space</h3>
+            <p>A fluid scale of nine steps from one base, two fixed line widths, and the radii.</p>
+          </header>
+          <div class="cells">
+            <section class="cell">
+              <p class="label"><code>tokens.space</code></p>
+              <h4>Progress and base</h4>
+              <p>
+                The facet's progress through the display range, as a share of the bar, and the fluid
+                base every step multiplies.
+              </p>
+              <div class="specimen">
+                <code>--space-fluid</code>
+                <div class="fluid-sample" style="--sample: var(--space-fluid)"></div>
+                <code>--space-base</code>
+                <div class="space-sample" style="--sample: var(--space-base)"></div>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.space</code></p>
+              <h4>Scale</h4>
+              <div class="specimen">
+                <code>--space-3xs</code>
+                <div class="space-sample" style="--sample: var(--space-3xs)"></div>
+                <code>--space-2xs</code>
+                <div class="space-sample" style="--sample: var(--space-2xs)"></div>
+                <code>--space-xs</code>
+                <div class="space-sample" style="--sample: var(--space-xs)"></div>
+                <code>--space-s</code>
+                <div class="space-sample" style="--sample: var(--space-s)"></div>
+                <code>--space-m</code>
+                <div class="space-sample" style="--sample: var(--space-m)"></div>
+                <code>--space-l</code>
+                <div class="space-sample" style="--sample: var(--space-l)"></div>
+                <code>--space-xl</code>
+                <div class="space-sample" style="--sample: var(--space-xl)"></div>
+                <code>--space-2xl</code>
+                <div class="space-sample" style="--sample: var(--space-2xl)"></div>
+                <code>--space-3xl</code>
+                <div class="space-sample" style="--sample: var(--space-3xl)"></div>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.space</code></p>
+              <h4>Lines</h4>
+              <div class="specimen">
+                <code>--line-s</code>
+                <div class="line-sample" style="--sample: var(--line-s)"></div>
+                <code>--line-m</code>
+                <div class="line-sample" style="--sample: var(--line-m)"></div>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.space</code></p>
+              <h4>Radii</h4>
+              <div class="specimen">
+                <code>--radius-base</code>
+                <div class="radius-sample" style="--sample: var(--radius-base)"></div>
+                <code>--radius-sm</code>
+                <div class="radius-sample" style="--sample: var(--radius-sm)"></div>
+                <code>--radius-md</code>
+                <div class="radius-sample" style="--sample: var(--radius-md)"></div>
+                <code>--radius-lg</code>
+                <div class="radius-sample" style="--sample: var(--radius-lg)"></div>
+                <code>--radius-full</code>
+                <div class="radius-sample" style="--sample: var(--radius-full)"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="type">
+          <header>
+            <h3>Type</h3>
+            <p>
+              A text scale whose body and small steps stay fixed while the steps above them grow,
+              then role fonts and leadings.
+            </p>
+          </header>
+          <div class="cells">
+            <section class="cell">
+              <p class="label"><code>tokens.type</code></p>
+              <h4>Progress</h4>
+              <div class="specimen">
+                <code>--type-fluid</code>
+                <div class="fluid-sample" style="--sample: var(--type-fluid)"></div>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.type</code></p>
+              <h4>Scale</h4>
+              <div class="specimen">
+                <code>--text-xs</code>
+                <span class="text-sample" style="--sample: var(--text-xs)">Specimen</span>
+                <code>--text-s</code>
+                <span class="text-sample" style="--sample: var(--text-s)">Specimen</span>
+                <code>--text-m</code>
+                <span class="text-sample" style="--sample: var(--text-m)">Specimen</span>
+                <code>--text-l</code>
+                <span class="text-sample" style="--sample: var(--text-l)">Specimen</span>
+                <code>--text-xl</code>
+                <span class="text-sample" style="--sample: var(--text-xl)">Specimen</span>
+                <code>--text-2xl</code>
+                <span class="text-sample" style="--sample: var(--text-2xl)">Specimen</span>
+                <code>--text-3xl</code>
+                <span class="text-sample" style="--sample: var(--text-3xl)">Specimen</span>
+                <code>--text-4xl</code>
+                <span class="text-sample" style="--sample: var(--text-4xl)">Specimen</span>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.type</code></p>
+              <h4>Fonts</h4>
+              <div class="specimen">
+                <code>--font-body</code>
+                <span class="font-sample" style="--sample: var(--font-body)">The quick brown fox</span>
+                <code>--font-heading</code>
+                <span class="font-sample" style="--sample: var(--font-heading)">The quick brown fox</span>
+                <code>--font-ui</code>
+                <span class="font-sample" style="--sample: var(--font-ui)">The quick brown fox</span>
+                <code>--font-code</code>
+                <span class="font-sample" style="--sample: var(--font-code)">The quick brown fox</span>
+              </div>
+            </section>
+            <section class="cell">
+              <p class="label"><code>tokens.type</code></p>
+              <h4>Leading</h4>
+              <div class="specimen">
+                <code>--leading-body</code>
+                <span class="leading-sample" style="--sample: var(--leading-body)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <code>--leading-heading</code>
+                <span class="leading-sample" style="--sample: var(--leading-heading)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <code>--leading-ui</code>
+                <span class="leading-sample" style="--sample: var(--leading-ui)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <code>--leading-code</code>
+                <span class="leading-sample" style="--sample: var(--leading-code)">Two lines of text, set at the leading the token names, wrap here.</span>
+              </div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <section id="elements">
+        <header>
+          <h2>Elements</h2>
+          <p>
+            Every rendered element as the elements layer styles it, with no classes: paint, type,
+            borders, radius, margins and paddings only, so each keeps its native layout and
+            behavior. Each cell's label names the elements it shows.
+          </p>
+        </header>
+
+        <section id="prose">
+          <h3>Prose</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label">
+                <code>&lt;h1&gt;</code> <code>&lt;h2&gt;</code> <code>&lt;h3&gt;</code>
+                <code>&lt;h4&gt;</code> <code>&lt;h5&gt;</code> <code>&lt;h6&gt;</code>
+              </p>
+              <h1>Heading one</h1>
+              <h2>Heading two</h2>
+              <h3>Heading three</h3>
+              <h4>Heading four</h4>
+              <h5>Heading five</h5>
+              <h6>Heading six</h6>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;p&gt;</code> <code>&lt;a&gt;</code> <code>&lt;strong&gt;</code>
+                <code>&lt;em&gt;</code> <code>&lt;code&gt;</code> <code>&lt;kbd&gt;</code>
+              </p>
+              <p>
+                A paragraph of body text in the body font, with
+                <a href="#prose">a link to this section</a>, <strong>strong text</strong>,
+                <em>emphasis</em>, inline <code>code</code>, and a key, <kbd>T</kbd>.
+              </p>
+              <p>A second paragraph, a block after a block.</p>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;ul&gt;</code> <code>&lt;ol&gt;</code> <code>&lt;li&gt;</code></p>
+              <ul>
+                <li>An unordered item</li>
+                <li>A second item</li>
+              </ul>
+              <ol>
+                <li>An ordered item</li>
+                <li>A second item</li>
+              </ol>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;blockquote&gt;</code></p>
+              <blockquote>
+                <p>A blockquote, set off by a rule at its start edge.</p>
+              </blockquote>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;pre&gt;</code>, with the tools layer's <code>.scroll-x</code></p>
+              <pre class="scroll-x"><code>// A preformatted block in the code font, scrolled by the tools layer's .scroll-x.
+const answer = 42;</code></pre>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;table&gt;</code> <code>&lt;thead&gt;</code> <code>&lt;tbody&gt;</code>
+                <code>&lt;tr&gt;</code> <code>&lt;th&gt;</code> <code>&lt;td&gt;</code>
+              </p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Token</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>--bg</code></td>
+                    <td>Page surface</td>
+                  </tr>
+                  <tr>
+                    <td><code>--fg</code></td>
+                    <td>Body text</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;hr&gt;</code></p>
+              <p>A paragraph before the rule.</p>
+              <hr />
+              <p>A paragraph after the rule.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="text">
+          <h3>Text-level</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label">Text-level elements</p>
+              <div class="rows">
+                <code>&lt;small&gt;</code>
+                <span><small>small print</small></span>
+                <code>&lt;s&gt;</code>
+                <span><s>no longer accurate</s></span>
+                <code>&lt;cite&gt;</code>
+                <span><cite>a cited title</cite></span>
+                <code>&lt;q&gt;</code>
+                <span><q>a quotation</q></span>
+                <code>&lt;dfn&gt;</code>
+                <span><dfn>a defined term</dfn></span>
+                <code>&lt;abbr&gt;</code>
+                <span><abbr title="an abbreviation">abbr</abbr></span>
+                <code>&lt;ruby&gt; &lt;rt&gt; &lt;rp&gt;</code>
+                <span><ruby>漢<rp>(</rp><rt>kan</rt><rp>)</rp>字<rp>(</rp><rt>ji</rt><rp>)</rp></ruby></span>
+                <code>&lt;data&gt;</code>
+                <span><data value="42">forty-two</data></span>
+                <code>&lt;time&gt;</code>
+                <span><time datetime="2026-10-13">October 13</time></span>
+                <code>&lt;var&gt;</code>
+                <span><var>x</var></span>
+                <code>&lt;samp&gt;</code>
+                <span><samp>sample output</samp></span>
+                <code>&lt;sub&gt; &lt;sup&gt;</code>
+                <span>H<sub>2</sub>O, x<sup>2</sup></span>
+                <code>&lt;i&gt;</code>
+                <span><i>idiomatic</i></span>
+                <code>&lt;b&gt;</code>
+                <span><b>bold</b></span>
+                <code>&lt;u&gt;</code>
+                <span><u>unarticulated</u></span>
+                <code>&lt;mark&gt;</code>
+                <span><mark>marked</mark></span>
+                <code>&lt;bdi&gt;</code>
+                <span><bdi>إيان</bdi></span>
+                <code>&lt;bdo&gt;</code>
+                <span><bdo dir="rtl">reversed</bdo></span>
+                <code>&lt;span&gt;</code>
+                <span><span>a span</span></span>
+                <code>&lt;br&gt;</code>
+                <span>a line<br />break</span>
+                <code>&lt;wbr&gt;</code>
+                <span>a long<wbr />word broken at its wbr</span>
+                <code>&lt;del&gt;</code>
+                <span><del>removed text</del></span>
+                <code>&lt;ins&gt;</code>
+                <span><ins>inserted text</ins></span>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;hgroup&gt;</code></p>
+              <hgroup>
+                <h4>A heading group</h4>
+                <p>Its subtitle.</p>
+              </hgroup>
+              <p>A paragraph after the group.</p>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;address&gt;</code></p>
+              <address>An address, for the page's contact.</address>
+            </div>
+          </div>
+        </section>
+
+        <section id="grouping">
+          <h3>Grouping</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>&lt;dl&gt;</code> <code>&lt;dt&gt;</code> <code>&lt;dd&gt;</code></p>
+              <dl>
+                <dt>A term</dt>
+                <dd>Its definition.</dd>
+                <dt>A second term</dt>
+                <dd>Its definition.</dd>
+              </dl>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;menu&gt;</code></p>
+              <menu>
+                <li>A menu item</li>
+                <li>A second item</li>
+              </menu>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;figure&gt;</code> <code>&lt;figcaption&gt;</code> <code>&lt;div&gt;</code>
+              </p>
+              <figure>
+                <div>A div of content in a figure.</div>
+                <figcaption>A figcaption names the figure.</figcaption>
+              </figure>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;search&gt;</code> <code>&lt;form&gt;</code> <code>&lt;label&gt;</code>
+              </p>
+              <search>
+                <form>
+                  <label for="specimen-search">Search</label>
+                  <input id="specimen-search" type="search" placeholder="A placeholder" />
+                </form>
+              </search>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;article&gt;</code> <code>&lt;header&gt;</code> <code>&lt;section&gt;</code>
+                <code>&lt;aside&gt;</code>
+                <code>&lt;nav&gt;</code> <code>&lt;footer&gt;</code>
+              </p>
+              <article>
+                <header>An article's header</header>
+                <section>A section of the article.</section>
+                <aside>An aside.</aside>
+                <nav><a href="#grouping">A nav link</a></nav>
+                <footer>An article's footer</footer>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="tables">
+          <h3>Tables</h3>
+          <div class="cells wide">
+            <div class="cell">
+              <p class="label">
+                <code>&lt;caption&gt;</code> <code>&lt;colgroup&gt;</code> <code>&lt;col&gt;</code>
+                <code>&lt;tfoot&gt;</code>
+              </p>
+              <table>
+                <caption>
+                  A caption, then column groups, a head, a body and a foot.
+                </caption>
+                <colgroup>
+                  <col />
+                  <col />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Step</th>
+                    <th scope="col">Size</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>--text-s</code></td>
+                    <td>Small</td>
+                  </tr>
+                  <tr>
+                    <td><code>--text-m</code></td>
+                    <td>Body</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td>Two steps</td>
+                    <td>Of eight</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="forms">
+          <h3>Forms</h3>
+          <form class="cells wide">
+            <div class="cell">
+              <p class="label">
+                <code>&lt;fieldset&gt;</code> <code>&lt;legend&gt;</code> <code>&lt;label&gt;</code>
+                <code>&lt;input&gt;</code>, by type, and <code>&lt;datalist&gt;</code>
+              </p>
+              <fieldset>
+                <legend>Every input type</legend>
+                <p><label>text <input type="text" placeholder="A placeholder" /></label></p>
+                <p><label>search <input type="search" /></label></p>
+                <p><label>email <input type="email" /></label></p>
+                <p><label>url <input type="url" /></label></p>
+                <p><label>tel <input type="tel" /></label></p>
+                <p><label>password <input type="password" value="password" /></label></p>
+                <p><label>number <input type="number" value="42" /></label></p>
+                <p><label>range <input type="range" /></label></p>
+                <p><label>date <input type="date" /></label></p>
+                <p><label>month <input type="month" /></label></p>
+                <p><label>week <input type="week" /></label></p>
+                <p><label>time <input type="time" /></label></p>
+                <p><label>datetime-local <input type="datetime-local" /></label></p>
+                <p><label>color <input type="color" value="#205ea6" /></label></p>
+                <p>
+                  <label><input type="checkbox" checked /> checkbox</label>
+                  <label><input type="radio" name="specimen-radio" checked /> radio</label>
+                  <label><input type="radio" name="specimen-radio" /> radio</label>
+                </p>
+                <p><label>file <input type="file" /></label></p>
+                <p>
+                  <label>list <input list="specimen-choices" /></label>
+                  <datalist id="specimen-choices">
+                    <option value="One"></option>
+                    <option value="Two"></option>
+                  </datalist>
+                </p>
+                <input type="hidden" value="hidden" />
+                <p>
+                  <input type="submit" />
+                  <input type="reset" />
+                  <input type="button" value="input button" />
+                  <input
+                    type="image"
+                    alt="Submit"
+                    width="24"
+                    height="24"
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='4' fill='%23878580'/%3E%3C/svg%3E"
+                  />
+                </p>
+              </fieldset>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;button&gt;</code> <code>&lt;select&gt;</code> <code>&lt;optgroup&gt;</code>
+                <code>&lt;option&gt;</code> <code>&lt;textarea&gt;</code>
+                <code>&lt;output&gt;</code> <code>&lt;progress&gt;</code> <code>&lt;meter&gt;</code>
+              </p>
+              <fieldset>
+                <legend>Other controls</legend>
+                <p>
+                  <button type="button">button</button>
+                  <button type="button" disabled>disabled</button>
+                </p>
+                <p>
+                  <label>
+                    select
+                    <select>
+                      <optgroup label="A group">
+                        <option>An option</option>
+                        <option>A second option</option>
+                      </optgroup>
+                    </select>
+                  </label>
+                </p>
+                <p>
+                  <label>
+                    multiple
+                    <select multiple>
+                      <option>An option</option>
+                      <option>A second option</option>
+                    </select>
+                  </label>
+                </p>
+                <p>
+                  <label>textarea <textarea placeholder="A placeholder"></textarea></label>
+                </p>
+                <p><label>output <output>42</output></label></p>
+                <p><label>progress <progress value="0.6"></progress></label></p>
+                <p><label>meter <meter value="0.6"></meter></label></p>
+              </fieldset>
+            </div>
+          </form>
+        </section>
+
+        <section id="embedded">
+          <h3>Embedded</h3>
+          <p>Placeholders from data: URLs and empty sources, so nothing loads from the network.</p>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>&lt;img&gt;</code></p>
+              <img
+                alt="A gray rectangle"
+                width="64"
+                height="40"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' rx='6' fill='%23878580'/%3E%3C/svg%3E"
+              />
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;picture&gt;</code> <code>&lt;source&gt;</code></p>
+              <picture>
+                <source
+                  type="image/svg+xml"
+                  srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Ccircle cx='32' cy='20' r='18' fill='%23878580'/%3E%3C/svg%3E"
+                />
+                <img
+                  alt="A gray circle"
+                  width="64"
+                  height="40"
+                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Ccircle cx='32' cy='20' r='18' fill='%23878580'/%3E%3C/svg%3E"
+                />
+              </picture>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;iframe&gt;</code></p>
+              <iframe title="An iframe" srcdoc="<p>An iframe's own document.</p>"></iframe>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;embed&gt;</code></p>
+              <embed
+                type="image/svg+xml"
+                width="64"
+                height="40"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' fill='%23878580'/%3E%3C/svg%3E"
+              />
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;object&gt;</code></p>
+              <object
+                title="A gray rectangle"
+                type="image/svg+xml"
+                width="64"
+                height="40"
+                data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' fill='%23878580'/%3E%3C/svg%3E"
+              >
+                An object.
+              </object>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;video&gt;</code> <code>&lt;track&gt;</code></p>
+              <video controls width="240"><track kind="captions" /></video>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;audio&gt;</code></p>
+              <audio controls><track kind="captions" /></audio>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;canvas&gt;</code></p>
+              <canvas width="64" height="40"></canvas>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;svg&gt;</code></p>
+              <svg width="64" height="40" viewBox="0 0 64 40" aria-label="An svg">
+                <rect width="64" height="40" rx="6" fill="currentColor" />
+              </svg>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;math&gt;</code></p>
+              <math display="block">
+                <mi>E</mi>
+                <mo>=</mo>
+                <mi>m</mi>
+                <msup><mi>c</mi><mn>2</mn></msup>
+              </math>
+            </div>
+          </div>
+        </section>
+
+        <section id="interactive">
+          <h3>Interactive</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>&lt;details&gt;</code> <code>&lt;summary&gt;</code></p>
+              <details open>
+                <summary>An open details</summary>
+                <p>Its content, shown.</p>
+              </details>
+              <details>
+                <summary>A closed details</summary>
+                <p>Its content, hidden until opened.</p>
+              </details>
+            </div>
+            <div class="cell">
+              <p class="label"><code>&lt;dialog&gt;</code></p>
+              <p>
+                <button
+                  type="button"
+                  onclick="document.getElementById('specimen-dialog').showModal()"
+                >
+                  Open the dialog
+                </button>
+              </p>
+              <dialog id="specimen-dialog">
+                <p>A modal dialog, centered over the page's backdrop.</p>
+                <form method="dialog">
+                  <button type="submit">Close</button>
+                </form>
+              </dialog>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tools">
+        <header>
+          <h2>Tools</h2>
+          <p>
+            Opt-in classes, each labeled with its class. A consumer extends buttons and tables
+            by setting their hooks in its own layer: <code>--button-color</code> for buttons,
+            <code>--table-stripe</code> for tables. Scroll and forms have no hook; a consumer's
+            own layer restates their classes.
+          </p>
+        </header>
+
+        <section id="buttons">
+          <h3>Buttons</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label">
+                <code>.button</code> on <code>&lt;a&gt;</code>, beside a native
+                <code>&lt;button&gt;</code>
+              </p>
+              <div class="sample-row">
+                <a class="button" href="#buttons">Jump to buttons</a>
+                <button type="button">A button</button>
+              </div>
+            </div>
+          </div>
+          <div class="cells wide">
+            <div class="cell">
+              <p class="label"><code>.button-&lt;hue&gt;</code> on <code>&lt;button&gt;</code></p>
+              <div class="sample-row">
+                <button type="button" class="button-red">red</button>
+                <button type="button" class="button-orange">orange</button>
+                <button type="button" class="button-yellow">yellow</button>
+                <button type="button" class="button-green">green</button>
+                <button type="button" class="button-cyan">cyan</button>
+                <button type="button" class="button-blue">blue</button>
+                <button type="button" class="button-purple">purple</button>
+                <button type="button" class="button-magenta">magenta</button>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>.button-&lt;hue&gt;</code> on <code>&lt;a class="button"&gt;</code>
+              </p>
+              <div class="sample-row">
+                <a class="button button-red" href="#buttons">red</a>
+                <a class="button button-orange" href="#buttons">orange</a>
+                <a class="button button-yellow" href="#buttons">yellow</a>
+                <a class="button button-green" href="#buttons">green</a>
+                <a class="button button-cyan" href="#buttons">cyan</a>
+                <a class="button button-blue" href="#buttons">blue</a>
+                <a class="button button-purple" href="#buttons">purple</a>
+                <a class="button button-magenta" href="#buttons">magenta</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="scroll">
+          <h3>Scroll</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>.scroll-y</code></p>
+              <div class="scroll-sample scroll-y">
+                <p>.scroll-y scrolls its overflow vertically, with a stable gutter.</p>
+                <p>A second paragraph.</p>
+                <p>A third paragraph.</p>
+                <p>A fourth paragraph.</p>
+                <p>A fifth paragraph.</p>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label"><code>.scroll-x</code></p>
+              <div class="scroll-sample scroll-x">
+                .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that
+                will not wrap stays readable to its end in a box narrower than itself.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="fields">
+          <h3>Forms</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>.field</code></p>
+              <div class="field">
+                <label for="tools-field">A label</label>
+                <input id="tools-field" type="text" placeholder="Its control" />
+                <small>An optional hint, under its control.</small>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label"><code>.field-grow</code> in <code>.field</code></p>
+              <div class="field">
+                <label for="tools-field-grow">A growing field</label>
+                <input
+                  id="tools-field-grow"
+                  class="field-grow"
+                  type="text"
+                  value="It grows as you type"
+                />
+                <small>Its width follows its content, from a few characters wide.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tables-tools">
+          <h3>Tables</h3>
+          <div class="cells wide">
+            <div class="cell">
+              <p class="label"><code>.table-full</code></p>
+              <table class="table-full">
+                <thead>
+                  <tr>
+                    <th scope="col">Class</th>
+                    <th scope="col">Effect</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>.table-full</code></td>
+                    <td>Takes the full inline size.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="cell">
+              <p class="label"><code>.table-striped</code></p>
+              <table class="table-striped">
+                <thead>
+                  <tr>
+                    <th scope="col">Row</th>
+                    <th scope="col">Surface</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td><code>--bg</code></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td><code>--bg</code></td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="contrast">
+        <header>
+          <h2>Contrast</h2>
+          <p>
+            Contrast is graded where legibility matters: text over a color. Each matrix, one per
+            scheme, grades every text token and hue, its rows, over every surface and border, its
+            columns, by the WCAG 2 ratio from relative luminance. AA meets 4.5 for body text; AA
+            large meets 3 for large text; fail is below 3. Each mark is judged on the unrounded
+            ratio, so a 4.50 can still be AA large and a 3.00 can still fail. Surfaces and borders
+            get no ratio of their own. Failures are recorded here, not corrected.
+          </p>
+        </header>
+        <div class="cells wide">
+          <div class="cell">
+            <p class="label"><code>&lt;table&gt;</code> in <code>.scroll-x</code></p>
+            <div class="scroll-x">
+              <table id="contrast-light">
+                <caption>
+                  Light: each text token's and hue's WCAG 2 contrast ratio over each surface and
+                  border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                    <th scope="col"><code>--border-3</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>18.62 <span>AA</span></td>
+                    <td>16.74 <span>AA</span></td>
+                    <td>15.00 <span>AA</span></td>
+                    <td>13.39 <span>AA</span></td>
+                    <td>11.98 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>7.14 <span>AA</span></td>
+                    <td>6.42 <span>AA</span></td>
+                    <td>5.75 <span>AA</span></td>
+                    <td>5.14 <span>AA</span></td>
+                    <td>4.59 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>3.59 <span>AA large</span></td>
+                    <td>3.22 <span>AA large</span></td>
+                    <td>2.89 <span>fail</span></td>
+                    <td>2.58 <span>fail</span></td>
+                    <td>2.31 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>6.23 <span>AA</span></td>
+                    <td>5.61 <span>AA</span></td>
+                    <td>5.02 <span>AA</span></td>
+                    <td>4.48 <span>AA large</span></td>
+                    <td>4.01 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>4.69 <span>AA</span></td>
+                    <td>4.22 <span>AA large</span></td>
+                    <td>3.78 <span>AA large</span></td>
+                    <td>3.37 <span>AA large</span></td>
+                    <td>3.02 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>3.39 <span>AA large</span></td>
+                    <td>3.05 <span>AA large</span></td>
+                    <td>2.73 <span>fail</span></td>
+                    <td>2.44 <span>fail</span></td>
+                    <td>2.18 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>4.39 <span>AA large</span></td>
+                    <td>3.94 <span>AA large</span></td>
+                    <td>3.53 <span>AA large</span></td>
+                    <td>3.16 <span>AA large</span></td>
+                    <td>2.82 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>4.43 <span>AA large</span></td>
+                    <td>3.99 <span>AA large</span></td>
+                    <td>3.57 <span>AA large</span></td>
+                    <td>3.19 <span>AA large</span></td>
+                    <td>2.85 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>6.36 <span>AA</span></td>
+                    <td>5.72 <span>AA</span></td>
+                    <td>5.12 <span>AA</span></td>
+                    <td>4.57 <span>AA</span></td>
+                    <td>4.09 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>7.58 <span>AA</span></td>
+                    <td>6.81 <span>AA</span></td>
+                    <td>6.11 <span>AA</span></td>
+                    <td>5.45 <span>AA</span></td>
+                    <td>4.88 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>6.53 <span>AA</span></td>
+                    <td>5.87 <span>AA</span></td>
+                    <td>5.26 <span>AA</span></td>
+                    <td>4.69 <span>AA</span></td>
+                    <td>4.20 <span>AA large</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell">
+            <p class="label"><code>&lt;table&gt;</code> in <code>.scroll-x</code></p>
+            <div class="scroll-x">
+              <table id="contrast-dark">
+                <caption>
+                  Dark: each text token's and hue's WCAG 2 contrast ratio over each surface and
+                  border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                    <th scope="col"><code>--border-3</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>15.00 <span>AA</span></td>
+                    <td>13.48 <span>AA</span></td>
+                    <td>11.69 <span>AA</span></td>
+                    <td>9.89 <span>AA</span></td>
+                    <td>8.35 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>9.31 <span>AA</span></td>
+                    <td>8.37 <span>AA</span></td>
+                    <td>7.26 <span>AA</span></td>
+                    <td>6.14 <span>AA</span></td>
+                    <td>5.18 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>3.75 <span>AA large</span></td>
+                    <td>3.37 <span>AA large</span></td>
+                    <td>2.92 <span>fail</span></td>
+                    <td>2.47 <span>fail</span></td>
+                    <td>2.08 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>4.42 <span>AA large</span></td>
+                    <td>3.97 <span>AA large</span></td>
+                    <td>3.44 <span>AA large</span></td>
+                    <td>2.91 <span>fail</span></td>
+                    <td>2.46 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>5.77 <span>AA</span></td>
+                    <td>5.19 <span>AA</span></td>
+                    <td>4.50 <span>AA large</span></td>
+                    <td>3.81 <span>AA large</span></td>
+                    <td>3.21 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>8.08 <span>AA</span></td>
+                    <td>7.26 <span>AA</span></td>
+                    <td>6.29 <span>AA</span></td>
+                    <td>5.33 <span>AA</span></td>
+                    <td>4.49 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>6.12 <span>AA</span></td>
+                    <td>5.50 <span>AA</span></td>
+                    <td>4.77 <span>AA</span></td>
+                    <td>4.03 <span>AA large</span></td>
+                    <td>3.40 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>6.70 <span>AA</span></td>
+                    <td>6.02 <span>AA</span></td>
+                    <td>5.22 <span>AA</span></td>
+                    <td>4.42 <span>AA large</span></td>
+                    <td>3.73 <span>AA large</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>4.86 <span>AA</span></td>
+                    <td>4.37 <span>AA large</span></td>
+                    <td>3.79 <span>AA large</span></td>
+                    <td>3.21 <span>AA large</span></td>
+                    <td>2.71 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>5.39 <span>AA</span></td>
+                    <td>4.85 <span>AA</span></td>
+                    <td>4.20 <span>AA large</span></td>
+                    <td>3.56 <span>AA large</span></td>
+                    <td>3.00 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>5.14 <span>AA</span></td>
+                    <td>4.62 <span>AA</span></td>
+                    <td>4.00 <span>AA large</span></td>
+                    <td>3.39 <span>AA large</span></td>
+                    <td>2.86 <span>fail</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

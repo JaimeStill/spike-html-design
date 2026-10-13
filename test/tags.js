@@ -24,14 +24,17 @@ export function show(tag, path) {
   return result.stdout;
 }
 
-// stylesheets returns the stylesheet files tag publishes: its root, baseline.css, and the layer
-// files under layers/ it imports, as repository paths.
+// stylesheets returns the stylesheet files tag publishes, as repository paths: its root,
+// baseline.css, first, then every other .css file in the tag outside test/, listed recursively so
+// a layer file nested in a subdirectory is never missed.
 export function stylesheets(tag) {
-  const listed = git("ls-tree", "--name-only", `${tag}`, "layers/");
-  if (!listed.ok) throw new Error(`tags: cannot list layers/ at ${tag}`);
-  const layers = listed.stdout
+  const listed = git("ls-tree", "-r", "--name-only", `${tag}`);
+  if (!listed.ok) throw new Error(`tags: cannot list the files at ${tag}`);
+  const others = listed.stdout
     .toString()
     .split("\n")
-    .filter((path) => path.endsWith(".css"));
-  return ["baseline.css", ...layers];
+    .filter(
+      (path) => path.endsWith(".css") && path !== "baseline.css" && !path.startsWith("test/"),
+    );
+  return ["baseline.css", ...others];
 }

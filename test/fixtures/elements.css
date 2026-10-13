@@ -1,0 +1,18 @@
+/*
+ * A test-only entry: the tokens files, the reset and the elements layer, each imported into its
+ * nested layer as baseline.css imports it, and nothing else. No tools, so the behavior test sees
+ * what the reset and elements do to native elements; it answers the reset's request 404 to see
+ * what the elements layer alone does.
+ */
+
+@layer spike-html-design.tokens.color,
+  spike-html-design.tokens.space,
+  spike-html-design.tokens.type,
+  spike-html-design.reset,
+  spike-html-design.elements;
+
+@import url(../../layers/tokens/color.css) layer(spike-html-design.tokens.color);
+@import url(../../layers/tokens/space.css) layer(spike-html-design.tokens.space);
+@import url(../../layers/tokens/type.css) layer(spike-html-design.tokens.type);
+@import url(../../layers/reset.css) layer(spike-html-design.reset);
+@import url(../../layers/elements.css) layer(spike-html-design.elements);

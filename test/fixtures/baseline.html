@@ -5,11 +5,11 @@
     <title>baseline fixture</title>
     <link rel="stylesheet" href="../../baseline.css" />
     <style>
-      /* A components-layer rule standing in for the baseline's components, and an app layer the
-         page declares after the stylesheet. The app rules carry equal or lower specificity than
-         the rules they must beat (these components rules, the theme's body rule), and no
-         !important. */
-      @layer components {
+      /* A rule appended to the baseline's tools layer, standing in for a tools class, and an app
+         layer the page declares after the stylesheet. The app rules carry equal or lower
+         specificity than the rules they must beat (these tools rules, the elements layer's body
+         rule), and no !important. */
+      @layer spike-html-design.tools {
         #specific.probe,
         .probe {
           color: rgb(255, 0, 0);

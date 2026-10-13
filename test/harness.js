@@ -1,8 +1,8 @@
 // harness is the single test seam: a page loaded in headless chromium and queried for computed
 // styles. It wraps Bun.WebView (experimental in bun 1.4.3) with the few capabilities the tests
 // use: open a URL, evaluate in the page, read a computed style, fingerprint a page's resolved
-// styles, emulate media features such as prefers-color-scheme, and answer a request URL prefix
-// from a local file. serve() is a static server for pages that must load over http://.
+// styles, emulate media features such as prefers-color-scheme and the viewport's size, and answer
+// a request URL prefix from a local file. serve() is a static server for pages that must load over http://.
 //
 // Bun.WebView spawns one chromium per bun process and opens each view as a tab in it, so the
 // first openPage() fixes the browser for the whole test run.
@@ -17,16 +17,18 @@ export function fileUrl(path) {
 
 // openPage opens url in a new tab of a headless chromium the harness spawns itself and resolves
 // to a Page once the page has loaded. Options set up the tab before the first load:
-// `scheme` emulates prefers-color-scheme ("dark" or "light"), and `intercept` maps URL prefixes
-// to the local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. It throws
-// when chromium is not on PATH or won't start.
-export async function openPage(url, { scheme, intercept } = {}) {
+// `scheme` emulates prefers-color-scheme ("dark" or "light"), `viewport` emulates the viewport's
+// size in CSS px, as in { width: 1440, height: 900 }, and `intercept` maps URL prefixes to the
+// local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. It throws when
+// chromium is not on PATH or won't start.
+export async function openPage(url, { scheme, viewport, intercept } = {}) {
   const page = new Page(spawnView());
   try {
     // about:blank first: a view has no CDP session until its first navigation, and emulation
     // and interception must be in place before the page under test loads.
     await page.view.navigate("about:blank");
     if (scheme) await page.setScheme(scheme);
+    if (viewport) await page.setViewport(viewport);
     for (const [prefix, path] of Object.entries(intercept ?? {}))
       await page.intercept(prefix, path);
     await page.goto(url);
@@ -151,6 +153,18 @@ class Page {
     });
   }
 
+  // setViewport emulates the viewport's size, { width, height } in CSS px at a device scale of 1,
+  // as a desktop window of that size would give. Viewport units and media queries follow it at
+  // once, without a reload.
+  async setViewport({ width, height }) {
+    await this.#cdp("Emulation.setDeviceMetricsOverride", {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+  }
+
   // intercept answers every request whose URL starts with prefix with the local file at path.
   // A missing file answers 404, so a wrong path fails a test instead of reaching the network.
   async intercept(prefix, path) {
@@ -190,15 +204,16 @@ class Page {
   }
 }
 
-// serve starts a static file server for root on a free localhost port and returns its base URL
-// and stop(). `prefix`, a path ending in "/" such as "/project/", serves root under it, the way
-// GitHub Pages serves a project site; the base URL ends in it. A directory path answers its
-// index.html; a path outside root or the prefix, or with no file, answers 404.
-export function serve(root, { prefix = "/" } = {}) {
+// serve starts a static file server for root on localhost and returns its base URL and stop().
+// `prefix`, a path ending in "/" such as "/project/", serves root under it, the way GitHub Pages
+// serves a project site; the base URL ends in it. `port` fixes the port; the default, 0, takes
+// a free one. A directory path answers its index.html; a path outside root or the prefix, or
+// with no file, answers 404.
+export function serve(root, { prefix = "/", port = 0 } = {}) {
   const base = resolve(root);
   const server = Bun.serve({
     hostname: "127.0.0.1",
-    port: 0,
+    port,
     async fetch(request) {
       const pathname = decodeURIComponent(new URL(request.url).pathname);
       if (!pathname.startsWith(prefix)) return new Response(null, { status: 404 });

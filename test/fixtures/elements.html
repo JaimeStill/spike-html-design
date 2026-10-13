@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>elements fixture</title>
+    <!-- The tokens, reset and elements layers. The behavior test loads this page with the
+         stylesheet, with the reset's request answered 404, and with the stylesheet's, and
+         compares every element's layout properties. Every rendered HTML element appears at least
+         once, and every input type, with a popover; nothing loads from the network. -->
+    <link rel="stylesheet" href="./elements.css" />
+  </head>
+  <body>
+    <header>
+      <hgroup>
+        <h1>Heading one</h1>
+        <p>A subtitle in a heading group.</p>
+      </hgroup>
+      <nav><a href="#article">the article</a></nav>
+    </header>
+    <search>
+      <form>
+        <label for="query">Search</label>
+        <input id="query" type="search" placeholder="Placeholder" />
+      </form>
+    </search>
+    <main>
+      <article id="article">
+        <h2>Heading two</h2>
+        <h3>Heading three</h3>
+        <h4>Heading four</h4>
+        <h5>Heading five</h5>
+        <h6>Heading six</h6>
+        <section>
+          <p>
+            <a href="#article">the article</a>, <em>em</em>, <strong>strong</strong>, <small>small</small>,
+            <s>s</s>, <cite>cite</cite>, <q>q</q>, <dfn>dfn</dfn>, <abbr title="abbreviation">abbr</abbr>,
+            <ruby>ruby<rp>(</rp><rt>rt</rt><rp>)</rp></ruby>, <data value="1">data</data>,
+            <time datetime="2026-10-13">time</time>, <code>code</code>, <var>var</var>,
+            <samp>samp</samp>, <kbd>kbd</kbd>, x<sub>sub</sub>, x<sup>sup</sup>, <i>i</i>, <b>b</b>,
+            <u>u</u>, <mark>mark</mark>, <bdi>bdi</bdi>, <bdo dir="rtl">bdo</bdo>, <span>span</span>,
+            a<br />break, a<wbr />wbr, <ins>ins</ins>, <del>del</del>.
+          </p>
+          <hr />
+          <pre><code>pre code</code></pre>
+          <blockquote><p>A blockquote.</p></blockquote>
+          <ol>
+            <li>An ordered item</li>
+            <li>A second item</li>
+          </ol>
+          <ul>
+            <li>An unordered item</li>
+            <li>A second item</li>
+          </ul>
+          <menu>
+            <li>A menu item</li>
+          </menu>
+          <dl>
+            <dt>Term</dt>
+            <dd>Definition</dd>
+          </dl>
+          <figure>
+            <div>A div in a figure.</div>
+            <figcaption>A figcaption.</figcaption>
+          </figure>
+          <address>An address.</address>
+        </section>
+        <aside>An aside.</aside>
+      </article>
+
+      <section>
+        <img
+          alt="A gray rectangle"
+          width="16"
+          height="16"
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E"
+        />
+        <picture>
+          <source
+            type="image/svg+xml"
+            srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E"
+          />
+          <img
+            alt="A gray circle"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E"
+          />
+        </picture>
+        <iframe title="An iframe" srcdoc="<p>An iframe.</p>"></iframe>
+        <embed type="image/svg+xml" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E" />
+        <object
+          title="A gray rectangle"
+          type="image/svg+xml"
+          data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E"
+        >
+          An object.
+        </object>
+        <video controls><track kind="captions" /></video>
+        <audio controls><track kind="captions" /></audio>
+        <canvas width="16" height="16"></canvas>
+        <svg width="16" height="16" aria-hidden="true"><rect width="16" height="16" /></svg>
+        <math><mi>x</mi><mo>=</mo><mn>1</mn></math>
+      </section>
+
+      <section>
+        <table>
+          <caption>A caption.</caption>
+          <colgroup>
+            <col />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Head</th>
+              <th>Head</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cell</td>
+              <td>Cell</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Foot</td>
+              <td>Foot</td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+
+      <form>
+        <fieldset>
+          <legend>A legend</legend>
+          <label>text <input type="text" placeholder="Placeholder" /></label>
+          <label>email <input type="email" /></label>
+          <label>url <input type="url" /></label>
+          <label>tel <input type="tel" /></label>
+          <label>password <input type="password" /></label>
+          <label>number <input type="number" /></label>
+          <label>range <input type="range" /></label>
+          <label>date <input type="date" /></label>
+          <label>month <input type="month" /></label>
+          <label>week <input type="week" /></label>
+          <label>time <input type="time" /></label>
+          <label>datetime-local <input type="datetime-local" /></label>
+          <label>color <input type="color" /></label>
+          <label>checkbox <input type="checkbox" /></label>
+          <label>radio <input type="radio" /></label>
+          <label>file <input type="file" /></label>
+          <label>list <input list="choices" /></label>
+          <datalist id="choices">
+            <option value="One"></option>
+          </datalist>
+          <input type="hidden" />
+          <input type="image" alt="Submit" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E" />
+          <input type="submit" />
+          <input type="reset" />
+          <input type="button" value="input button" />
+          <button type="button">button</button>
+          <button type="button" disabled>disabled</button>
+          <select>
+            <optgroup label="A group">
+              <option>An option</option>
+            </optgroup>
+          </select>
+          <select multiple>
+            <option>An option</option>
+          </select>
+          <textarea placeholder="Placeholder"></textarea>
+          <output>output</output>
+          <progress value="0.5"></progress>
+          <meter value="0.5"></meter>
+        </fieldset>
+      </form>
+
+      <details open>
+        <summary>A summary</summary>
+        <p>Details.</p>
+      </details>
+      <details>
+        <summary>A closed summary</summary>
+        <p>Details.</p>
+      </details>
+      <dialog open><p>A dialog.</p></dialog>
+      <dialog id="modal"><p>A modal dialog.</p></dialog>
+      <div id="popover" popover><p>A popover.</p></div>
+    </main>
+    <footer>A footer.</footer>
+  </body>
+</html>

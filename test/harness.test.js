@@ -22,7 +22,7 @@ describe("harness", () => {
   test("reads a computed style and a custom property from file://", async () => {
     const page = await open(fileUrl(join(fixtures, "index.html")), { scheme: "light" });
     expect(await page.style("p", "color")).toBe("rgb(16, 15, 15)");
-    expect(await page.style(":root", "--accent")).toBe("rgb(32, 94, 166)");
+    expect(await page.style(":root", "--blue")).toBe("rgb(32, 94, 166)");
   });
 
   test("reads a computed style from the local server", async () => {
@@ -56,6 +56,19 @@ describe("harness", () => {
     expect(await page.style("p", "color")).toBe("rgb(206, 205, 195)");
   });
 
+  test("emulates the viewport's size, then changes it without a reload", async () => {
+    const fixture = fileUrl(join(fixtures, "index.html"));
+    const size = "[innerWidth, innerHeight]";
+    const page = await open(fixture, { viewport: { width: 320, height: 800 } });
+    expect(await page.evaluate(size)).toEqual([320, 800]);
+    expect(await page.evaluate("matchMedia('(width: 320px)').matches")).toBe(true);
+    await page.evaluate("window.unreloaded = true");
+    await page.setViewport({ width: 3440, height: 1440 });
+    expect(await page.evaluate(size)).toEqual([3440, 1440]);
+    expect(await page.evaluate("matchMedia('(width: 3440px)').matches")).toBe(true);
+    expect(await page.evaluate("window.unreloaded === true")).toBe(true);
+  });
+
   test("the local server serves under a prefix and answers 404 outside it", async () => {
     const prefixed = serve(fixtures, { prefix: "/project/" });
     try {
@@ -65,6 +78,19 @@ describe("harness", () => {
       expect((await fetch(prefixed.url.replace("/project/", "/pinned.css"))).status).toBe(404);
     } finally {
       prefixed.stop();
+    }
+  });
+
+  test("the local server takes a fixed port when given one", async () => {
+    const probe = serve(fixtures);
+    const port = Number(new URL(probe.url).port);
+    probe.stop();
+    const fixed = serve(fixtures, { port });
+    try {
+      expect(fixed.url).toBe(`http://127.0.0.1:${port}/`);
+      expect((await fetch(fixed.url)).status).toBe(200);
+    } finally {
+      fixed.stop();
     }
   });
 
@@ -80,7 +106,7 @@ describe("harness", () => {
       "html > body:nth-child(2)",
       "html > body:nth-child(2) > p:nth-child(1)",
     ]);
-    expect(print[0][1]).toEqual({ color: "rgb(0, 0, 0)", "--accent": "rgb(32, 94, 166)" });
+    expect(print[0][1]).toEqual({ color: "rgb(0, 0, 0)", "--blue": "rgb(32, 94, 166)" });
     expect(print.at(-1)[1]).toEqual({ color: "rgb(16, 15, 15)" });
     await page.setScheme("dark");
     expect(await page.fingerprint(["color"])).not.toEqual(print);
