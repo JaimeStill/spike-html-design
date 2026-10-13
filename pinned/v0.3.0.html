@@ -383,97 +383,228 @@ const answer = 42;</code></pre>
 
       <section id="contrast">
         <h2>Contrast</h2>
-        <table>
-          <caption>
-            Each tier's and hue's WCAG 2 contrast ratio against <code>--bg</code>, from relative
-            luminance, in each scheme. AA meets 4.5 for body text; AA large meets 3 for large text
-            and interface parts; fail is below 3. Failures are recorded here, not corrected.
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Token</th>
-              <th scope="col">Light</th>
-              <th scope="col">Dark</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row"><code>--bg-2</code></th>
-              <td>1.11 <span>fail</span></td>
-              <td>1.11 <span>fail</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--border</code></th>
-              <td>1.24 <span>fail</span></td>
-              <td>1.28 <span>fail</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--border-2</code></th>
-              <td>1.39 <span>fail</span></td>
-              <td>1.52 <span>fail</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--border-3</code></th>
-              <td>1.55 <span>fail</span></td>
-              <td>1.80 <span>fail</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--fg</code></th>
-              <td>18.62 <span>AA</span></td>
-              <td>15.00 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--fg-2</code></th>
-              <td>7.14 <span>AA</span></td>
-              <td>9.31 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--fg-3</code></th>
-              <td>3.59 <span>AA large</span></td>
-              <td>3.75 <span>AA large</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--red</code></th>
-              <td>6.23 <span>AA</span></td>
-              <td>4.42 <span>AA large</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--orange</code></th>
-              <td>4.69 <span>AA</span></td>
-              <td>5.77 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--yellow</code></th>
-              <td>3.39 <span>AA large</span></td>
-              <td>8.08 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--green</code></th>
-              <td>4.39 <span>AA large</span></td>
-              <td>6.12 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--cyan</code></th>
-              <td>4.43 <span>AA large</span></td>
-              <td>6.70 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--blue</code></th>
-              <td>6.36 <span>AA</span></td>
-              <td>4.86 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--purple</code></th>
-              <td>7.58 <span>AA</span></td>
-              <td>5.39 <span>AA</span></td>
-            </tr>
-            <tr>
-              <th scope="row"><code>--magenta</code></th>
-              <td>6.53 <span>AA</span></td>
-              <td>5.14 <span>AA</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <p>
+          Contrast is graded where legibility matters: text over a color. Each matrix, one per
+          scheme, grades every text token and hue, its rows, over every surface, its columns, by
+          the WCAG 2 ratio from relative luminance. AA meets 4.5 for body text; AA large meets 3
+          for large text; fail is below 3. Each mark is judged on the unrounded ratio, so a 4.50
+          can still be AA large and a 3.00 can still fail. Surfaces get no ratio of their own.
+          Failures are recorded here, not corrected.
+        </p>
+        <div class="scroll-x">
+          <table id="contrast-light">
+            <caption>
+              Light: each text token's and hue's WCAG 2 contrast ratio over each surface.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Text over</th>
+                <th scope="col"><code>--bg</code></th>
+                <th scope="col"><code>--bg-2</code></th>
+                <th scope="col"><code>--border</code></th>
+                <th scope="col"><code>--border-2</code></th>
+                <th scope="col"><code>--border-3</code></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>--fg</code></th>
+                <td>18.62 <span>AA</span></td>
+                <td>16.74 <span>AA</span></td>
+                <td>15.00 <span>AA</span></td>
+                <td>13.39 <span>AA</span></td>
+                <td>11.98 <span>AA</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--fg-2</code></th>
+                <td>7.14 <span>AA</span></td>
+                <td>6.42 <span>AA</span></td>
+                <td>5.75 <span>AA</span></td>
+                <td>5.14 <span>AA</span></td>
+                <td>4.59 <span>AA</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--fg-3</code></th>
+                <td>3.59 <span>AA large</span></td>
+                <td>3.22 <span>AA large</span></td>
+                <td>2.89 <span>fail</span></td>
+                <td>2.58 <span>fail</span></td>
+                <td>2.31 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--red</code></th>
+                <td>6.23 <span>AA</span></td>
+                <td>5.61 <span>AA</span></td>
+                <td>5.02 <span>AA</span></td>
+                <td>4.48 <span>AA large</span></td>
+                <td>4.01 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--orange</code></th>
+                <td>4.69 <span>AA</span></td>
+                <td>4.22 <span>AA large</span></td>
+                <td>3.78 <span>AA large</span></td>
+                <td>3.37 <span>AA large</span></td>
+                <td>3.02 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--yellow</code></th>
+                <td>3.39 <span>AA large</span></td>
+                <td>3.05 <span>AA large</span></td>
+                <td>2.73 <span>fail</span></td>
+                <td>2.44 <span>fail</span></td>
+                <td>2.18 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--green</code></th>
+                <td>4.39 <span>AA large</span></td>
+                <td>3.94 <span>AA large</span></td>
+                <td>3.53 <span>AA large</span></td>
+                <td>3.16 <span>AA large</span></td>
+                <td>2.82 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--cyan</code></th>
+                <td>4.43 <span>AA large</span></td>
+                <td>3.99 <span>AA large</span></td>
+                <td>3.57 <span>AA large</span></td>
+                <td>3.19 <span>AA large</span></td>
+                <td>2.85 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--blue</code></th>
+                <td>6.36 <span>AA</span></td>
+                <td>5.72 <span>AA</span></td>
+                <td>5.12 <span>AA</span></td>
+                <td>4.57 <span>AA</span></td>
+                <td>4.09 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--purple</code></th>
+                <td>7.58 <span>AA</span></td>
+                <td>6.81 <span>AA</span></td>
+                <td>6.11 <span>AA</span></td>
+                <td>5.45 <span>AA</span></td>
+                <td>4.88 <span>AA</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--magenta</code></th>
+                <td>6.53 <span>AA</span></td>
+                <td>5.87 <span>AA</span></td>
+                <td>5.26 <span>AA</span></td>
+                <td>4.69 <span>AA</span></td>
+                <td>4.20 <span>AA large</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="scroll-x">
+          <table id="contrast-dark">
+            <caption>
+              Dark: each text token's and hue's WCAG 2 contrast ratio over each surface.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Text over</th>
+                <th scope="col"><code>--bg</code></th>
+                <th scope="col"><code>--bg-2</code></th>
+                <th scope="col"><code>--border</code></th>
+                <th scope="col"><code>--border-2</code></th>
+                <th scope="col"><code>--border-3</code></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>--fg</code></th>
+                <td>15.00 <span>AA</span></td>
+                <td>13.48 <span>AA</span></td>
+                <td>11.69 <span>AA</span></td>
+                <td>9.89 <span>AA</span></td>
+                <td>8.35 <span>AA</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--fg-2</code></th>
+                <td>9.31 <span>AA</span></td>
+                <td>8.37 <span>AA</span></td>
+                <td>7.26 <span>AA</span></td>
+                <td>6.14 <span>AA</span></td>
+                <td>5.18 <span>AA</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--fg-3</code></th>
+                <td>3.75 <span>AA large</span></td>
+                <td>3.37 <span>AA large</span></td>
+                <td>2.92 <span>fail</span></td>
+                <td>2.47 <span>fail</span></td>
+                <td>2.08 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--red</code></th>
+                <td>4.42 <span>AA large</span></td>
+                <td>3.97 <span>AA large</span></td>
+                <td>3.44 <span>AA large</span></td>
+                <td>2.91 <span>fail</span></td>
+                <td>2.46 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--orange</code></th>
+                <td>5.77 <span>AA</span></td>
+                <td>5.19 <span>AA</span></td>
+                <td>4.50 <span>AA large</span></td>
+                <td>3.81 <span>AA large</span></td>
+                <td>3.21 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--yellow</code></th>
+                <td>8.08 <span>AA</span></td>
+                <td>7.26 <span>AA</span></td>
+                <td>6.29 <span>AA</span></td>
+                <td>5.33 <span>AA</span></td>
+                <td>4.49 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--green</code></th>
+                <td>6.12 <span>AA</span></td>
+                <td>5.50 <span>AA</span></td>
+                <td>4.77 <span>AA</span></td>
+                <td>4.03 <span>AA large</span></td>
+                <td>3.40 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--cyan</code></th>
+                <td>6.70 <span>AA</span></td>
+                <td>6.02 <span>AA</span></td>
+                <td>5.22 <span>AA</span></td>
+                <td>4.42 <span>AA large</span></td>
+                <td>3.73 <span>AA large</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--blue</code></th>
+                <td>4.86 <span>AA</span></td>
+                <td>4.37 <span>AA large</span></td>
+                <td>3.79 <span>AA large</span></td>
+                <td>3.21 <span>AA large</span></td>
+                <td>2.71 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--purple</code></th>
+                <td>5.39 <span>AA</span></td>
+                <td>4.85 <span>AA</span></td>
+                <td>4.20 <span>AA large</span></td>
+                <td>3.56 <span>AA large</span></td>
+                <td>3.00 <span>fail</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>--magenta</code></th>
+                <td>5.14 <span>AA</span></td>
+                <td>4.62 <span>AA</span></td>
+                <td>4.00 <span>AA large</span></td>
+                <td>3.39 <span>AA large</span></td>
+                <td>2.86 <span>fail</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   </body>

@@ -150,6 +150,16 @@ const HUES = {
   "--magenta": ["#a02f6f", "#ce5d97"],
 };
 
+// SURFACES are the color tokens text sits over, the contrast matrices' columns, in order.
+const SURFACES = ["--bg", "--bg-2", "--border", "--border-2", "--border-3"];
+
+// TEXT are the color tokens drawn as text, the contrast matrices' rows, in order: the text tiers,
+// then the hues.
+const TEXT = [
+  ...Object.keys(TIERS).filter((name) => !SURFACES.includes(name)),
+  ...Object.keys(HUES),
+];
+
 // COLORS are the color facet's tokens, name to the color each resolves to in light and in dark.
 const COLORS = Object.fromEntries(
   Object.entries({ ...TIERS, ...HUES }).map(([name, pair]) => [name, pair.map(rgb)]),
@@ -308,8 +318,8 @@ function contrast(a, b) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// mark is the mark a contrast ratio earns in the specimen's table: AA at 4.5 for body text,
-// AA large at 3 for large text and interface parts, fail below 3.
+// mark is the mark a contrast ratio earns in the specimen's matrices: AA at 4.5 for body text,
+// AA large at 3 for large text, fail below 3.
 function mark(ratio) {
   if (ratio >= 4.5) return "AA";
   if (ratio >= 3) return "AA large";
@@ -1025,38 +1035,71 @@ describe("specimen", () => {
     }
   });
 
-  test("the contrast table has one row per tier and hue but --bg", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const rows = await page.evaluate(`[...document.querySelectorAll("#contrast tbody th code")]
-      .map((code) => code.textContent)`);
-    // An exact match, so a new color token without a row fails.
-    expect([...rows].sort()).toEqual(
-      Object.keys(COLORS)
-        .filter((name) => name !== "--bg")
-        .sort(),
-    );
-    expect(new Set(rows).size).toBe(rows.length);
-  });
+  // Contrast is graded only where legibility matters, text over a color: each scheme's matrix
+  // has a row per text token and hue and a column per surface, and a surface gets no ratio of
+  // its own.
+  for (const scheme of ["light", "dark"]) {
+    test(`the ${scheme} contrast matrix grades every text token and hue over every surface`, async () => {
+      const page = await open(specimen, { scheme: "light" });
+      const table = `#contrast-${scheme}`;
+      const rows = await page.evaluate(`[...document.querySelectorAll("${table} tbody th code")]
+        .map((code) => code.textContent)`);
+      const columns = await page.evaluate(`[...document.querySelectorAll("${table} thead th code")]
+        .map((code) => code.textContent)`);
+      // Exact matches, in order, so a new color token without a row or a column fails.
+      expect(rows).toEqual(TEXT);
+      expect(columns).toEqual(SURFACES);
+      expect([...TEXT, ...SURFACES].sort()).toEqual(Object.keys(COLORS).sort());
+    });
+  }
 
   for (const [index, scheme] of ["light", "dark"].entries()) {
-    test(`the contrast table's ${scheme} column matches each ratio recomputed in chromium`, async () => {
+    test(`the ${scheme} contrast matrix matches each ratio recomputed in chromium`, async () => {
       const page = await open(specimen, { scheme });
-      // The table is static: each cell is the ratio as written, then its mark.
-      const cells = await page.evaluate(`[...document.querySelectorAll("#contrast tbody tr")]
-        .map((row) => {
-          const cell = row.cells[${index + 1}];
+      // The matrix is static: each cell is the ratio as written, then its mark.
+      const cells =
+        await page.evaluate(`[...document.querySelectorAll("#contrast-${scheme} tbody tr")]
+        .flatMap((row) => [...row.cells].slice(1).map((cell, column) => ({
+          text: row.querySelector("th code").textContent,
+          surface: ${JSON.stringify(SURFACES)}[column],
+          ratio: cell.firstChild.textContent.trim(),
+          mark: cell.querySelector("span")?.textContent,
+        })))`);
+      expect(cells.length).toBe(TEXT.length * SURFACES.length);
+      for (const { text, surface, ...cell } of cells) {
+        const fg = await resolveColor(page, text);
+        const bg = await resolveColor(page, surface);
+        // The emulated scheme took: each token resolves to its value in this scheme.
+        expect([fg, bg]).toEqual([COLORS[text][index], COLORS[surface][index]]);
+        const ratio = contrast(fg, bg);
+        expect([text, surface, cell]).toEqual([
+          text,
+          surface,
+          { ratio: ratio.toFixed(2), mark: mark(ratio) },
+        ]);
+      }
+    });
+  }
+
+  for (const name of ["narrow", "phone"]) {
+    test(`the contrast matrices scroll inside their wrappers, not the page, on a ${name} display`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
+      const boxes = await page.evaluate(`[...document.querySelectorAll("#contrast table")]
+        .map((table) => {
+          const wrapper = table.parentElement;
           return {
-            token: row.querySelector("th code").textContent,
-            ratio: cell.firstChild.textContent.trim(),
-            mark: cell.querySelector("span")?.textContent,
+            wrapped: wrapper.matches(".scroll-x"),
+            inside: wrapper.getBoundingClientRect().right <= document.documentElement.clientWidth,
           };
         })`);
-      const bg = await resolveColor(page, "--bg");
-      expect(bg).toBe(COLORS["--bg"][index]);
-      for (const { token, ...cell } of cells) {
-        const ratio = contrast(await resolveColor(page, token), bg);
-        expect([token, cell]).toEqual([token, { ratio: ratio.toFixed(2), mark: mark(ratio) }]);
-      }
+      expect(boxes).toEqual([
+        { wrapped: true, inside: true },
+        { wrapped: true, inside: true },
+      ]);
+      expect(
+        await page.evaluate(`document.querySelector("#contrast").scrollWidth
+        <= document.querySelector("#contrast").clientWidth`),
+      ).toBe(true);
     });
   }
 
