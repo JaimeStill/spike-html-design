@@ -448,5 +448,7 @@ slices 5/6 committed · review stop ✓ · standards — · spec — · editor �
   note naming the stack (foundation, layouts, components, and consumers: the reference client,
   generative context, Pages sites and per-repository docs, live Go demos) and what each layer
   owns; v1.client as the umbrella; docs-site and v1.repository-docs as consumers; the remaining
-  spikes and this spike's profiles, preferences, and keys re-checked against it. The pending
-  edits above feed that session.
+  spikes (spike-html-artifacts, spike-html-go-wasm) and this spike's profiles, preferences, and
+  keys re-checked against it; and any additional spikes the strategy needs established, so
+  v1.client covers the reference client, the artifacts, and the repository docs sites. Runs
+  right after this session. The pending edits above feed it.
