@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 6/6 committed · review stop ✓ · standards ✓ · spec — · editor —
+slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10:16 fixed; hooks amended) · editor —
 
 ## Decisions
 
@@ -427,6 +427,11 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec — · editor �
 - facets (BUILD, accepted by the architect): the button variant treatment is keyed on the class
   prefix: a variant is named `button-<name>` and sets only --button-color; CSS can't test
   whether a custom property is set, so a hook set on any other class does nothing.
+- facets (BUILD, escalation): a tools family has a hook where it has a treatment to extend:
+  buttons (--button-color) and tables (--table-stripe); scroll and forms have none and extend
+  through a consumer's later layer. Amends behavior 11's "one hook per family". Rejected
+  --field-gap and --scroll-padding: a hook feeding one declaration is frozen API with no gain,
+  and adding one later breaks nothing.
 
 ## Pending edits
 
