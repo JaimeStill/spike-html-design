@@ -1548,7 +1548,7 @@ describe("elements", () => {
     const page = await open(specimen, { scheme: "light" });
     for (const [selector, token] of [
       ["body", "--leading-body"],
-      ["#prose h3", "--leading-heading"],
+      ["#prose .cell h3", "--leading-heading"],
       ["#prose pre", "--leading-code"],
     ]) {
       const [size, leading] = [
@@ -1575,7 +1575,7 @@ describe("elements", () => {
         body: "--text-m",
         "#prose h1": "--text-3xl",
         "#prose h2": "--text-2xl",
-        "#prose h3": "--text-xl",
+        "#prose .cell h3": "--text-xl",
         "#prose h4": "--text-l",
         "#prose h5": "--text-m",
         "#prose h6": "--text-s",
@@ -2661,24 +2661,40 @@ describe("extension", () => {
   });
 });
 
+// DESKTOP and PHONE are the viewports the specimen's layout is read at: a laptop's window, and a
+// phone's width.
+const DESKTOP = { width: 1280, height: 800 };
+const PHONE = { width: 390, height: 844 };
+
 describe("specimen", () => {
   test("shows every token with a sample that resolves it", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .specimen > code")]
-      .map((code) => [code.textContent, code.nextElementSibling.style.getPropertyValue("--sample")])`);
+    // A token shows as a row of a .specimen grid, its name then its sample, or as a row of a
+    // token table, its name then its swatch.
+    const shown = await page.evaluate(`[
+      ...[...document.querySelectorAll("#tokens .specimen > code")]
+        .map((code) => [code.textContent, code.nextElementSibling]),
+      ...[...document.querySelectorAll("#tokens .tokens tbody tr")]
+        .map((row) => [row.cells[0].textContent, row.cells[1].firstElementChild]),
+    ].map(([name, sample]) => [name, sample.style.getPropertyValue("--sample")])`);
     expect(shown.map(([name]) => name).sort()).toEqual(Object.keys(TOKENS).sort());
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 
   test("shows every tier and hue with its light and dark values", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .colors > code")]
-      .map((code) => [code.textContent, code.nextElementSibling.nextElementSibling.textContent])`);
+    // Each row's light and dark cells give the value as text and paint it in a dot.
+    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .tokens tbody tr")]
+      .map((row) => [row.cells[0].textContent, [...row.cells].slice(2).map((cell) =>
+        [cell.textContent.trim(), cell.querySelector(".dot").style.getPropertyValue("--sample")])])`);
     expect(Object.fromEntries(shown)).toEqual(
       Object.fromEntries(
         Object.entries({ ...TIERS, ...HUES }).map(([name, [light, dark]]) => [
           name,
-          `${light} / ${dark}`,
+          [
+            [light, light],
+            [dark, dark],
+          ],
         ]),
       ),
     );
@@ -2748,8 +2764,218 @@ describe("specimen", () => {
       ...ADDED.map((name) => [`${PACKAGE}.tokens.color`, `./${profilePath(name)}`]),
       "specimen",
     ]);
-    const note = await page.evaluate(`document.querySelector("body > header .note").textContent`);
-    expect(squash(note)).toContain("is composition");
+    // The layer's own comment says so; the page carries no note about it.
+    const comment = await page.evaluate(`document.querySelector("style").textContent`);
+    expect(squash(comment)).toContain("The arrangement is composition");
+    expect(squash(comment)).toContain("is the baseline alone");
+  });
+
+  test("carries no note about the workbench: the composition speaks for itself", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const text = await page.evaluate(`document.body.textContent`);
+    expect(squash(text)).not.toContain("This page is a workbench");
+    expect(await page.evaluate(`document.querySelectorAll(".note").length`)).toBe(0);
+  });
+
+  test("opens each section on a full-width banner on the element surface, and each subsection on one on the pane", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const banners = await page.evaluate(`[
+      ...[...document.querySelectorAll("main > section")]
+        .map((section) => [section, section.querySelector(":scope > header > h2")]),
+      ...[...document.querySelectorAll("main > section > section")]
+        .map((section) => [section, section.querySelector(":scope > h3, :scope > header > h3")]),
+    ].map(([section, heading]) => {
+      const [outer, inner] = [section.getBoundingClientRect(), heading.getBoundingClientRect()];
+      return [section.id, heading.localName, Math.round(outer.width - inner.width),
+        getComputedStyle(heading).backgroundColor];
+    })`);
+    expect(banners.length).toBeGreaterThan(10);
+    for (const [id, level, short, fill] of banners) {
+      const surface = level === "h2" ? "--bg-2" : "--bg-0";
+      expect([id, short, fill]).toEqual([id, 0, COLORS[surface][0]]);
+    }
+  });
+
+  // panels resolves, per grid of cells, its cells' rows: each row the left edge and width of its
+  // cells, with the grid's content width, and whether each row starts where the last ended.
+  const panels = (page) =>
+    page.evaluate(`[...document.querySelectorAll(".cells")].map((grid) => {
+      const rows = new Map();
+      for (const cell of grid.children) {
+        const box = cell.getBoundingClientRect();
+        const top = Math.round(box.top);
+        if (!rows.has(top)) rows.set(top, []);
+        rows.get(top).push(box);
+      }
+      const tops = [...rows.keys()];
+      const bottoms = [...rows.values()].map((boxes) =>
+        Math.round(Math.max(...boxes.map((box) => box.bottom))));
+      const style = getComputedStyle(grid);
+      const content = grid.clientWidth - Number.parseFloat(style.paddingLeft)
+        - Number.parseFloat(style.paddingRight);
+      return {
+        cells: grid.children.length,
+        columns: Math.max(...[...rows.values()].map((boxes) => boxes.length)),
+        filled: [...rows.values()].map((boxes) =>
+          Math.round(boxes.reduce((sum, box) => sum + box.width, 0) - content)),
+        stacked: tops.slice(1).every((top, index) => top === bottoms[index]),
+      };
+    })`);
+
+  test("lays its samples out in gapless panels, two cells wide on a wide display and one on a phone", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const wide = await panels(page);
+    expect(wide.length).toBeGreaterThan(10);
+    // Every row fills its grid edge to edge, cells meeting with no gap, and each row starts
+    // where the one above it ends.
+    for (const grid of wide) {
+      expect(grid.columns).toBe(Math.min(2, grid.cells));
+      expect(new Set(grid.filled)).toEqual(new Set([0]));
+      expect(grid.stacked).toBe(true);
+    }
+    await page.setViewport(PHONE);
+    for (const grid of await panels(page)) {
+      expect(grid.columns).toBe(1);
+      expect(new Set(grid.filled)).toEqual(new Set([0]));
+      expect(grid.stacked).toBe(true);
+    }
+  });
+
+  for (const scheme of SCHEMES) {
+    test(`fits a phone's width with no horizontal page scroll, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme, viewport: PHONE });
+      expect(
+        await page.evaluate(`document.documentElement.scrollWidth
+          <= document.documentElement.clientWidth`),
+      ).toBe(true);
+    });
+  }
+
+  test("sets each input type's name beside its control, in one column of controls per grid", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const grids = await page.evaluate(`[...document.querySelectorAll("#forms .form-grid")]
+      .map((grid) => [...grid.querySelectorAll(":scope > label")].map((label) => {
+        const [name, control] = [label.getBoundingClientRect(),
+          label.control.getBoundingClientRect()];
+        return { name: label.textContent, beside: name.right <= control.left,
+          row: name.top < control.bottom && control.top < name.bottom,
+          left: Math.round(control.left) };
+      }))`);
+    expect(grids.length).toBe(2);
+    for (const rows of grids) {
+      expect(rows.length).toBeGreaterThan(5);
+      for (const { name, beside, row } of rows) {
+        expect([name, beside, row]).toEqual([name, true, true]);
+      }
+      expect(new Set(rows.map(({ left }) => left)).size).toBe(1);
+    }
+    // Every type that takes a value has its row.
+    const named = grids[0].map(({ name }) => name);
+    for (const type of ["text", "email", "date", "datetime-local", "color", "file"]) {
+      expect(named).toContain(type);
+    }
+  });
+
+  test("groups the choices in a fieldset of their own, and the button inputs in one row", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const groups = await page.evaluate(`(() => {
+      const kinds = (selector) => [...new Set([...document.querySelectorAll(selector)]
+        .map((input) => input.closest("fieldset")))]
+        .map((fieldset) => [...new Set([...fieldset.querySelectorAll("input")]
+          .map((input) => input.type))].sort());
+      const actions = [...document.querySelectorAll(
+        "#forms input:is([type=submit], [type=reset], [type=button], [type=image])")]
+        .map((input) => input.getBoundingClientRect());
+      const center = (box) => Math.round((box.top + box.bottom) / 2);
+      return {
+        choices: kinds("#forms input:is([type=radio], [type=checkbox])"),
+        actions: kinds("#forms input[type=submit]"),
+        row: actions.every((box) => Math.abs(center(box) - center(actions[0])) <= 1),
+      };
+    })()`);
+    expect(groups).toEqual({
+      choices: [["checkbox", "radio"]],
+      actions: [["button", "image", "reset", "submit"]],
+      row: true,
+    });
+  });
+
+  test("its embedded content loads nothing from the network, and its frame follows the page's scheme", async () => {
+    for (const scheme of SCHEMES) {
+      const page = await open(specimen, { scheme });
+      const read = await page.evaluate(`(() => {
+        const frame = document.querySelector("#embedded iframe").contentWindow;
+        return {
+          fetched: performance.getEntriesByType("resource").map((entry) => entry.name)
+            .filter((name) => !name.startsWith("file:")),
+          dark: frame.matchMedia("(prefers-color-scheme: dark)").matches,
+          // The frame's own ground, as the mean of its channels: dark in dark, light in light.
+          ground: frame.getComputedStyle(frame.document.body).backgroundColor
+            .match(/\\d+/g).slice(0, 3).reduce((sum, c) => sum + Number(c), 0) / 3,
+        };
+      })()`);
+      const { ground, ...rest } = read;
+      expect([scheme, rest, scheme === "dark" ? ground < 64 : ground > 192]).toEqual([
+        scheme,
+        { fetched: [], dark: scheme === "dark" },
+        true,
+      ]);
+    }
+  });
+
+  // pairs resolves, per profile in order, the boxes of the light and dark containers matching
+  // selector inside within: [name, light box, dark box], each box [left, top, right, bottom].
+  const pairs = (page, within, selector) =>
+    page.evaluate(`(() => {
+      const boxes = [...document.querySelectorAll(${JSON.stringify(`${within} ${selector}`)})]
+        .map((el) => el.closest("[data-palette]"));
+      const names = [...new Set(boxes.map((el) => el.dataset.palette))];
+      return names.map((name) => [name, ...["light", "dark"].map((scheme) => {
+        const box = boxes.find((el) => el.dataset.palette === name
+          && el.dataset.scheme === scheme).getBoundingClientRect();
+        return [box.left, box.top, box.right, box.bottom].map(Math.round);
+      })]);
+    })()`);
+
+  // expectRows expects, at a desktop width, each profile's light and dark containers to share a
+  // row, light first, each profile's row below the last; and at a phone's, dark under light.
+  async function expectRows(page, within, selector) {
+    await page.setViewport(DESKTOP);
+    const wide = await pairs(page, within, selector);
+    expect(wide.map(([name]) => name)).toEqual(Object.keys(COLOR_PROFILES));
+    for (const [index, [name, light, dark]] of wide.entries()) {
+      expect([name, dark[1] === light[1], light[2] <= dark[0]]).toEqual([name, true, true]);
+      if (index > 0) expect([name, light[1] >= wide[index - 1][1][3]]).toEqual([name, true]);
+    }
+    await page.setViewport(PHONE);
+    for (const [name, light, dark] of await pairs(page, within, selector)) {
+      expect([name, dark[1] >= light[3], dark[0] === light[0]]).toEqual([name, true, true]);
+    }
+  }
+
+  test("compares every profile in a grid of preview cards, a row per profile, light beside dark", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const cards = await page.evaluate(`[...document.querySelectorAll("#profiles .preview-card")]
+      .map((card) => [card.dataset.palette, card.dataset.scheme])`);
+    expect(cards).toEqual(
+      Object.keys(COLOR_PROFILES).flatMap((name) => SCHEMES.map((scheme) => [name, scheme])),
+    );
+    await expectRows(page, "#profiles", ".preview-card");
+  });
+
+  test("its comparison grid's cards are the preview fixture's, markup for markup", async () => {
+    const markup = async (url) =>
+      (
+        await (
+          await open(url, { scheme: "light" })
+        ).evaluate(`[...document.querySelectorAll(".preview-card")].map((card) => card.outerHTML)`)
+      ).map(squash);
+    expect(await markup(specimen)).toEqual(await markup(previewFixture));
+  });
+
+  test("records contrast a row per profile, its light and dark records side by side", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await expectRows(page, "#contrast", "table");
   });
 
   test("shows every tools class in a labeled cell", async () => {
