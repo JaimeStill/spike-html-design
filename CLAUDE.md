@@ -1,10 +1,11 @@
 # spike-html-design
 
 A spike for the Standards Lab reference architecture. It builds one native, tagged CSS and JS
-baseline for human-facing HTML artifacts (herald's layer structure, a Primer-derived dark and
-light theme, a theme toggle, a keyboard layer) and tests whether other repositories can consume
-it by version through jsDelivr. The repository is managed with the marathon workflow; start
-from `context/README.md`.
+baseline for human-facing HTML artifacts: color, space, and type facets whose profiles swap,
+elements and tools layers over native elements, and modules for preferences and keys. It tests
+whether other repositories can consume the baseline by version, as a git-tag package and through
+jsDelivr, and extend it. The repository is managed with the marathon workflow; start from
+`context/README.md`.
 
 - **Standards:** `STANDARDS.md`, with pointers into the architecture repository.
 - **Check:** `mise run check`. It runs browser tests in headless chromium and fails when

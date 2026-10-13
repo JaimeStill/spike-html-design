@@ -8,99 +8,11 @@
 
 1. [x] layers
 2. [x] themes
-3. [ ] aesthetic
-4. [ ] toggle
-5. [ ] keys
-6. [ ] validate
-
-## Task brief · themes
-
-```
-Problem       v0.1.0 carries herald's grays and five hues: one look, no roles,
-              no forced theme, no contrast evidence. Evidence 2, 3 and 4 need
-              dark and light themes from one source, a system default that
-              follows the OS live, and a contrast table.
-Behaviors
-  1. Tiers take Primer's resolved values through light-dark(), light /
-     dark: --bg #ffffff / #0d1117, --bg-1 #f6f8fa / #151b23, --bg-2
-     #eff2f5 / #262c36, --divider #d1d9e0 / #3d444d, --fg #1f2328 /
-     #f0f6fc, --fg-1 #59636e / #9198a1, --fg-2 #818b98 / #656c76. The
-     names --color, --color-1 and --color-2 no longer exist, and no alias
-     keeps them.
-  2. Eight hue tokens, each named for its color, light / dark: --red
-     #c50d28 / #f27d83, --orange #a24610 / #ed8326, --yellow #805900 /
-     #d3910d, --green #2b6e3f / #41b445, --cyan #006a80 / #07ace4, --blue
-     #005fcc / #4da0ff, --purple #783ae4 / #b687f7, --magenta #b12f79 /
-     #e57bb2. No bright, tint, black, white or ANSI tokens.
-  3. Four role tokens alias hues: --accent blue, --success green,
-     --warning yellow, --danger red. An app layer that overrides a hue
-     changes its role with it.
-  4. Links and focus outlines resolve to --accent; selected text sits on
-     a translucent color-mix() of --accent.
-  5. :root[data-theme="light"] and [data-theme="dark"] set color-scheme
-     in the tokens layer. Each resolves its theme's colors whatever the
-     emulated system scheme.
-  6. With no data-theme, the page follows prefers-color-scheme. Changing
-     the emulated scheme on an open page changes the resolved --bg and
-     --fg with no reload.
-  7. Badges add .badge-cyan, -purple, -magenta, -success, -warning,
-     -danger and -accent. Each is its token on a translucent mix of
-     that token. Buttons are unchanged.
-  8. The tokens layer's source opens with "Colors derived from
-     @primer/primitives (MIT, GitHub Inc.),
-     https://github.com/primer/primitives". The root stylesheet's
-     header says each tag freezes its token and class names.
-  9. The specimen shows every token, the new badges, and a section that
-     sets the four roles beside the eight hues under the usage rule.
-  10. The specimen carries a static contrast table for both themes: every
-      color token against --bg as a WCAG 2 ratio to 2 decimals, marked at
-      4.5 and 3, with failures recorded, not corrected. The check
-      recomputes each ratio in chromium under each emulated scheme and
-      fails on any mismatch.
-  11. Each pinned page is tested from one table. Once a page's tag exists,
-      its markup and render are compared against that tag's specimen,
-      root stylesheet and layer files, with that tag's probe values. Until
-      then they are compared against the working tree. The v0.1.0 page
-      still renders as the v0.1.0 specimen with v0.1.0's stylesheet.
-  12. A pinned page links only cdn.jsdelivr.net/gh/JaimeStill/
-      spike-html-design@v0.2.0/baseline.css. With that request answered
-      hermetically, its computed styles match the specimen's for the same
-      markup, from file:// and a local server.
-  13. The live pin check reads each tag's probe values. After the tag,
-      `mise run pin v0.2.0` passes, and `mise run pin v0.1.0` still passes
-      against v0.1.0's values.
-  "Resolves": the computed color of a sample that reads the token.
-Test seams    A page loaded in headless chromium through the one harness
-              helper, queried for computed styles under emulated schemes;
-              pinned pages also read their tag's files through git show.
-              13 uses it with the network on.
-Slices
-  1. pinned per tag: table-driven pinned test with per-tag probes in the
-     shared helper and the pin script; v0.1.0 compared against its tag,
-     shown green after a token edit (11, 13)
-  2. tokens: renamed tiers, Primer values, eight hues, four roles, the
-     credit and the root header; theme, components and specimen follow the
-     rename; links, focus and selection on --accent (1–4, 8)
-  3. data-theme hook and live system default (5, 6)
-  4. badges, the roles-and-hues specimen section, and STANDARDS.md's
-     usage rule and suffix rule (7, 9)
-  5. contrast table in the specimen, recomputed by the check (10)
-  6. pinned v0.2.0 page and its hermetic test; README and CLAUDE.md
-     describe the Primer-derived themes (12)
-  7. after SHIP's tag: mise run pin v0.2.0 and v0.1.0, results recorded
-     (13)
-Out of scope  <theme-toggle>, its storage, and the flash (toggle); keys.js,
-              the ? dialog, key-hint styling (keys); sizes (validate);
-              Primer's high-contrast and colorblind themes; ANSI tokens;
-              correcting contrast failures; a LICENSE for the repository.
-Door          One-way for v0.2.0 once pushed (jsDelivr caches the tag as
-              immutable, freezing --fg, --fg-1, --fg-2, the eight hue
-              and four role names, the seven badge classes, the
-              data-theme hook and the tokens layer's bytes). v0.1.0 stays
-              as tagged, and its consumers keep --color until they move to
-              v0.2.0 and rename. Two-way before the push.
-Release       v0.2.0 (spike-html-design root)
-```
+3. [ ] facets
+4. [ ] profiles
+5. [ ] preferences
+6. [ ] keys
+7. [ ] validate
 
 ## Decisions
 
@@ -242,20 +154,103 @@ Release       v0.2.0 (spike-html-design root)
   rendered specimen variants, and every later session brief that changes how pages look embeds
   screenshots of the specimen in both themes. themes' palette was accepted from contrast ratios
   alone, without a rendered page.
+- aesthetic: hues take Flexoki's own steps, 600 light / 400 dark, uncorrected; Flexoki's palette
+  establishes the contrast. Supersedes themes' Primer values from v0.3.0 on; v0.2.0 stays Primer.
+  Superseded by plan (facets redirect): the color contract is open. Kept as reference for the
+  Flexoki profile, light / dark: red #AF3029 / #D14D41, orange #BC5215 / #DA702C, yellow #AD8301
+  / #D0A215, green #66800B / #879A39, cyan #24837B / #3AA99F, blue #205EA6 / #4385BE, purple
+  #5E409D / #8B7EC8, magenta #A02F6F / #CE5D97.
+- aesthetic: the specimen drops the contrast table at v0.3.0; the README's evidence 4 is
+  restated, not dropped, so the numbering holds. Superseded by plan (facets redirect): contrast
+  is recorded per profile.
+- aesthetic: faint text takes no correction; --fg-2 is the step the chosen variant assigns.
+  Superseded by plan (facets redirect): no variant was chosen, and the color contract is open.
+- aesthetic: --accent stays on blue; cassette futurism is a rough inspiration, not copied.
+  Superseded by plan (facets redirect): the color contract is open.
+- aesthetic: font stacks stay system-only and unchanged; rejected a vendored webfont. Still holds
+  for the stacks; the plan (facets redirect) keys them by role, and type profiles set them.
+- aesthetic: mono for headings and chrome; sans for prose. Superseded by plan (facets redirect):
+  type is a facet; variant C's treatment is reference only.
+- aesthetic: no new component classes; chrome is theme-layer element styles plus the
+  specimen's app layer. Superseded by plan (facets redirect): components leave the foundation,
+  and elements and tools replace the theme layer.
+- aesthetic: variants are rendered outside the repository in BUILD's slice 1, screenshotted in
+  both themes, never committed; they differ in layout, type, and the Flexoki steps assigned to
+  the tiers and roles. Superseded by plan (facets redirect): no session-generated screenshots.
+- aesthetic: the specimen drops its contrast section and adds "In use". Superseded by plan
+  (facets redirect): the specimen becomes the workbench.
+- aesthetic: Flexoki is credited by one comment heading the tokens layer; rejected the full MIT
+  notice.
+- aesthetic: slice 1 ends at a planned stop where the architect picks a variant or blend.
+  Superseded by plan (facets redirect): the architect redirected the spike at that stop, and the
+  review stops move to facets and profiles.
+- plan (facets redirect): at aesthetic's planned pick the architect redirected the spike: the
+  baseline becomes a foundation of swappable design facets, consumed by version as a git-tag
+  package and through jsDelivr, and extended by other packages. The question, the evidence
+  (now 11 items), and the path are rewritten in `context/README.md`; the decision it changes
+  also names v1.client.
+- plan (facets redirect): terms: a layer is a CSS cascade layer, the order rules win in; a facet
+  is one dimension of design as a token family (color; space, meaning lines, spacing, and
+  radius; type); a profile is one set of values for one facet; a scheme is light, dark, or
+  system, a choice inside every color profile; a theme is a named selection of one profile per
+  facet.
+- plan (facets redirect): every layer nests under one top-level layer named for the package:
+  pkg.tokens with sub-layers pkg.tokens.color, pkg.tokens.space, and pkg.tokens.type, then
+  pkg.reset, pkg.elements, pkg.tools. tools is the foundation's top layer.
+- plan (facets redirect): consumers declare their own later layers (components, app), and
+  unlayered consumer CSS beats the whole foundation. Component packages are the consumer's
+  concern; shadow-DOM components read the tokens through inheritance.
+- plan (facets redirect): the elements layer styles native elements without classes, limited to
+  paint, type, border, radius, margin, and padding; a test checks each element's layout
+  properties against chromium's defaults. The tools layer holds opt-in classes for native
+  elements (button variants, scroll helpers, form and table helpers), free to change layout.
+- plan (facets redirect): components leave the foundation: badge, card, and variant B's labeled
+  panel are components. The components layer is removed in facets.
+- plan (facets redirect): `::file-selector-button` is styled by elements; the hidden-input
+  pattern is a component.
+- plan (facets redirect): a profile applies through a zero-specificity attribute scope on any
+  element (`:where([data-palette=…])`, data-space, data-type), with the default profile on
+  :root. A scope re-declares its aliases and re-sets color and background on its root, so a
+  preview container renders as that profile does at the root.
+- plan (facets redirect): color profiles are Flexoki first, then Kanagawa (wave and lotus), Tokyo
+  Night (night and day), and Catppuccin (mocha and latte). Contrast is a per-profile fact,
+  recorded and not corrected.
+- plan (facets redirect): the color token contract is open again; the hue and role model is not
+  assumed.
+- plan (facets redirect): the token contract is new, with herald as inspiration only: fluid space
+  and type scales in modern units, radius scaled from one base (variant C's 4/6/8px are reference
+  only), and fonts keyed by role (body, heading, ui, code). Tokens are renamed at v0.3.0 with no
+  aliases; earlier tags keep their names.
+- plan (facets redirect): a small JS SDK covers what CSS can't: a profile registry that the
+  package and each extension package register into, preferences, and keys. T opens a theming
+  menu with a section per facet and the scheme. preferences replaces toggle.
+- plan (facets redirect): packaging. From facets on, a package.json gives the name, the version,
+  and exports for the CSS entries and JS modules, with no dependencies. Consumers install by git
+  tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`. jsDelivr stays a tested secondary
+  channel, with pinned pages and `mise run pin` per tag. The lean entry holds the foundation and
+  the default profiles, the full entry every profile, and the check enforces a compressed byte
+  budget per entry from facets on.
+- plan (facets redirect): no build in the foundation; bundling at release waits until validate
+  measures the @import chain's cost from the CDN.
+- plan (facets redirect): the specimen becomes a workbench: a section per layer and facet, and
+  from profiles on a comparison grid of preview containers for every profile and scheme.
+- plan (facets redirect): facets and profiles each have a planned visual review stop, facets
+  after the tokens and elements render and profiles after the grid renders.
+- plan (facets redirect): a `mise run serve` task serves a branch on localhost for viewing.
+- plan (facets redirect): no pixel diffs and no session-generated screenshots; the architect
+  views the served workbench and sends screenshots when calling something out. Supersedes the
+  plan line "every later session brief that changes how pages look embeds screenshots".
+- plan (facets redirect): the harness PNG capture, 0d50c76, is not carried; the local `aesthetic`
+  branch is deleted unmerged once these edits merge.
+- plan (facets redirect): layouts and a layout engine go to the coordinator's backlog as
+  `client-layouts`; motion is a later facet.
+- plan (facets redirect): notes outside the path: variants A, B, and C are reference only:
+  C's sentence-case mono headings, 17px sans prose, and 4/6/8px radius; B's labeled panel with
+  its h2 on the frame as a future component. Chromium blocks ES module scripts on file://, so
+  preferences and validate settle how an artifact opened from disk runs the SDK.
 
 ## Pending edits
 
-- coordinator · html-artifacts.md, "Style baseline": "One native stylesheet" becomes a root
-  stylesheet that imports one file per layer (layers.round 3).
-- coordinator · html-artifacts.md, "Style baseline", "Palette": the 18 ANSI hue tokens, muted, and
-  accent become the tiers (bg, bg-1, bg-2, fg, fg-1, fg-2, divider), eight hue tokens each named
-  for its color, four role tokens aliasing them, the usage rule, and the suffix rule (themes).
-- coordinator · html-artifacts.md, "Palette": "Primer is not used, since its layered palette
-  pays off only inside github.com" becomes "colors derive from a flat subset of Primer's
-  resolved values; its layered system isn't adopted" (themes).
-- coordinator · html-artifacts.md, "Themes": Flexoki and its notice become "derived from
-  @primer/primitives (MIT), credited by a source comment"; the omarchy and kanagawa rejections
-  stay (themes).
-- coordinator · roadmap.toml, `tasks.themes` summary: Flexoki with 18 ANSI hue tokens becomes
-  dark and light themes derived from Primer's resolved values, with eight hue tokens and four
-  role tokens over them (themes).
+- coordinator · html-artifacts.md, "Style baseline": rewritten at the answer to describe the
+  faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
+  replaces the layers and themes edits to "Style baseline", "Palette", and "Themes").
