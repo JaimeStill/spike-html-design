@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 2/6 committed · review stop — · standards — · spec — · editor —
+slices 3/6 committed · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -387,6 +387,10 @@ slices 2/6 committed · review stop — · standards — · spec — · editor �
 - facets: facets reports sizes and enforces none; the budget is enforced from profiles on.
   Supersedes the packaging line "the check enforces a compressed byte budget per entry from
   facets on".
+- facets (BUILD, architect): contrast is graded only where legibility is the concern, text over a
+  color: every text token (--fg, --fg-2, --fg-3) and every hue against every surface (--bg,
+  --bg-2, --border, --border-2, --border-3), in each scheme. Surfaces get no ratio of their own.
+  Amends behavior 15; rejected grading surfaces against --bg with text thresholds.
 
 ## Pending edits
 
