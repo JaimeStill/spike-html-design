@@ -44,7 +44,7 @@ export const PROBES = {
   "v0.3.0": [
     [":root", "--bg", "light-dark(#fffcf0, #100f0f)"],
     [":root", "--line-s", "1px"],
-    [":root", "--measure", "68ch"],
+    [":root", "--text-m", "1rem"],
     ["body", "box-sizing", "border-box"],
     ["#prose h1", "font-weight", "600"],
     ["#tools .scroll-x", "overflow-x", "auto"],

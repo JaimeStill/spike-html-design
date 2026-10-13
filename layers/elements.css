@@ -34,7 +34,7 @@
 
 :where(body) {
   font-family: var(--font-body);
-  /* The text scale's base step, so body text grows with the display as the headings do. */
+  /* The text scale's base step, 1rem at every display: body text stays at the reader's size. */
   font-size: var(--text-m);
   background-color: var(--bg);
   color: var(--fg);

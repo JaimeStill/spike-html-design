@@ -59,21 +59,34 @@ const TEXT_STEPS = {
   "--text-4xl": 5,
 };
 
+// TEXT_FIXED are the text steps no display size changes, --text-m and the steps below it, name
+// to rem: 1rem × 1.25^n, the scale's narrow ratio.
+const TEXT_FIXED = Object.fromEntries(
+  Object.entries(TEXT_STEPS)
+    .filter(([, n]) => n <= 0)
+    .map(([name, n]) => [name, 1.25 ** n]),
+);
+
 // FLUID are the fluid tokens, name to [smallest, largest] value in rem: the space base and each
-// step's multiple of it, and each text step from 1rem × 1.2^n to 1.125rem × 1.25^n, rounded to
-// the four decimals the type facet states them in.
+// step's multiple of it, and each text step above --text-m from 1rem × 1.25^n to 1rem × 1.333^n,
+// rounded to the four decimals the type facet states them in.
 const FLUID = {
   "--space-base": SPACE_BASE,
   ...Object.fromEntries(
     Object.entries(SPACE_STEPS).map(([name, k]) => [name, SPACE_BASE.map((rem) => rem * k)]),
   ),
   ...Object.fromEntries(
-    Object.entries(TEXT_STEPS).map(([name, n]) => [
-      name,
-      [1.2 ** n, 1.125 * 1.25 ** n].map((rem) => Number(rem.toFixed(4))),
-    ]),
+    Object.entries(TEXT_STEPS)
+      .filter(([name]) => !(name in TEXT_FIXED))
+      .map(([name, n]) => [name, [1.25 ** n, 1.333 ** n].map((rem) => Number(rem.toFixed(4)))]),
   ),
 };
+
+// textSize is the px a text step resolves to in a viewport, with a root font size of rem px: a
+// fixed step's own size, or a fluid step's formula.
+function textSize(name, viewport, rem = 16) {
+  return name in TEXT_FIXED ? TEXT_FIXED[name] * rem : fluid(FLUID[name], viewport, rem);
+}
 
 // SPACE is the space facet's token set, name to kind: how a test resolves the token's value.
 const SPACE = {
@@ -101,11 +114,13 @@ const TYPE = {
   "--leading-heading": "number",
   "--leading-ui": "number",
   "--leading-code": "number",
-  "--measure": "length",
 };
 
 // FIXED are the type and space tokens no display size changes, name to declared value.
 const FIXED = {
+  "--text-xs": "0.64rem",
+  "--text-s": "0.8rem",
+  "--text-m": "1rem",
   "--font-body": SANS,
   "--font-heading": MONO,
   "--font-ui": MONO,
@@ -114,7 +129,6 @@ const FIXED = {
   "--leading-heading": "1.2",
   "--leading-ui": "1.25",
   "--leading-code": "1.5",
-  "--measure": "68ch",
   "--line-s": "1px",
   "--line-m": "2px",
   "--radius-base": "0.375rem",
@@ -175,10 +189,11 @@ const FACETS = {
 // TOKENS are every token the baseline declares, name to kind.
 const TOKENS = Object.assign({}, ...Object.values(FACETS));
 
-// RETIRED are the v0.1.0 and v0.2.0 token names the facets dropped: the color tiers, the role
-// tokens, and herald's text tiers; herald's numbered space steps, its font stacks, and the text
-// steps the type facet renamed. None may be declared or read anywhere in the working tree. The
-// kept text names (--text-xs, --text-xl, --text-2xl to --text-4xl) are not among them.
+// RETIRED are the token names the facets dropped: from v0.1.0 and v0.2.0, the color tiers, the
+// role tokens, and herald's text tiers; herald's numbered space steps, its font stacks, and the
+// text steps the type facet renamed; and --measure, since line length is layout's. None may be
+// declared or read anywhere in the working tree. The kept text names (--text-xs, --text-xl,
+// --text-2xl to --text-4xl) are not among them.
 const RETIRED = [
   "--bg-1",
   "--divider",
@@ -196,6 +211,7 @@ const RETIRED = [
   "--text-sm",
   "--text-base",
   "--text-lg",
+  "--measure",
 ];
 
 // SOURCES are the working tree's CSS: the stylesheet, its layer files, the specimen and its
@@ -422,7 +438,7 @@ describe("tokens", () => {
     expect(names).toEqual(Object.keys(TOKENS).sort());
   });
 
-  test("the fonts, leadings, measure, lines and radius base carry their declared values", async () => {
+  test("the fixed text steps, fonts, leadings, lines and radius base carry their declared values", async () => {
     const page = await open(specimen, { scheme: "light" });
     const tokens = await rootTokens(page);
     for (const [name, value] of Object.entries(FIXED)) {
@@ -499,7 +515,7 @@ describe("tokens", () => {
     }
   });
 
-  test("no v0.1.0 or v0.2.0 token name remains in the working tree's CSS", async () => {
+  test("no retired token name remains in the working tree's CSS", async () => {
     for (const path of SOURCES) {
       const text = await Bun.file(join(root, path)).text();
       // A name ends where the next character can't continue it, so --bg-1 never matches --bg-10.
@@ -724,6 +740,22 @@ describe("fluid space and type, by display shape", () => {
       }
     });
   }
+
+  test("leave --text-m, --text-s and --text-xs fixed at every shape and size", async () => {
+    // The fixed steps are rem, so only the root font size moves them: every display case reads
+    // the same px, 1rem × 1.25^n at a 16px root.
+    const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
+    const fixed = Object.fromEntries(Object.keys(TEXT_FIXED).map((name) => [name, "length"]));
+    const expected = Object.fromEntries(
+      Object.entries(TEXT_FIXED).map(([name, rem]) => [name, expect.closeTo(rem * 16, 2)]),
+    );
+    for (const ratio of Object.keys(RATIOS)) {
+      for (const size of Object.keys(SIZES)) {
+        await page.setViewport(display(ratio, size));
+        expect([ratio, size, await resolveAll(page, fixed)]).toEqual([ratio, size, expected]);
+      }
+    }
+  });
 
   test("follow a resize without a reload", async () => {
     const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
@@ -1055,10 +1087,7 @@ describe("elements", () => {
       };
       for (const [selector, token] of Object.entries(sizes)) {
         const size = Number.parseFloat(await page.style(selector, "font-size"));
-        expect([selector, size]).toEqual([
-          selector,
-          expect.closeTo(fluid(FLUID[token], viewport), 2),
-        ]);
+        expect([selector, size]).toEqual([selector, expect.closeTo(textSize(token, viewport), 2)]);
         if (selector !== "body") expect(await page.style(selector, "font-weight")).toBe("600");
       }
     });
