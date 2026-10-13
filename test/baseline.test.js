@@ -887,12 +887,22 @@ describe("reset", () => {
     expect(await page.style("body", "min-height")).toBe(`${viewport}px`);
   });
 
-  test("makes media blocks no wider than their container", async () => {
+  test("makes media blocks no wider than their container, keeping their aspect ratio", async () => {
     const page = await open(fixture, { scheme: "light" });
     for (const selector of ["img", "picture", "video", "canvas", "svg"]) {
       expect(await page.style(selector, "display")).toBe("block");
       expect(await page.style(selector, "max-width")).toBe("100%");
     }
+    // A canvas of 300 by 150 in a 150px container narrows to 150 by 75, not 150 by 150.
+    const size = await page.evaluate(`(() => {
+      const box = document.body.appendChild(document.createElement("div"));
+      box.style.width = "150px";
+      const canvas = box.appendChild(document.createElement("canvas"));
+      const { width, height } = canvas.getBoundingClientRect();
+      box.remove();
+      return [width, height];
+    })()`);
+    expect(size).toEqual([150, 75]);
   });
 
   test("sets form controls in the interface font and leading", async () => {
@@ -904,6 +914,27 @@ describe("reset", () => {
     const size = await page.style("button", "font-size");
     const leading = await page.style("button", "line-height");
     expect(Number.parseFloat(leading)).toBeCloseTo(Number.parseFloat(size) * 3, 2);
+    // Each control inherits the page's font size, not chromium's smaller system font.
+    const body = await page.style("body", "font-size");
+    for (const selector of ["button", "input", "select", "textarea"]) {
+      expect([selector, await page.style(selector, "font-size")]).toEqual([selector, body]);
+    }
+  });
+
+  test("gives an anchor's target room above it, and holds text at the page's size", async () => {
+    const page = await open(`${fixture}#target`, { scheme: "light" });
+    // 5ex in the target's own font, from a box sized in it.
+    const ex = await page.evaluate(`(() => {
+      const probe = document.querySelector("#target").appendChild(document.createElement("i"));
+      probe.style.display = "inline-block";
+      probe.style.width = "5ex";
+      const width = probe.getBoundingClientRect().width;
+      probe.remove();
+      return width;
+    })()`);
+    expect(Number.parseFloat(await page.style("#target", "scroll-margin-top"))).toBeCloseTo(ex, 1);
+    expect(await page.style("#equal", "scroll-margin-top")).toBe("0px");
+    expect(await page.style("html", "text-size-adjust")).toBe("100%");
   });
 
   test("scrolls to anchors smoothly only without reduced motion", async () => {
@@ -920,7 +951,7 @@ describe("reset", () => {
 // lists: colors and backgrounds, font and text properties, borders (radius, a table's collapse
 // and spacing included) and outlines, margins and paddings, accent-color and caret-color.
 const ALLOWED =
-  /^(color|background-color|accent-color|caret-color|line-height|letter-spacing|word-spacing|font-[\w-]+|text-(align|transform|decoration-[\w-]+|underline-[\w-]+)|border-[\w-]+|outline-[\w-]+|margin-[\w-]+|padding-[\w-]+)$/;
+  /^(color|background-color|accent-color|caret-color|line-height|letter-spacing|word-spacing|font-[\w-]+|text-(align|transform|wrap-style|decoration-[\w-]+|underline-[\w-]+)|border-[\w-]+|outline-[\w-]+|margin-[\w-]+|padding-[\w-]+)$/;
 
 // elementsDeclarations resolves to the elements layer's selectors and the properties its rules
 // set, from the baseline linked by a page served over http.
@@ -1284,16 +1315,63 @@ const PSEUDOS = {
   "::backdrop": "dialog:modal",
 };
 
+// MARGINS are the margin longhands, which the reset zeroes and the elements layer sets.
+const MARGINS = ["margin-top", "margin-right", "margin-bottom", "margin-left"];
+
+// RESET_COMPARED are the computed properties the reset and elements behavior test compares: the
+// layout properties, the margins, and the other non-type properties the reset sets. Type
+// properties, fonts and leadings, are the elements layer's to set and are not compared.
+const RESET_COMPARED = [
+  ...LAYOUT,
+  ...MARGINS,
+  "overflow-wrap",
+  "scroll-margin-top",
+  "scroll-margin-bottom",
+  "scroll-behavior",
+];
+
+// TYPE_PROPERTIES matches the type properties the reset may set besides those it is compared on:
+// form controls' font and leading, the body's leading, and text-size-adjust.
+const TYPE_PROPERTIES = /^(font-[\w-]+|line-height|(-webkit-)?text-size-adjust)$/;
+
+// RESET_ALLOWANCES are the only differences from no stylesheet that the reset, with the elements
+// layer over it, may make, each as [selector, properties]: a difference passes only on an element
+// that matches a selector whose properties name it. Every other difference, on any element or
+// pseudo-element, fails.
+const RESET_ALLOWANCES = [
+  // Every box sized by its border.
+  ["*", ["box-sizing"]],
+  // Every margin, which the reset zeroes and the elements layer spaces, but a dialog's and a
+  // popover's: chromium's auto margins center them.
+  [":not(dialog, [popover])", MARGINS],
+  // Media as blocks no wider than their container.
+  ["img, picture, video, canvas, svg", ["display", "max-width", "max-inline-size"]],
+  // An image, video or canvas keeps its aspect ratio when narrowed.
+  ["img, video, canvas", ["height", "block-size"]],
+  // The body fills the viewport.
+  ["body", ["min-height", "min-block-size"]],
+  // Prose breaks a word longer than its line; overflow-wrap inherits.
+  [":is(p, h1, h2, h3, h4, h5, h6), :is(p, h1, h2, h3, h4, h5, h6) *", ["overflow-wrap"]],
+  // Form controls take the page's font: chromium sizes an option's gaps and minimum height in
+  // em, so they follow it.
+  ["option", ["row-gap", "column-gap", "min-height", "min-block-size"]],
+  // An anchor's target lands with room above it, and the page scrolls to it smoothly.
+  [":target", ["scroll-margin-top", "scroll-margin-bottom"]],
+  [":has(:target)", ["scroll-behavior"]],
+];
+
 // readLayout runs in the page: it opens the fixture's modal dialog, so its ::backdrop renders,
-// then reads every rendered element's, and every styled pseudo-element's, layout properties,
-// keyed by tag path. An element reads its computed values through computedStyleMap(), never its
-// resolved ones: getComputedStyle() answers a rendered element's width, height and insets in
-// used px, which padding and fonts legitimately change, where the computed value is the auto or
-// the length the cascade gave. A pseudo-element has no computedStyleMap(), so it reads
-// getComputedStyle(), which answers its sizes and insets in used px, so those are left out of a
-// pseudo-element's read.
-function readLayout({ properties, pseudos, used }) {
+// and its popover, then reads every rendered element's, and every styled pseudo-element's,
+// properties, keyed by tag path, with the properties allow lets that element differ in. An
+// element reads its computed values through computedStyleMap(), never its resolved ones:
+// getComputedStyle() answers a rendered element's width, height and insets in used px, which
+// padding and fonts legitimately change, where the computed value is the auto or the length the
+// cascade gave. A pseudo-element has no computedStyleMap(), so it reads getComputedStyle(), which
+// answers its sizes and insets in used px, so those are left out of a pseudo-element's read; no
+// allowance reaches a pseudo-element.
+function readLayout({ properties, pseudos, used, allow }) {
   document.querySelector("#modal").showModal();
+  document.querySelector("#popover").showPopover();
   const path = (el) =>
     el.parentElement
       ? `${path(el.parentElement)} > ${el.localName}:nth-child(${[...el.parentElement.children].indexOf(el) + 1})`
@@ -1318,17 +1396,40 @@ function readLayout({ properties, pseudos, used }) {
         .map((name) => [name, style.getPropertyValue(name)]),
     );
   };
+  const allowed = (el) =>
+    allow.filter(([selector]) => el.matches(selector)).flatMap(([, names]) => names);
   const skip = "head, head *, script, noscript, template";
   const entries = [...document.querySelectorAll(`*:not(${skip})`)].map((el) => [
     path(el),
     computed(el),
+    allowed(el),
   ]);
   for (const [pseudo, selector] of Object.entries(pseudos)) {
     for (const el of document.querySelectorAll(selector)) {
-      entries.push([`${path(el)}${pseudo}`, resolved(el, pseudo)]);
+      entries.push([`${path(el)}${pseudo}`, resolved(el, pseudo), []]);
     }
   }
   return entries;
+}
+
+// layoutDifferences reads two pages' layouts over properties, with the allowances applied to the
+// first, and resolves to every difference no allowance covers, as [path, property, first value,
+// second value], and the properties the allowances let differ, as path to names.
+async function layoutDifferences(styled, bare, properties, allow = []) {
+  const args = JSON.stringify({ properties, pseudos: PSEUDOS, used: USED, allow });
+  const read = (page) => page.evaluate(`(${readLayout})(${args})`);
+  const [withLayers, without] = [await read(styled), await read(bare)];
+  expect(withLayers.map(([path]) => path)).toEqual(without.map(([path]) => path));
+  const differences = [];
+  const allowed = [];
+  for (const [index, [path, style, names]] of withLayers.entries()) {
+    for (const name of Object.keys(style)) {
+      if (style[name] === without[index][1][name]) continue;
+      if (names.includes(name)) allowed.push(name);
+      else differences.push([path, name, style[name], without[index][1][name]]);
+    }
+  }
+  return { differences, allowed: new Set(allowed) };
 }
 
 // TAGS are every rendered HTML element the elements fixture and the specimen must show: sections
@@ -1353,6 +1454,23 @@ const INPUT_TYPES = [
   ..."number range color checkbox radio file submit image reset button".split(" "),
 ];
 
+// The fixture's test entry, and the reset file it imports, as the fixture requests them.
+const elementsEntry = `${server.url}test/fixtures/elements.css`;
+const resetFile = `${server.url}layers/reset.css`;
+const absent = join(import.meta.dir, "fixtures", "absent");
+
+// openElements opens the elements fixture at a small display, where the body's --text-m is 16px,
+// the browser's default: chromium states some native sizes in em (progress, meter, a dialog's
+// max size), and their computed px follow the font, which the elements layer may set. Each URL
+// of drop is answered 404.
+function openElements(drop = []) {
+  return open(elementsFixture, {
+    scheme: "light",
+    viewport: display("9:16", "small"),
+    intercept: Object.fromEntries(drop.map((url) => [url, absent])),
+  });
+}
+
 describe("elements behavior", () => {
   test("the elements fixture holds every rendered element and every input type", async () => {
     const page = await open(elementsFixture, { scheme: "light" });
@@ -1365,33 +1483,100 @@ describe("elements behavior", () => {
   });
 
   test("with only the tokens and elements layers, every element lays out as with no stylesheet", async () => {
-    // The same fixture loaded twice: once with its stylesheet, the tokens files and elements.css
-    // in their nested layers, and once with that stylesheet's request answered 404. Both at a
-    // small display, where the body's --text-m is 16px, the browser's default: chromium states
-    // some native sizes in em (progress, meter, a dialog's max size), and their computed px
-    // follow the font, which the elements layer may set.
-    const viewport = display("9:16", "small");
-    const styled = await open(elementsFixture, { scheme: "light", viewport });
-    const bare = await open(elementsFixture, {
-      scheme: "light",
-      viewport,
-      intercept: {
-        [`${server.url}test/fixtures/elements.css`]: join(import.meta.dir, "fixtures", "absent"),
-      },
-    });
-    // Equal reads prove nothing unless the stylesheet loaded in one and not the other.
+    // The fixture once with the reset's request answered 404, so only the tokens and elements
+    // layers load, and once with the whole entry's.
+    const styled = await openElements([resetFile]);
+    const bare = await openElements([elementsEntry]);
+    // Equal reads prove nothing unless the elements layer loaded in one and not the other, and
+    // the reset in neither.
     expect(await styled.style("body", "background-color")).toBe(COLORS["--bg"][0]);
+    expect(await styled.style("body", "box-sizing")).toBe("content-box");
     expect(await bare.style("body", "background-color")).toBe("rgba(0, 0, 0, 0)");
-    const args = JSON.stringify({ properties: LAYOUT, pseudos: PSEUDOS, used: USED });
-    const read = (page) => page.evaluate(`(${readLayout})(${args})`);
-    const [withLayer, without] = [await read(styled), await read(bare)];
-    expect(withLayer.map(([path]) => path)).toEqual(without.map(([path]) => path));
-    const differences = withLayer.flatMap(([path, style], index) =>
-      Object.keys(style)
-        .filter((name) => style[name] !== without[index][1][name])
-        .map((name) => [path, name, style[name], without[index][1][name]]),
+    const { differences } = await layoutDifferences(styled, bare, LAYOUT);
+    expect(differences).toEqual([]);
+  });
+
+  test("with the reset under the elements layer, every element differs from no stylesheet only as the reset allows", async () => {
+    const styled = await openElements();
+    const bare = await openElements([elementsEntry]);
+    expect(await styled.style("body", "box-sizing")).toBe("border-box");
+    expect(await bare.style("body", "background-color")).toBe("rgba(0, 0, 0, 0)");
+    const { differences, allowed } = await layoutDifferences(
+      styled,
+      bare,
+      RESET_COMPARED,
+      RESET_ALLOWANCES,
     );
     expect(differences).toEqual([]);
+    // The allowances are not vacuous: the reset's changes reached the read.
+    for (const name of ["box-sizing", "margin-top", "display", "max-width", "height"]) {
+      expect([name, allowed.has(name)]).toEqual([name, true]);
+    }
+  });
+
+  test("a universal margin reset that zeroes a dialog's and a popover's margins fails the allowances", async () => {
+    // The reset's former rule, * { margin: 0 }, appended to its layer: it wins over the
+    // exemption by source order, and the test must catch it.
+    const styled = await openElements();
+    await addAppStyle(styled, `@layer ${PACKAGE}.reset { * { margin: 0; } }`);
+    const bare = await openElements([elementsEntry]);
+    const { differences } = await layoutDifferences(styled, bare, RESET_COMPARED, RESET_ALLOWANCES);
+    const elements = (selector) =>
+      styled.evaluate(`[...document.querySelectorAll(${JSON.stringify(selector)})].length`);
+    expect(await elements("dialog, [popover]")).toBe(3);
+    expect(new Set(differences.map(([path]) => path.split(" > ").at(-1).split(":")[0]))).toEqual(
+      new Set(["dialog", "div"]),
+    );
+    expect(new Set(differences.map(([, name]) => name))).toEqual(new Set(MARGINS));
+    expect(differences).toHaveLength(3 * MARGINS.length);
+  });
+
+  test("the reset sets only properties the behavior test compares, and type properties", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const properties = await page.evaluate(`(() => {
+      const properties = new Set();
+      const walk = (rules) => {
+        for (const rule of rules) {
+          for (const name of rule.style ?? []) properties.add(name);
+          if (rule.cssRules) walk(rule.cssRules);
+        }
+      };
+      walk(${layerSheet("reset")}.cssRules);
+      return [...properties];
+    })()`);
+    expect(properties.length).toBeGreaterThan(0);
+    // A logical longhand computes to its physical one, which the test compares.
+    const physical = (name) =>
+      name.replace("block-start", "top").replace("block-end", "bottom").replace("inline-", "");
+    expect(
+      properties.filter(
+        (name) => !RESET_COMPARED.includes(physical(name)) && !TYPE_PROPERTIES.test(name),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a modal dialog keeps chromium's margins, and centers in the viewport", async () => {
+    const styled = await openElements();
+    const bare = await openElements([elementsEntry]);
+    const read = (page) =>
+      page.evaluate(`(() => {
+        const dialog = document.querySelector("#modal");
+        dialog.showModal();
+        const map = dialog.computedStyleMap();
+        const { left, top, width, height } = dialog.getBoundingClientRect();
+        return {
+          margins: ${JSON.stringify(MARGINS)}.map((name) => map.get(name).toString()),
+          offsets: [left * 2 + width - document.documentElement.clientWidth,
+            top * 2 + height - document.documentElement.clientHeight],
+        };
+      })()`);
+    const [withLayers, without] = [await read(styled), await read(bare)];
+    expect(withLayers.margins).toEqual(without.margins);
+    expect(withLayers.margins).toEqual(MARGINS.map(() => "auto"));
+    // Centered: as much room on each side as on the other, to a px, in the viewport less its
+    // scrollbar.
+    for (const offset of withLayers.offsets) expect(Math.abs(offset)).toBeLessThanOrEqual(1);
   });
 });
 

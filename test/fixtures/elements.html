@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <title>elements fixture</title>
-    <!-- The tokens and elements layers alone. The behavior test loads this page once with the
-         stylesheet and once with its request answered 404, and compares every element's layout
-         properties. Every rendered HTML element appears at least once, and every input type;
-         nothing loads from the network. -->
+    <!-- The tokens, reset and elements layers. The behavior test loads this page with the
+         stylesheet, with the reset's request answered 404, and with the stylesheet's, and
+         compares every element's layout properties. Every rendered HTML element appears at least
+         once, and every input type, with a popover; nothing loads from the network. -->
     <link rel="stylesheet" href="./elements.css" />
   </head>
   <body>
@@ -70,6 +70,8 @@
       <section>
         <img
           alt="A gray rectangle"
+          width="16"
+          height="16"
           src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'/%3E"
         />
         <picture>
@@ -181,6 +183,7 @@
       </details>
       <dialog open><p>A dialog.</p></dialog>
       <dialog id="modal"><p>A modal dialog.</p></dialog>
+      <div id="popover" popover><p>A popover.</p></div>
     </main>
     <footer>A footer.</footer>
   </body>

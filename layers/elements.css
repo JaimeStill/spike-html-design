@@ -109,6 +109,14 @@
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: var(--leading-heading);
+  /* Headings balance their lines, and paragraphs avoid a lone last word. text-wrap-style
+     leaves text-wrap-mode, which is layout, native; pretty is not Baseline, so a browser
+     without it wraps as before. */
+  text-wrap-style: balance;
+}
+
+:where(p) {
+  text-wrap-style: pretty;
 }
 
 :where(h1) {
