@@ -391,6 +391,9 @@ slices 3/6 committed · review stop — · standards — · spec — · editor �
   color: every text token (--fg, --fg-2, --fg-3) and every hue against every surface (--bg,
   --bg-2, --border, --border-2, --border-3), in each scheme. Surfaces get no ratio of their own.
   Amends behavior 15; rejected grading surfaces against --bg with text thresholds.
+- facets (BUILD, architect): display tests are framed by aspect ratio, not by any one monitor:
+  21:9, 16:9, 16:10, 4:3, 1:1, and their portrait mirrors down to 9:21, each at a small and a
+  large size. Amends behavior 7's "including 3440×1440".
 
 ## Pending edits
 
