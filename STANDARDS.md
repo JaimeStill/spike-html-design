@@ -20,3 +20,14 @@ The architecture pages that apply, in the architecture repository:
 - A role token marks state or interaction; a hue token marks a category, never status. On a
   page that shows status, categories take cyan, purple, magenta and orange first.
 - A variant is a suffix, never a prefix: `--red-bright`, `.badge-red-bright`.
+
+## Whitespace
+
+Space follows proximity: what belongs together sits closer than what doesn't.
+
+- Items in a list or group sit `--space-3xs` to `--space-2xs` apart.
+- Blocks sit `--space-s` apart.
+- A heading's space above grows with its level, and it sits closer to what follows it, which it
+  names, than to what precedes it.
+- Sections sit `--space-xl` to `--space-2xl` apart, set in the consumer's layout, never the
+  baseline's.
