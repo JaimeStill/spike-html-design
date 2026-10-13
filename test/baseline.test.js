@@ -6,6 +6,7 @@ import { LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
 const root = dirname(import.meta.dir);
 const specimen = fileUrl(join(root, "index.html"));
 const fixture = fileUrl(join(import.meta.dir, "fixtures", "baseline.html"));
+const whitespaceFixture = fileUrl(join(import.meta.dir, "fixtures", "whitespace.html"));
 // The repository served under a project subpath, as GitHub Pages serves the specimen.
 const server = serve(root, { prefix: "/spike-html-design/" });
 const pages = [];
@@ -916,10 +917,10 @@ describe("reset", () => {
 });
 
 // ALLOWED matches the properties the elements layer may set, as the longhands a rule's style
-// lists: colors and backgrounds, font and text properties, borders (radius included, collapse
-// and spacing not) and outlines, margins and paddings, accent-color and caret-color.
+// lists: colors and backgrounds, font and text properties, borders (radius, a table's collapse
+// and spacing included) and outlines, margins and paddings, accent-color and caret-color.
 const ALLOWED =
-  /^(color|background-color|accent-color|caret-color|line-height|letter-spacing|word-spacing|font-[\w-]+|text-(align|transform|decoration-[\w-]+|underline-[\w-]+)|border-(?!collapse$|spacing$)[\w-]+|outline-[\w-]+|margin-[\w-]+|padding-[\w-]+)$/;
+  /^(color|background-color|accent-color|caret-color|line-height|letter-spacing|word-spacing|font-[\w-]+|text-(align|transform|decoration-[\w-]+|underline-[\w-]+)|border-[\w-]+|outline-[\w-]+|margin-[\w-]+|padding-[\w-]+)$/;
 
 // elementsDeclarations resolves to the elements layer's selectors and the properties its rules
 // set, from the baseline linked by a page served over http.
@@ -1102,9 +1103,8 @@ describe("elements", () => {
     const indent = `${await resolveToken(page, "--space-m")}px`;
     expect(await page.style("#prose ul", "padding-inline-start")).toBe(indent);
     expect(await page.style("#prose ol", "padding-inline-start")).toBe(indent);
-    // Cells are outlined, but the table keeps its native separate borders: collapsing them is
-    // layout, left to the tools layer.
-    expect(await page.style("#prose table", "border-collapse")).toBe("separate");
+    // Cells are outlined, and the table collapses their borders into one grid.
+    expect(await page.style("#prose table", "border-collapse")).toBe("collapse");
     for (const cell of ["th", "td"]) {
       expect(await page.style(`#prose ${cell}`, "border-top")).toBe(`1px solid ${divider}`);
     }
@@ -1140,12 +1140,30 @@ describe("elements", () => {
     expect(tint(await selection())?.hue).toBe("rgb(1, 2, 3)");
   });
 
-  test("spaces adjacent prose blocks", async () => {
-    // Above the range, so --space-s is its largest value, 18px.
-    const page = await open(specimen, { scheme: "light", viewport: display("16:9", "large") });
-    expect(await page.style("#prose h1", "margin-top")).toBe("18px");
-    expect(await page.style("#prose hr + p", "margin-top")).toBe("18px");
-  });
+  for (const size of ["small", "large"]) {
+    test(`spaces the flow by proximity, at 16:9, ${size}`, async () => {
+      // The whitespace fixture names, on each element, the space token its gap above must equal:
+      // headings far from what precedes them by level and close to what follows, blocks
+      // --space-s apart, items --space-3xs apart, a container's first child flush with its top.
+      const page = await open(whitespaceFixture, {
+        scheme: "light",
+        viewport: display("16:9", size),
+      });
+      const gaps = await page.evaluate(`[...document.querySelectorAll("[data-gap]")].map((el) => {
+        const above = el.previousElementSibling;
+        const edge = above
+          ? above.getBoundingClientRect().bottom
+          : el.parentElement.getBoundingClientRect().top;
+        return [el.localName + ": " + el.textContent.trim().slice(0, 24), el.dataset.gap,
+          el.getBoundingClientRect().top - edge];
+      })`);
+      expect(gaps.length).toBeGreaterThan(20);
+      for (const [element, token, gap] of gaps) {
+        const want = token === "0" ? 0 : await resolveToken(page, token, "length");
+        expect([element, token, gap]).toEqual([element, token, expect.closeTo(want, 1)]);
+      }
+    });
+  }
 
   test("draws borders and outlines at the line widths", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -1182,7 +1200,9 @@ const elementsFixture = `${server.url}test/fixtures/elements.html`;
 // LAYOUT are the computed properties that decide an element's layout and behavior, which the
 // elements layer must leave at chromium's defaults: display and box, position and insets, float,
 // overflow, visibility, sizes with min and max in both their physical and logical forms, flex
-// and grid, white-space, list markers, tables, appearance, and the interaction properties.
+// and grid, white-space, list markers, table layout and caption side, appearance, and the
+// interaction properties. A table's border-collapse and border-spacing are border properties,
+// which the elements layer may set, so they are not among them.
 const LAYOUT = [
   "display",
   "box-sizing",
@@ -1237,8 +1257,6 @@ const LAYOUT = [
   "white-space-collapse",
   "text-wrap-mode",
   "list-style-position",
-  "border-collapse",
-  "border-spacing",
   "table-layout",
   "caption-side",
   "vertical-align",

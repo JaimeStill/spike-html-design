@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>whitespace fixture</title>
+    <!-- The baseline's whitespace by proximity. Each element with a data-gap names the space
+         token its gap above should equal: the distance from the previous sibling's bottom edge,
+         or from its container's top edge for a first child; "0" for none. The containers are
+         flow roots, so a first child's margin would show inside them rather than collapse
+         through. -->
+    <link rel="stylesheet" href="../../baseline.css" />
+    <style>
+      @layer app {
+        main,
+        section,
+        ul,
+        dl,
+        hgroup,
+        figure {
+          display: flow-root;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 data-gap="0">A first heading</h1>
+      <p data-gap="--space-2xs">A paragraph right after a heading sits close to it.</p>
+      <p data-gap="--space-s">A second paragraph, a block after a block.</p>
+      <h2 data-gap="--space-xl">A level two heading</h2>
+      <h3 data-gap="--space-l">A level three heading, right after another heading</h3>
+      <p data-gap="--space-2xs">A paragraph.</p>
+      <h4 data-gap="--space-l">A level four heading</h4>
+      <p data-gap="--space-2xs">A paragraph.</p>
+      <h5 data-gap="--space-m">A level five heading</h5>
+      <p data-gap="--space-2xs">A paragraph.</p>
+      <h6 data-gap="--space-m">A level six heading</h6>
+      <ul data-gap="--space-2xs">
+        <li data-gap="0">An item</li>
+        <li data-gap="--space-3xs">A second item</li>
+        <li data-gap="--space-3xs">A third item</li>
+      </ul>
+      <dl data-gap="--space-s">
+        <dt data-gap="0">A term</dt>
+        <dd data-gap="0">Its definition</dd>
+        <dt data-gap="--space-3xs">A second term</dt>
+        <dd data-gap="0">Its definition</dd>
+      </dl>
+      <hgroup data-gap="--space-xl">
+        <h2 data-gap="0">A heading group</h2>
+        <p data-gap="--space-3xs">Its subtitle.</p>
+      </hgroup>
+      <p data-gap="--space-2xs">A paragraph after the group.</p>
+      <figure data-gap="--space-s">
+        <div data-gap="0">A figure's content.</div>
+        <figcaption data-gap="--space-2xs">Its caption.</figcaption>
+      </figure>
+      <section data-gap="0">
+        <h3 data-gap="0">A section's first heading</h3>
+        <p data-gap="--space-2xs">A paragraph.</p>
+      </section>
+      <section data-gap="0">
+        <p data-gap="0">A section's first paragraph.</p>
+        <pre data-gap="--space-s">A pre after it.</pre>
+      </section>
+    </main>
+  </body>
+</html>
