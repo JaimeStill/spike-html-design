@@ -63,8 +63,8 @@ also an input to v1.client.
 9. Extension: a package, a test fixture, adds a color profile into the foundation's color layer,
    registers it, and passes the conformance test the foundation exports.
 10. A page pinned to an earlier tag stays unchanged after later tags ship.
-11. Each entry point's size, raw and compressed, against the enforced budget, and the cost of
-    the @import chain from the CDN.
+11. Each entry point's size, raw and compressed: measured and reported in facets, enforced
+    against a budget from profiles on; and the cost of the @import chain from the CDN.
 
 ## Scope
 
@@ -72,10 +72,12 @@ also an input to v1.client.
   Tools are pinned in mise. Bundling at release waits until validate measures the cost of the
   @import chain from the CDN.
 - **Packaging.** From facets on, a `package.json` names and versions the package and exports
-  its CSS entry points and JS modules, with no dependencies. A consumer installs it by git tag:
-  `bun add github:JaimeStill/spike-html-design#vX.Y.Z`. The lean entry point holds the
-  foundation and the default profiles, the full one every profile, and the check enforces a
-  compressed byte budget for each.
+  its CSS entry points, and from preferences on its JS modules, with no dependencies. At v0.3.0
+  it exports one entry, the lean `baseline.css`, as the package root. A consumer installs it by
+  git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which validate proves. The lean
+  entry point holds the foundation and the default profiles, and the full one, from profiles
+  on, every profile. Each entry's size, raw and brotli, is measured and reported in facets, and
+  enforced against a budget from profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
   tested secondary channel: `cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@vX.Y.Z/...`.
 - **Releases.** One minor tag per task, v0.1.0 to v0.6.0. A tag is never changed or re-cut. The
@@ -87,31 +89,45 @@ also an input to v1.client.
 
 ## Capabilities
 
-Each entry names the task that builds it. v0.2.0, the latest tag, has four flat layers (tokens,
-reset, theme, components) under `baseline.css`, Primer-derived dark and light themes with the
-`data-theme` hook and the system default, a contrast table, the specimen page, and the pinned
-pages.
+Each entry names the task that builds it. v0.2.0 had four flat layers (tokens, reset, theme,
+components) under `baseline.css`, Primer-derived dark and light themes with the `data-theme`
+hook, role tokens, and component classes. v0.3.0, the facets tag, replaces them: the nested
+layers, the facet tokens under new names with no aliases, the elements and tools layers, and
+`package.json`; v0.1.0 and v0.2.0 keep their own names and pinned pages.
 
 - **Layers** (facets): one top-level layer named for the package holds tokens, with color,
   space, and type sub-layers, then reset, elements, and tools.
-- **Facets** (facets): the token contract. Space and type use fluid scales in modern units,
-  radius scales from one base, and fonts are keyed by role (body, heading, ui, code). facets
-  ships one profile per facet, Flexoki for color.
+- **Facets** (facets): the token contract, one profile per facet. Color is Flexoki: tiers for
+  surfaces, borders, and text, and eight hues named for their color, with no role tokens; a hue
+  carries no meaning, and semantic variants are the consumer's. With no `data-scheme` attribute
+  the page follows the system scheme, live, and `data-scheme="light"` or `"dark"` forces it.
+  Space is a nine-step fluid scale, two line widths, and radii from one base; type is an
+  eight-step scale, fluid from `--text-l` up, with fonts and leadings keyed by role (body,
+  heading, ui, code). The fluid tokens interpolate with `progress()` between rem bounds over the
+  display's size. Browsers without `progress()`, older than Firefox 155 and Safari 26, lose
+  fluid sizing: the space tokens and the fluid text steps fail to compute, so the margins,
+  paddings, and heading sizes that read them fall back to their unset values.
 - **Profiles** (profiles): Kanagawa (wave and lotus), Tokyo Night (night and day), and
   Catppuccin (mocha and latte), with a contrast table per profile. A zero-specificity attribute
   (`data-palette`, `data-space`, `data-type`) applies a profile to any element, and the default
   profile sits on `:root`. A scope re-declares its aliases and re-sets color and background, so
   a preview container renders as its profile renders at the root.
-- **Elements** (facets): class-free styling of native elements, limited to paint, type, border,
-  radius, margin, and padding, with `::file-selector-button` included. A test checks each
-  element's layout properties against chromium's defaults.
-- **Tools** (facets): opt-in classes for native elements, such as button variants, scroll
-  helpers, and form and table helpers, which may change layout.
+- **Elements** (facets): class-free, zero-specificity styling of every rendered native element,
+  limited to paint, type, border (with a table's `border-collapse` and `border-spacing`), radius,
+  margin, and padding, with `::file-selector-button`, `::marker`, `::placeholder`, and
+  `::backdrop` included. A test checks each element's layout properties, under the reset and
+  elements, against chromium's defaults; the reset changes only its listed allowances.
+- **Tools** (facets): opt-in, unprefixed classes for native elements, which may change layout:
+  buttons (`.button` and a `.button-<hue>` variant per hue), scroll, forms, and tables. Each
+  family is open for extension through one hook, such as `--button-color`, which a consumer's
+  variant sets in its own layer.
 - **JS modules** (preferences, keys): a profile registry that the package and each extension
   package register into; preferences, where T opens a theming menu with a section per facet and
   the scheme; `keys.js`, the ? help dialog, and key-hint styling.
-- **Package** (facets, validate): `package.json`, the lean and full entry points, the size
-  budget, and an extension fixture that passes the exported conformance test.
+- **Package** (facets, profiles, validate): `package.json` and the lean entry point, with each
+  entry's size reported by `mise run size` and the check (facets); the full entry point and the
+  enforced size budget (profiles); the git-tag install and an extension fixture that passes the
+  exported conformance test (validate).
 - **Publishing:** the specimen page, `index.html`, on Pages, with a section per layer and facet
   from facets on and a grid of preview containers for every profile and scheme from profiles on;
   `mise run serve` (facets), which serves a branch on localhost; a page per tag under `pinned/`
@@ -128,12 +144,12 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
    contrast table; v0.2.0.
 3. `facets`: the nested layers, the facet token interfaces, the elements layer and its behavior
    test, the tools layer, one profile per facet, the components layer removed, `package.json`,
-   the lean entry point and the size budget, the specimen's section per layer and facet, `mise
-   run serve`, and a planned visual review after the tokens and elements render; v0.3.0
-   (evidence 1, 2, 4).
+   the lean entry point with its size measured and reported, the specimen's section per layer
+   and facet, `mise run serve`, and a planned visual review after the tokens and elements
+   render; v0.3.0 (evidence 1, 2, 4).
 4. `profiles`: Kanagawa, Tokyo Night, and Catppuccin, preview containers, the specimen's grid of
-   every profile and scheme, the full entry point, contrast per profile, and a planned visual
-   review after the grid renders; v0.4.0 (evidence 3, 5).
+   every profile and scheme, the full entry point, the enforced size budget, contrast per
+   profile, and a planned visual review after the grid renders; v0.4.0 (evidence 3, 5).
 5. `preferences`: the profile registry, the T theming menu, persistence, and the flash
    measurement; v0.5.0 (evidence 6).
 6. `keys`: `keys.js`, the ? dialog, key-hint styling; v0.6.0 (evidence 7).

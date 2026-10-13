@@ -16,10 +16,27 @@ The architecture pages that apply, in the architecture repository:
 - A page works the same from `file://`, a local server, and Pages; it links the baseline by a
   pinned jsDelivr tag URL, never a branch.
 - A published tag is never changed or re-cut; jsDelivr caches it as immutable.
-- Every hue token is named for the color it shows.
-- A role token marks state or interaction; a hue token marks a category, never status. On a
-  page that shows status, categories take cyan, purple, magenta and orange first.
-- A variant is a suffix, never a prefix: `--red-bright`, `.badge-red-bright`.
+- Features: Baseline Newly available, plus non-Baseline features only as progressive
+  enhancement, where a browser without them still renders a correct page.
+- Fluid tokens need `progress()`; a browser without it loses fluid sizing, not the page.
+- A variant is a suffix, never a prefix: `--red-bright`, `.button-red`.
+- Sizes are reported, not enforced; the budget is enforced from profiles on.
+
+## Tokens
+
+- A hue is named for the color it shows and carries no meaning. There are no role tokens:
+  semantic variants are the consumer's, through a tools family's hook or its own layers. The
+  baseline is open for extension, closed for modification.
+- Fluid bounds are rem, never px; aspect-ratio queries belong to layout, never to a token.
+
+## Layers
+
+- elements is class-free with zero specificity, and sets only paint, type, border (including
+  `border-collapse` and `border-spacing`), radius, margin, and padding.
+- tools is opt-in and unprefixed, with one hook per family; a variant is a suffix, and a variant
+  named `button-<name>` gets the button treatment.
+- The reset changes only its listed allowances.
+- The specimen's arrangement lives in its own layer: composition, not baseline.
 
 ## Whitespace
 
