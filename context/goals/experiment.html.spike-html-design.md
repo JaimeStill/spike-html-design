@@ -154,7 +154,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 3/7 committed (2b21e96, f1bd346, 2ac62e0) · review stop — · standards — · spec — · editor —
+slices 4/7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043) · review stop pending · standards — · spec — · editor —
 
 ## Decisions
 
