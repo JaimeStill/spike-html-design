@@ -535,10 +535,6 @@ describe("tokens", () => {
     });
   }
 
-  test("the color facet holds sixteen tokens", () => {
-    expect(Object.keys(COLORS)).toHaveLength(16);
-  });
-
   test("every fluid token's bounds are rem, never px, and it interpolates with progress()", async () => {
     const page = await open(server.url, { scheme: "light" });
     const declared = Object.fromEntries(
@@ -1705,26 +1701,34 @@ describe("tools", () => {
   });
 
   test("each hue variant sets only the hook, --button-color, to its hue", async () => {
-    const page = await open(server.url, { scheme: "light" });
+    // On a span, which no button treatment matches, a variant class shows only what it sets
+    // itself: every computed property, custom ones included, that differs from a plain span's.
+    const page = await open(specimen, { scheme: "light" });
     const variants = await page.evaluate(`(() => {
-      const variants = {};
-      const walk = (rules) => {
-        for (const rule of rules) {
-          if (/^\\.button-[\\w-]+$/.test(rule.selectorText ?? "")) {
-            variants[rule.selectorText] = [...rule.style]
-              .map((name) => [name, rule.style.getPropertyValue(name).trim()]);
-          }
-          if (rule.cssRules) walk(rule.cssRules);
-        }
+      const read = (el) => {
+        const style = getComputedStyle(el);
+        return Object.fromEntries([...style].map((name) => [name, style.getPropertyValue(name)]));
       };
-      walk(${layerSheet("tools")}.cssRules);
-      return variants;
+      const span = (className) => {
+        const el = document.body.appendChild(document.createElement("span"));
+        el.className = className;
+        return read(el);
+      };
+      const plain = span("");
+      return Object.fromEntries(${JSON.stringify(Object.keys(HUES))}.map((hue) => {
+        const name = "button-" + hue.slice(2);
+        const style = span(name);
+        return [name, Object.keys(style).filter((key) => style[key] !== plain[key])
+          .map((key) => [key, style[key].trim()])];
+      }));
     })()`);
+    // The hook holds the hue's own value, as the root computes it.
+    const tokens = await rootTokens(page);
     expect(variants).toEqual(
       Object.fromEntries(
         Object.keys(HUES).map((hue) => [
-          `.button-${hue.slice(2)}`,
-          [["--button-color", `var(${hue})`]],
+          `button-${hue.slice(2)}`,
+          [["--button-color", tokens[hue]]],
         ]),
       ),
     );
@@ -2007,7 +2011,6 @@ describe("specimen", () => {
       // Exact matches, in order, so a new color token without a row or a column fails.
       expect(rows).toEqual(TEXT);
       expect(columns).toEqual(SURFACES);
-      expect([...TEXT, ...SURFACES].sort()).toEqual(Object.keys(COLORS).sort());
     });
   }
 

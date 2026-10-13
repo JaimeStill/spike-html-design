@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
+import { CURRENT } from "./layers.js";
 
 const root = dirname(import.meta.dir);
 const pkg = await Bun.file(join(root, "package.json")).json();
@@ -12,9 +13,11 @@ function targets(exports) {
 }
 
 describe("package", () => {
-  test("names the package at its version, with no dependencies", () => {
+  test("names the package at the tag the working tree answers, with no dependencies", () => {
     expect(pkg.name).toBe("spike-html-design");
-    expect(pkg.version).toBe("0.3.0");
+    // The version is the tag whose probes and pinned page the working tree carries, so a release
+    // that bumps one and not the other fails.
+    expect(`v${pkg.version}`).toBe(CURRENT);
     for (const field of ["dependencies", "devDependencies", "peerDependencies"]) {
       expect([field, pkg[field]]).toEqual([field, undefined]);
     }
