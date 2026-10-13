@@ -119,7 +119,7 @@
       <header>
         <h1>spike-html-design</h1>
         <p>
-          The baseline's tokens, the prose elements its elements layer styles, and its tools,
+          The baseline's tokens, every element its elements layer styles, and its tools,
           rendered by <code>baseline.css</code> alone. It follows the system scheme; a
           <code>data-scheme</code> of <code>light</code> or <code>dark</code> on the root element
           forces one.
@@ -316,52 +316,306 @@
         </section>
       </section>
 
-      <section id="prose">
-        <h2>Prose</h2>
-        <h1>Heading one</h1>
-        <h2>Heading two</h2>
-        <h3>Heading three</h3>
-        <h4>Heading four</h4>
-        <h5>Heading five</h5>
-        <h6>Heading six</h6>
+      <section id="elements">
+        <h2>Elements</h2>
         <p>
-          A paragraph of body text in the body font, with <a href="#prose">a link to this section</a>,
-          <strong>strong text</strong>, <em>emphasis</em>, inline <code>code</code>, and a key,
-          <kbd>T</kbd>.
+          Every rendered element as the elements layer styles it, with no classes: paint, type,
+          borders, radius, margins and paddings only, so each keeps its native layout and
+          behavior. A pre that must scroll takes the tools layer's <code>.scroll-x</code>.
         </p>
-        <ul>
-          <li>An unordered item</li>
-          <li>A second item</li>
-        </ul>
-        <ol>
-          <li>An ordered item</li>
-          <li>A second item</li>
-        </ol>
-        <blockquote>
-          <p>A blockquote, set off by a rule at its start edge.</p>
-        </blockquote>
-        <pre><code>// A preformatted block in the code font.
+
+        <section id="prose">
+          <h3>Prose</h3>
+          <h1>Heading one</h1>
+          <h2>Heading two</h2>
+          <h3>Heading three</h3>
+          <h4>Heading four</h4>
+          <h5>Heading five</h5>
+          <h6>Heading six</h6>
+          <p>
+            A paragraph of body text in the body font, with <a href="#prose">a link to this section</a>,
+            <strong>strong text</strong>, <em>emphasis</em>, inline <code>code</code>, and a key,
+            <kbd>T</kbd>.
+          </p>
+          <ul>
+            <li>An unordered item</li>
+            <li>A second item</li>
+          </ul>
+          <ol>
+            <li>An ordered item</li>
+            <li>A second item</li>
+          </ol>
+          <blockquote>
+            <p>A blockquote, set off by a rule at its start edge.</p>
+          </blockquote>
+          <pre class="scroll-x"><code>// A preformatted block in the code font, scrolled by the tools layer's .scroll-x.
 const answer = 42;</code></pre>
-        <table>
-          <thead>
-            <tr>
-              <th>Token</th>
-              <th>Role</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>--bg</code></td>
-              <td>Page surface</td>
-            </tr>
-            <tr>
-              <td><code>--fg</code></td>
-              <td>Body text</td>
-            </tr>
-          </tbody>
-        </table>
-        <hr />
-        <p>A paragraph after the rule.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--bg</code></td>
+                <td>Page surface</td>
+              </tr>
+              <tr>
+                <td><code>--fg</code></td>
+                <td>Body text</td>
+              </tr>
+            </tbody>
+          </table>
+          <hr />
+          <p>A paragraph after the rule.</p>
+        </section>
+
+        <section id="text">
+          <h3>Text-level</h3>
+          <p>
+            <small>small</small>, <s>struck</s>, <cite>a cited title</cite>,
+            <q>a quotation</q>, <dfn>a defined term</dfn>,
+            <abbr title="an abbreviation">abbr</abbr>,
+            <ruby>漢<rp>(</rp><rt>kan</rt><rp>)</rp>字<rp>(</rp><rt>ji</rt><rp>)</rp></ruby>,
+            <data value="42">data</data>, <time datetime="2026-10-13">October 13</time>,
+            <var>var</var>, <samp>sample output</samp>, H<sub>2</sub>O, x<sup>2</sup>,
+            <i>idiomatic</i>, <b>bold</b>, <u>unarticulated</u>, <mark>marked</mark>,
+            <bdi>إيان</bdi>, <bdo dir="rtl">reversed</bdo>, <span>a span</span>, a line<br />break,
+            and a long<wbr />word broken at its wbr.
+          </p>
+          <p>Edits: <del>removed text</del> and <ins>inserted text</ins>.</p>
+          <hgroup>
+            <h4>A heading group</h4>
+            <p>Its subtitle.</p>
+          </hgroup>
+          <address>An address, for the page's contact.</address>
+        </section>
+
+        <section id="grouping">
+          <h3>Grouping</h3>
+          <dl>
+            <dt>A term</dt>
+            <dd>Its definition.</dd>
+            <dt>A second term</dt>
+            <dd>Its definition.</dd>
+          </dl>
+          <menu>
+            <li>A menu item</li>
+            <li>A second item</li>
+          </menu>
+          <figure>
+            <div>A div of content in a figure.</div>
+            <figcaption>A figcaption names the figure.</figcaption>
+          </figure>
+          <search>
+            <form>
+              <label for="specimen-search">Search</label>
+              <input id="specimen-search" type="search" placeholder="A placeholder" />
+            </form>
+          </search>
+          <article>
+            <header>An article's header</header>
+            <aside>An aside.</aside>
+            <nav><a href="#grouping">A nav link</a></nav>
+            <footer>An article's footer</footer>
+          </article>
+        </section>
+
+        <section id="tables">
+          <h3>Tables</h3>
+          <table>
+            <caption>
+              A caption, then column groups, a head, a body and a foot.
+            </caption>
+            <colgroup>
+              <col />
+              <col />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">Step</th>
+                <th scope="col">Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--text-s</code></td>
+                <td>Small</td>
+              </tr>
+              <tr>
+                <td><code>--text-m</code></td>
+                <td>Body</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Two steps</td>
+                <td>Of eight</td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+        <section id="forms">
+          <h3>Forms</h3>
+          <form>
+            <fieldset>
+              <legend>Every input type</legend>
+              <p><label>text <input type="text" placeholder="A placeholder" /></label></p>
+              <p><label>search <input type="search" /></label></p>
+              <p><label>email <input type="email" /></label></p>
+              <p><label>url <input type="url" /></label></p>
+              <p><label>tel <input type="tel" /></label></p>
+              <p><label>password <input type="password" value="password" /></label></p>
+              <p><label>number <input type="number" value="42" /></label></p>
+              <p><label>range <input type="range" /></label></p>
+              <p><label>date <input type="date" /></label></p>
+              <p><label>month <input type="month" /></label></p>
+              <p><label>week <input type="week" /></label></p>
+              <p><label>time <input type="time" /></label></p>
+              <p><label>datetime-local <input type="datetime-local" /></label></p>
+              <p><label>color <input type="color" value="#205ea6" /></label></p>
+              <p>
+                <label><input type="checkbox" checked /> checkbox</label>
+                <label><input type="radio" name="specimen-radio" checked /> radio</label>
+                <label><input type="radio" name="specimen-radio" /> radio</label>
+              </p>
+              <p><label>file <input type="file" /></label></p>
+              <p>
+                <label>list <input list="specimen-choices" /></label>
+                <datalist id="specimen-choices">
+                  <option value="One"></option>
+                  <option value="Two"></option>
+                </datalist>
+              </p>
+              <input type="hidden" value="hidden" />
+              <p>
+                <input type="submit" />
+                <input type="reset" />
+                <input type="button" value="input button" />
+                <input
+                  type="image"
+                  alt="Submit"
+                  width="24"
+                  height="24"
+                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='4' fill='%23878580'/%3E%3C/svg%3E"
+                />
+              </p>
+            </fieldset>
+            <fieldset>
+              <legend>Other controls</legend>
+              <p>
+                <button type="button">button</button>
+                <button type="button" disabled>disabled</button>
+              </p>
+              <p>
+                <label>
+                  select
+                  <select>
+                    <optgroup label="A group">
+                      <option>An option</option>
+                      <option>A second option</option>
+                    </optgroup>
+                  </select>
+                </label>
+              </p>
+              <p>
+                <label>
+                  multiple
+                  <select multiple>
+                    <option>An option</option>
+                    <option>A second option</option>
+                  </select>
+                </label>
+              </p>
+              <p>
+                <label>textarea <textarea placeholder="A placeholder"></textarea></label>
+              </p>
+              <p><label>output <output>42</output></label></p>
+              <p><label>progress <progress value="0.6"></progress></label></p>
+              <p><label>meter <meter value="0.6"></meter></label></p>
+            </fieldset>
+          </form>
+        </section>
+
+        <section id="embedded">
+          <h3>Embedded</h3>
+          <p>Placeholders from data: URLs and empty sources, so nothing loads from the network.</p>
+          <img
+            alt="A gray rectangle"
+            width="64"
+            height="40"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' rx='6' fill='%23878580'/%3E%3C/svg%3E"
+          />
+          <picture>
+            <source
+              type="image/svg+xml"
+              srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Ccircle cx='32' cy='20' r='18' fill='%23878580'/%3E%3C/svg%3E"
+            />
+            <img
+              alt="A gray circle"
+              width="64"
+              height="40"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Ccircle cx='32' cy='20' r='18' fill='%23878580'/%3E%3C/svg%3E"
+            />
+          </picture>
+          <iframe title="An iframe" srcdoc="<p>An iframe's own document.</p>"></iframe>
+          <embed
+            type="image/svg+xml"
+            width="64"
+            height="40"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' fill='%23878580'/%3E%3C/svg%3E"
+          />
+          <object
+            title="A gray rectangle"
+            type="image/svg+xml"
+            width="64"
+            height="40"
+            data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' fill='%23878580'/%3E%3C/svg%3E"
+          >
+            An object.
+          </object>
+          <video controls width="240"><track kind="captions" /></video>
+          <audio controls><track kind="captions" /></audio>
+          <canvas width="64" height="40"></canvas>
+          <svg width="64" height="40" viewBox="0 0 64 40" aria-label="An svg">
+            <rect width="64" height="40" rx="6" fill="currentColor" />
+          </svg>
+          <math display="block">
+            <mi>E</mi>
+            <mo>=</mo>
+            <mi>m</mi>
+            <msup><mi>c</mi><mn>2</mn></msup>
+          </math>
+        </section>
+
+        <section id="interactive">
+          <h3>Interactive</h3>
+          <details open>
+            <summary>An open details</summary>
+            <p>Its content, shown.</p>
+          </details>
+          <details>
+            <summary>A closed details</summary>
+            <p>Its content, hidden until opened.</p>
+          </details>
+          <p>
+            <button
+              type="button"
+              onclick="document.getElementById('specimen-dialog').showModal()"
+            >
+              Open the dialog
+            </button>
+          </p>
+          <dialog id="specimen-dialog">
+            <p>A modal dialog, over the page's backdrop.</p>
+            <form method="dialog">
+              <button type="submit">Close</button>
+            </form>
+          </dialog>
+        </section>
       </section>
 
       <section id="tools">

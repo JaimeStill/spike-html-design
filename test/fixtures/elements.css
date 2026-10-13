@@ -1,0 +1,15 @@
+/*
+ * A test-only entry: the tokens files and the elements layer, each imported into its nested layer
+ * as baseline.css imports it, and nothing else. No reset and no tools, so the elements behavior
+ * test sees what the elements layer alone does to native elements.
+ */
+
+@layer spike-html-design.tokens.color,
+  spike-html-design.tokens.space,
+  spike-html-design.tokens.type,
+  spike-html-design.elements;
+
+@import url(../../layers/tokens/color.css) layer(spike-html-design.tokens.color);
+@import url(../../layers/tokens/space.css) layer(spike-html-design.tokens.space);
+@import url(../../layers/tokens/type.css) layer(spike-html-design.tokens.type);
+@import url(../../layers/elements.css) layer(spike-html-design.elements);

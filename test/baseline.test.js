@@ -883,7 +883,122 @@ describe("reset", () => {
   });
 });
 
+// ALLOWED matches the properties the elements layer may set, as the longhands a rule's style
+// lists: colors and backgrounds, font and text properties, borders (radius included, collapse
+// and spacing not) and outlines, margins and paddings, accent-color and caret-color.
+const ALLOWED =
+  /^(color|background-color|accent-color|caret-color|line-height|letter-spacing|word-spacing|font-[\w-]+|text-(align|transform|decoration-[\w-]+|underline-[\w-]+)|border-(?!collapse$|spacing$)[\w-]+|outline-[\w-]+|margin-[\w-]+|padding-[\w-]+)$/;
+
+// elementsDeclarations resolves to the elements layer's selectors and the properties its rules
+// set, from the baseline linked by a page served over http.
+function elementsDeclarations(page) {
+  return page.evaluate(`(() => {
+    const selectors = [];
+    const properties = new Set();
+    const walk = (rules) => {
+      for (const rule of rules) {
+        if (rule.selectorText) selectors.push(rule.selectorText);
+        for (const name of rule.style ?? []) properties.add(name);
+        if (rule.cssRules) walk(rule.cssRules);
+      }
+    };
+    walk(${layerSheet("elements")}.cssRules);
+    return { selectors, properties: [...properties] };
+  })()`);
+}
+
+// splitList splits a selector list at its top-level commas, never at a comma inside parentheses.
+function splitList(list) {
+  const parts = [""];
+  let depth = 0;
+  for (const char of list) {
+    if (char === "(") depth++;
+    if (char === ")") depth--;
+    if (char === "," && depth === 0) parts.push("");
+    else parts[parts.length - 1] += char;
+  }
+  return parts.map((part) => part.trim());
+}
+
+// stripWhere returns a selector with every :where() group, nested parentheses and all, taken
+// out.
+function stripWhere(selector) {
+  let out = "";
+  let index = 0;
+  while (index < selector.length) {
+    if (selector.startsWith(":where(", index)) {
+      let depth = 0;
+      for (index += ":where".length; index < selector.length; index++) {
+        if (selector[index] === "(") depth++;
+        if (selector[index] === ")" && --depth === 0) break;
+      }
+      index++;
+    } else {
+      out += selector[index++];
+    }
+  }
+  return out;
+}
+
 describe("elements", () => {
+  test("every elements rule has zero specificity, apart from a pseudo-element's own", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const { selectors } = await elementsDeclarations(page);
+    expect(selectors.length).toBeGreaterThan(0);
+    // With every :where() group taken out, a selector holds only combinators and, last, at most
+    // one pseudo-element: nothing left to carry specificity but the pseudo-element's (0,0,1).
+    const specific = selectors
+      .flatMap(splitList)
+      .filter((selector) => !/^[\s>+~]*(::[\w-]+)?$/.test(stripWhere(selector)));
+    expect(specific).toEqual([]);
+  });
+
+  test("the elements layer sets only paint, type, border, radius, margin and padding", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const { properties } = await elementsDeclarations(page);
+    expect(properties.length).toBeGreaterThan(0);
+    expect(properties.filter((name) => !ALLOWED.test(name))).toEqual([]);
+  });
+
+  test("the native button, the button inputs and the file button are neutral, from tiers alone", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const controls = [
+      ["#forms button", ""],
+      ['#forms input[type="submit"]', ""],
+      ['#forms input[type="reset"]', ""],
+      ['#forms input[type="button"]', ""],
+      ['#forms input[type="file"]', "::file-selector-button"],
+    ];
+    const paint = (selector, pseudo) =>
+      page.evaluate(`(() => {
+        const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}),
+          ${JSON.stringify(pseudo || null)});
+        return [style.color, style.backgroundColor, style.borderTopColor];
+      })()`);
+    const tiers = ["--fg", "--bg-2", "--border-3"].map((name) => COLORS[name][0]);
+    for (const [selector, pseudo] of controls) {
+      expect([selector, await paint(selector, pseudo)]).toEqual([selector, tiers]);
+    }
+    // No hue reaches them: overriding every hue leaves each control's paint as it was.
+    const hues = Object.keys(HUES).map((name) => `${name}: rgb(1, 2, 3);`);
+    await addAppStyle(page, `@layer app { :root { ${hues.join(" ")} } }`);
+    for (const [selector, pseudo] of controls) {
+      expect([selector, await paint(selector, pseudo)]).toEqual([selector, tiers]);
+    }
+    // Hovered, the native button fills one tier up, with --border.
+    await page.evaluate(
+      `document.querySelector("#forms button").scrollIntoView({ block: "center" })`,
+    );
+    const center = await page.evaluate(`(() => {
+      const { x, y, width, height } = document.querySelector("#forms button")
+        .getBoundingClientRect();
+      return { x: x + width / 2, y: y + height / 2 };
+    })()`);
+    await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", ...center });
+    expect(await page.style("#forms button", "background-color")).toBe(COLORS["--border"][0]);
+  });
+
   test("sets the body, headings, and code, pre and kbd in their role fonts", async () => {
     const page = await open(specimen, { scheme: "light" });
     expect(await page.style("body", "font-family")).toBe(SANS);
@@ -958,7 +1073,9 @@ describe("elements", () => {
     const indent = `${await resolveToken(page, "--space-m")}px`;
     expect(await page.style("#prose ul", "padding-inline-start")).toBe(indent);
     expect(await page.style("#prose ol", "padding-inline-start")).toBe(indent);
-    expect(await page.style("#prose table", "border-collapse")).toBe("collapse");
+    // Cells are outlined, but the table keeps its native separate borders: collapsing them is
+    // layout, left to the tools layer.
+    expect(await page.style("#prose table", "border-collapse")).toBe("separate");
     for (const cell of ["th", "td"]) {
       expect(await page.style(`#prose ${cell}`, "border-top")).toBe(`1px solid ${divider}`);
     }
@@ -1020,9 +1137,214 @@ describe("elements", () => {
     // The check is only as wide as the page: it must hold every tools class.
     const shown = TOOLS.map((name) => `!!document.querySelector("#tools .${name}")`);
     expect(await page.evaluate(`[${shown}].every(Boolean)`)).toBe(true);
-    const styles = (await page.fingerprint(["box-shadow", "background-image"])).map(([, s]) => s);
+    // chromium resolves no computed style for a track element, so the video's and audio's
+    // tracks are left out.
+    const styles = (await page.fingerprint(["display", "box-shadow", "background-image"]))
+      .map(([, s]) => s)
+      .filter((s) => s.display !== "");
     expect(new Set(styles.map((s) => s["box-shadow"]))).toEqual(new Set(["none"]));
     expect(new Set(styles.map((s) => s["background-image"]))).toEqual(new Set(["none"]));
+  });
+});
+
+// The elements fixture over http, so the bare load can answer its one stylesheet 404.
+const elementsFixture = `${server.url}test/fixtures/elements.html`;
+
+// LAYOUT are the computed properties that decide an element's layout and behavior, which the
+// elements layer must leave at chromium's defaults: display and box, position and insets, float,
+// overflow, visibility, sizes with min and max in both their physical and logical forms, flex
+// and grid, white-space, list markers, tables, appearance, and the interaction properties.
+const LAYOUT = [
+  "display",
+  "box-sizing",
+  "position",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "z-index",
+  "float",
+  "clear",
+  "overflow-x",
+  "overflow-y",
+  "visibility",
+  "width",
+  "height",
+  "min-width",
+  "min-height",
+  "max-width",
+  "max-height",
+  "inline-size",
+  "block-size",
+  "min-inline-size",
+  "min-block-size",
+  "max-inline-size",
+  "max-block-size",
+  "flex-direction",
+  "flex-wrap",
+  "flex-grow",
+  "flex-shrink",
+  "flex-basis",
+  "order",
+  "justify-content",
+  "justify-items",
+  "justify-self",
+  "align-content",
+  "align-items",
+  "align-self",
+  "row-gap",
+  "column-gap",
+  "grid-template-columns",
+  "grid-template-rows",
+  "grid-template-areas",
+  "grid-auto-flow",
+  "grid-auto-columns",
+  "grid-auto-rows",
+  "grid-row-start",
+  "grid-row-end",
+  "grid-column-start",
+  "grid-column-end",
+  "white-space",
+  "white-space-collapse",
+  "text-wrap-mode",
+  "list-style-position",
+  "border-collapse",
+  "border-spacing",
+  "table-layout",
+  "caption-side",
+  "vertical-align",
+  "appearance",
+  "pointer-events",
+  "user-select",
+  "cursor",
+  "resize",
+  "transform",
+  "contain",
+  "content-visibility",
+];
+
+// USED are the LAYOUT properties getComputedStyle() answers in used px on a rendered box.
+const USED = LAYOUT.filter((name) =>
+  /^(top|right|bottom|left|(min-|max-)?(width|height|inline-size|block-size))$/.test(name),
+);
+
+// PSEUDOS are the pseudo-elements the elements layer styles, each with the fixture elements that
+// render it.
+const PSEUDOS = {
+  "::marker": "li, summary",
+  "::file-selector-button": "input[type=file]",
+  "::placeholder": "[placeholder]",
+  "::backdrop": "dialog:modal",
+};
+
+// readLayout runs in the page: it opens the fixture's modal dialog, so its ::backdrop renders,
+// then reads every rendered element's, and every styled pseudo-element's, layout properties,
+// keyed by tag path. An element reads its computed values through computedStyleMap(), never its
+// resolved ones: getComputedStyle() answers a rendered element's width, height and insets in
+// used px, which padding and fonts legitimately change, where the computed value is the auto or
+// the length the cascade gave. A pseudo-element has no computedStyleMap(), so it reads
+// getComputedStyle(), which answers its sizes and insets in used px, so those are left out of a
+// pseudo-element's read.
+function readLayout({ properties, pseudos, used }) {
+  document.querySelector("#modal").showModal();
+  const path = (el) =>
+    el.parentElement
+      ? `${path(el.parentElement)} > ${el.localName}:nth-child(${[...el.parentElement.children].indexOf(el) + 1})`
+      : el.localName;
+  const computed = (el) => {
+    const map = el.computedStyleMap();
+    return Object.fromEntries(
+      properties.map((name) => {
+        let value;
+        try {
+          value = map.get(name)?.toString();
+        } catch {}
+        return [name, value ?? getComputedStyle(el).getPropertyValue(name)];
+      }),
+    );
+  };
+  const resolved = (el, pseudo) => {
+    const style = getComputedStyle(el, pseudo);
+    return Object.fromEntries(
+      properties
+        .filter((name) => !used.includes(name))
+        .map((name) => [name, style.getPropertyValue(name)]),
+    );
+  };
+  const skip = "head, head *, script, noscript, template";
+  const entries = [...document.querySelectorAll(`*:not(${skip})`)].map((el) => [
+    path(el),
+    computed(el),
+  ]);
+  for (const [pseudo, selector] of Object.entries(pseudos)) {
+    for (const el of document.querySelectorAll(selector)) {
+      entries.push([`${path(el)}${pseudo}`, resolved(el, pseudo)]);
+    }
+  }
+  return entries;
+}
+
+// TAGS are every rendered HTML element the elements fixture and the specimen must show: sections
+// and headings, grouping, text-level, edits, embedded, tables, forms, and interactive elements.
+// Metadata and scripting elements are left out.
+const TAGS = [
+  ..."body article section nav aside h1 h2 h3 h4 h5 h6 hgroup header footer address".split(" "),
+  ..."p hr pre blockquote ol ul menu li dl dt dd figure figcaption main search div".split(" "),
+  ..."a em strong small s cite q dfn abbr ruby rt rp data time code var samp kbd sub sup".split(
+    " ",
+  ),
+  ..."i b u mark bdi bdo span br wbr ins del".split(" "),
+  ..."img picture source iframe embed object video track audio canvas svg math".split(" "),
+  ..."table caption colgroup col thead tbody tfoot tr th td".split(" "),
+  ..."form label input button select datalist optgroup option textarea output".split(" "),
+  ..."progress meter fieldset legend details summary dialog".split(" "),
+];
+
+// INPUT_TYPES are every type an input takes.
+const INPUT_TYPES = [
+  ..."hidden text search tel url email password date month week time datetime-local".split(" "),
+  ..."number range color checkbox radio file submit image reset button".split(" "),
+];
+
+describe("elements behavior", () => {
+  test("the elements fixture holds every rendered element and every input type", async () => {
+    const page = await open(elementsFixture, { scheme: "light" });
+    const shown = await page.evaluate(`({
+      tags: [...new Set([...document.body.querySelectorAll("*")].map((el) => el.localName))],
+      types: [...document.querySelectorAll("input")].map((el) => el.type),
+    })`);
+    expect(TAGS.filter((tag) => tag !== "body" && !shown.tags.includes(tag))).toEqual([]);
+    expect(INPUT_TYPES.filter((type) => !shown.types.includes(type))).toEqual([]);
+  });
+
+  test("with only the tokens and elements layers, every element lays out as with no stylesheet", async () => {
+    // The same fixture loaded twice: once with its stylesheet, the tokens files and elements.css
+    // in their nested layers, and once with that stylesheet's request answered 404. Both at a
+    // small display, where the body's --text-m is 16px, the browser's default: chromium states
+    // some native sizes in em (progress, meter, a dialog's max size), and their computed px
+    // follow the font, which the elements layer may set.
+    const viewport = display("9:16", "small");
+    const styled = await open(elementsFixture, { scheme: "light", viewport });
+    const bare = await open(elementsFixture, {
+      scheme: "light",
+      viewport,
+      intercept: {
+        [`${server.url}test/fixtures/elements.css`]: join(import.meta.dir, "fixtures", "absent"),
+      },
+    });
+    // Equal reads prove nothing unless the stylesheet loaded in one and not the other.
+    expect(await styled.style("body", "background-color")).toBe(COLORS["--bg"][0]);
+    expect(await bare.style("body", "background-color")).toBe("rgba(0, 0, 0, 0)");
+    const args = JSON.stringify({ properties: LAYOUT, pseudos: PSEUDOS, used: USED });
+    const read = (page) => page.evaluate(`(${readLayout})(${args})`);
+    const [withLayer, without] = [await read(styled), await read(bare)];
+    expect(withLayer.map(([path]) => path)).toEqual(without.map(([path]) => path));
+    const differences = withLayer.flatMap(([path, style], index) =>
+      Object.keys(style)
+        .filter((name) => style[name] !== without[index][1][name])
+        .map((name) => [path, name, style[name], without[index][1][name]]),
+    );
+    expect(differences).toEqual([]);
   });
 });
 
@@ -1106,13 +1428,14 @@ describe("specimen", () => {
     );
   });
 
-  test("shows every prose element the elements layer styles", async () => {
+  test("shows every rendered element and every input type", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const tags = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "a", "ul", "ol", "li", "blockquote"];
-    tags.push("pre", "code", "kbd", "table", "th", "td", "hr");
-    for (const tag of tags) {
-      expect(await page.evaluate(`!!document.querySelector("#prose ${tag}")`)).toBe(true);
-    }
+    const shown = await page.evaluate(`({
+      tags: [...new Set([...document.querySelectorAll("body, body *")].map((el) => el.localName))],
+      types: [...document.querySelectorAll("#forms input")].map((el) => el.type),
+    })`);
+    expect(TAGS.filter((tag) => !shown.tags.includes(tag))).toEqual([]);
+    expect(INPUT_TYPES.filter((type) => !shown.types.includes(type))).toEqual([]);
   });
 
   test("shows every tools class", async () => {
@@ -1196,7 +1519,9 @@ describe("specimen", () => {
   test("renders the same from file:// and from a server under a project subpath", async () => {
     const local = await open(specimen, { scheme: "light" });
     const served = await open(server.url, { scheme: "light" });
-    expect(served.view.url).toBe(server.url);
+    // The page's own location: the view's URL follows the last frame to navigate, and the
+    // specimen's embedded frames navigate after the page.
+    expect(await served.evaluate("location.href")).toBe(server.url);
     // Equal fingerprints prove nothing if the stylesheet, or one of its layer files, failed to
     // load in both.
     for (const page of [local, served]) expect(await layersLoaded(page)).toEqual(LOADED);

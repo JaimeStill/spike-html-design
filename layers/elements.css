@@ -1,19 +1,38 @@
 /*
  * layers/elements.css, the elements layer.
  *
- * herald's theme (body surface and text, code in the code font), extended to the prose elements
- * an artifact uses: headings on the text scale, links, lists, tables, blockquote, hr. Fonts and
- * leadings read the type facet's role tokens, spacing reads the space scale, and border and
- * outline widths read the line tokens. Everything is flat: borders in --border, no fills beyond
- * the page surface, no shadows, no gradients. The
- * layer reads hues by name, as any reader of the color facet does: links, focus outlines,
- * selected text, the text caret, and form controls' accent all take --blue.
+ * Every rendered HTML element on the tokens, with no classes: sections and headings, grouping
+ * and text-level elements, edits, embedded content, tables, forms, details and dialog, and the
+ * ::file-selector-button, ::marker, ::placeholder and ::backdrop pseudo-elements. An element
+ * whose native look already sits on the tokens, through the body's font, color and accent, has
+ * no rule of its own; every element has been considered.
+ *
+ * Two limits hold for every rule here:
+ *
+ * - Zero specificity. Every selector is wrapped in :where(), so any class, attribute or element
+ *   selector in a later layer, or in this one, beats it. A pseudo-element can't sit inside
+ *   :where(), so a rule for one alone carries the pseudo-element's own (0,0,1).
+ * - Paint, type, border, radius, margin and padding only: colors and backgrounds, font and text
+ *   properties, borders and outlines, border-radius, margins and paddings, accent-color and
+ *   caret-color. Nothing that changes an element's layout or behavior: no display, position,
+ *   float, overflow, visibility, sizes, flex or grid, white-space, list-style-position,
+ *   appearance, pointer-events, user-select or border-collapse. A test holds every element's
+ *   layout properties to chromium's defaults. Changing layout is the tools layer's work: a pre
+ *   that must scroll takes .scroll-x.
+ *
+ * Fonts and leadings read the type facet's role tokens, spacing reads the space scale, and
+ * border and outline widths read the line tokens. Colors read tiers and hues by name: links,
+ * focus outlines, selected text, the caret and form controls' accent take --blue; the native
+ * button is neutral, built from tiers alone. Everything is flat: borders, no shadows, no
+ * gradients.
  *
  * baseline.css imports this file into spike-html-design.elements. Pages link baseline.css,
  * never this file: linked on its own, its rules would be unlayered.
  */
 
-body {
+/* Sections and the page. */
+
+:where(body) {
   font-family: var(--font-body);
   /* The text scale's base step, so body text grows with the display as the headings do. */
   font-size: var(--text-m);
@@ -31,128 +50,327 @@ body {
   background-color: color-mix(in srgb, var(--blue) 30%, transparent);
 }
 
-pre,
-code,
-kbd {
-  font-family: var(--font-code);
+/* Every focusable element, not only links, shows the same outline when the keyboard reaches it.
+   An outline takes no space, so it changes no layout. */
+:where(:focus-visible) {
+  outline: var(--line-m) solid var(--blue);
+  outline-offset: 2px;
 }
 
-pre {
-  line-height: var(--leading-code);
-}
-
-/* Vertical rhythm between adjacent prose blocks, which the reset leaves at zero margin. It sits
-   in the elements layer, so any tools or app rule that sets a margin replaces it. */
-:where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr)
-+ :where(h1, h2, h3, h4, h5, h6, p, ul, ol, dl, pre, blockquote, table, figure, hr) {
+/* Vertical rhythm between adjacent blocks, which the reset leaves at zero margin. It sits in
+   the elements layer, so any tools or app rule that sets a margin replaces it. */
+:where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  hgroup,
+  p,
+  ul,
+  ol,
+  menu,
+  dl,
+  pre,
+  blockquote,
+  table,
+  figure,
+  hr,
+  details,
+  fieldset,
+  address
+)
++ :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  hgroup,
+  p,
+  ul,
+  ol,
+  menu,
+  dl,
+  pre,
+  blockquote,
+  table,
+  figure,
+  hr,
+  details,
+  fieldset,
+  address
+) {
   margin-block-start: var(--space-s);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+:where(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: var(--leading-heading);
 }
 
-h1 {
+:where(h1) {
   font-size: var(--text-4xl);
 }
 
-h2 {
+:where(h2) {
   font-size: var(--text-3xl);
 }
 
-h3 {
+:where(h3) {
   font-size: var(--text-2xl);
 }
 
-h4 {
+:where(h4) {
   font-size: var(--text-xl);
 }
 
-h5 {
+:where(h5) {
   font-size: var(--text-l);
 }
 
-h6 {
+:where(h6) {
   font-size: var(--text-m);
 }
 
-a {
-  color: var(--blue);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-
-  &:hover {
-    text-decoration-thickness: 2px;
-  }
-
-  &:focus-visible {
-    outline: var(--line-m) solid var(--blue);
-    outline-offset: 2px;
-  }
-}
-
-ul,
-ol {
-  padding-inline-start: var(--space-m);
-}
-
-li + li {
+/* A heading group's lines after its heading are its subtitle. */
+:where(hgroup) :where(p) {
   margin-block-start: var(--space-3xs);
-}
-
-table {
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: var(--space-3xs) var(--space-xs);
-  border: var(--line-s) solid var(--border);
-  text-align: start;
-  vertical-align: top;
-}
-
-th {
-  font-weight: 600;
   color: var(--fg-2);
 }
 
-blockquote {
+/* Grouping. */
+
+:where(ul, ol, menu) {
+  padding-inline-start: var(--space-m);
+}
+
+:where(li) + :where(li) {
+  margin-block-start: var(--space-3xs);
+}
+
+::marker {
+  color: var(--fg-3);
+}
+
+:where(dt) {
+  font-weight: 600;
+}
+
+:where(dd) {
+  margin-inline-start: var(--space-m);
+}
+
+:where(dd) + :where(dt) {
+  margin-block-start: var(--space-2xs);
+}
+
+:where(blockquote) {
   padding-inline-start: var(--space-s);
   border-inline-start: var(--line-m) solid var(--border);
   color: var(--fg-2);
 }
 
-hr {
+:where(hr) {
   border: 0;
   border-block-start: var(--line-s) solid var(--border);
 }
 
-code,
-kbd {
-  font-size: 0.875em;
+:where(figcaption) {
+  margin-block-start: var(--space-2xs);
+  font-size: var(--text-s);
+  color: var(--fg-2);
 }
 
-kbd {
-  padding: 0 var(--space-3xs);
-  border: var(--line-s) solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-pre {
+:where(pre) {
   padding: var(--space-xs) var(--space-s);
   border: var(--line-s) solid var(--border);
   border-radius: var(--radius-sm);
-  overflow-x: auto;
+  font-family: var(--font-code);
+  line-height: var(--leading-code);
+}
 
-  & code {
-    font-size: inherit;
-  }
+/* Text-level. */
+
+:where(a) {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+:where(a:hover) {
+  text-decoration-thickness: 2px;
+}
+
+:where(code, kbd, samp) {
+  font-family: var(--font-code);
+  font-size: 0.875em;
+}
+
+:where(pre) :where(code, kbd, samp) {
+  font-size: inherit;
+}
+
+:where(kbd) {
+  padding: 0 var(--space-3xs);
+  border: var(--line-s) solid var(--border-3);
+  border-radius: var(--radius-sm);
+}
+
+:where(abbr[title]) {
+  text-decoration: underline dotted var(--fg-3);
+  text-underline-offset: 0.2em;
+}
+
+/* A highlight is a translucent mix of yellow, so the text keeps its own color in either
+   scheme; the native mark is black on yellow in both. */
+:where(mark) {
+  background-color: color-mix(in srgb, var(--yellow) 30%, transparent);
+  color: inherit;
+}
+
+/* Sub and sup take no leading of their own, so a line holding one keeps the body's. */
+:where(sub, sup) {
+  line-height: 0;
+}
+
+:where(rt) {
+  color: var(--fg-2);
+}
+
+/* Edits stay neutral: removed text dims and keeps its strike; inserted text keeps its
+   underline. A hue would imply a meaning the baseline leaves to the page. */
+:where(del, s) {
+  color: var(--fg-2);
+}
+
+:where(ins) {
+  text-decoration-color: var(--fg-3);
+}
+
+/* Embedded. Images, media, canvas, svg and math keep their native look; a frame takes the
+   baseline's border in place of the native inset. */
+
+:where(iframe) {
+  border: var(--line-s) solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* Tables. Cells are outlined; collapsing their borders into one grid is layout, the tools
+   layer's work. */
+
+:where(caption) {
+  padding-block-end: var(--space-2xs);
+  font-size: var(--text-s);
+  color: var(--fg-2);
+  text-align: start;
+}
+
+:where(th, td) {
+  padding: var(--space-3xs) var(--space-xs);
+  border: var(--line-s) solid var(--border);
+  text-align: start;
+}
+
+:where(th) {
+  font-weight: 600;
+  color: var(--fg-2);
+}
+
+/* Forms. Text fields, selects and text areas share one outlined look; checkboxes, radios,
+   ranges, color wells, progress and meter keep their native look, tinted by the inherited
+   accent-color. */
+
+:where(
+  input:not(
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="color"],
+    [type="file"],
+    [type="image"],
+    [type="button"],
+    [type="submit"],
+    [type="reset"]
+  ),
+  select,
+  textarea
+) {
+  padding: var(--space-3xs) var(--space-2xs);
+  border: var(--line-s) solid var(--border-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+::placeholder {
+  color: var(--fg-3);
+}
+
+/* The native button, the button-type inputs and the file input's button are neutral: text on
+   the second surface, an outline in the strongest border, and a fill one tier up on hover. */
+:where(button, input[type="button"], input[type="submit"], input[type="reset"]),
+::file-selector-button {
+  padding: var(--space-3xs) var(--space-s);
+  border: var(--line-s) solid var(--border-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-2);
+  color: var(--fg);
+}
+
+:where(
+  button:enabled:hover,
+  input:is([type="button"], [type="submit"], [type="reset"]):enabled:hover
+),
+:where(input[type="file"]:enabled:hover)::file-selector-button {
+  background-color: var(--border);
+}
+
+:where(button:disabled, input:is([type="button"], [type="submit"], [type="reset"]):disabled),
+:where(input[type="file"]:disabled)::file-selector-button {
+  background-color: var(--bg);
+  color: var(--fg-3);
+}
+
+:where(fieldset) {
+  padding: var(--space-xs) var(--space-s);
+  border: var(--line-s) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+:where(legend) {
+  padding-inline: var(--space-3xs);
+  font-family: var(--font-ui);
+  color: var(--fg-2);
+}
+
+:where(output) {
+  font-family: var(--font-code);
+}
+
+/* Interactive. */
+
+:where(summary) {
+  font-family: var(--font-ui);
+}
+
+:where(details[open] > summary) {
+  margin-block-end: var(--space-2xs);
+}
+
+:where(dialog) {
+  padding: var(--space-m);
+  border: var(--line-s) solid var(--border-3);
+  border-radius: var(--radius-md);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+/* A modal dialog veils the page in its own surface, so the page behind recedes in either
+   scheme. */
+::backdrop {
+  background-color: color-mix(in srgb, var(--bg) 80%, transparent);
 }
