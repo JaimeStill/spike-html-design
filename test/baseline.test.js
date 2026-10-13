@@ -61,15 +61,16 @@ const TEXT_STEPS = {
 };
 
 // TEXT_FIXED are the text steps no display size changes, --text-m and the steps below it, name
-// to rem: 1rem × 1.25^n, the scale's narrow ratio.
+// to rem: 1rem × 1.125^n, the scale's narrow ratio, rounded to the four decimals the type facet
+// states them in.
 const TEXT_FIXED = Object.fromEntries(
   Object.entries(TEXT_STEPS)
     .filter(([, n]) => n <= 0)
-    .map(([name, n]) => [name, 1.25 ** n]),
+    .map(([name, n]) => [name, Number((1.125 ** n).toFixed(4))]),
 );
 
 // FLUID are the fluid tokens, name to [smallest, largest] value in rem: the space base and each
-// step's multiple of it, and each text step above --text-m from 1rem × 1.25^n to 1rem × 1.333^n,
+// step's multiple of it, and each text step above --text-m from 1rem × 1.125^n to 1rem × 1.2^n,
 // rounded to the four decimals the type facet states them in.
 const FLUID = {
   "--space-base": SPACE_BASE,
@@ -79,7 +80,7 @@ const FLUID = {
   ...Object.fromEntries(
     Object.entries(TEXT_STEPS)
       .filter(([name]) => !(name in TEXT_FIXED))
-      .map(([name, n]) => [name, [1.25 ** n, 1.333 ** n].map((rem) => Number(rem.toFixed(4)))]),
+      .map(([name, n]) => [name, [1.125 ** n, 1.2 ** n].map((rem) => Number(rem.toFixed(4)))]),
   ),
 };
 
@@ -119,8 +120,8 @@ const TYPE = {
 
 // FIXED are the type and space tokens no display size changes, name to declared value.
 const FIXED = {
-  "--text-xs": "0.64rem",
-  "--text-s": "0.8rem",
+  "--text-xs": "0.7901rem",
+  "--text-s": "0.8889rem",
   "--text-m": "1rem",
   "--font-body": SANS,
   "--font-heading": MONO,
@@ -785,7 +786,7 @@ describe("fluid space and type, by display shape", () => {
 
   test("leave --text-m, --text-s and --text-xs fixed at every shape and size", async () => {
     // The fixed steps are rem, so only the root font size moves them: every display case reads
-    // the same px, 1rem × 1.25^n at a 16px root.
+    // the same px, 1rem × 1.125^n at a 16px root.
     const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
     const fixed = Object.fromEntries(Object.keys(TEXT_FIXED).map((name) => [name, "length"]));
     const expected = Object.fromEntries(
@@ -1125,12 +1126,12 @@ describe("elements", () => {
       const page = await open(specimen, { scheme: "light", viewport });
       const sizes = {
         body: "--text-m",
-        "#prose h1": "--text-4xl",
-        "#prose h2": "--text-3xl",
-        "#prose h3": "--text-2xl",
-        "#prose h4": "--text-xl",
-        "#prose h5": "--text-l",
-        "#prose h6": "--text-m",
+        "#prose h1": "--text-3xl",
+        "#prose h2": "--text-2xl",
+        "#prose h3": "--text-xl",
+        "#prose h4": "--text-l",
+        "#prose h5": "--text-m",
+        "#prose h6": "--text-s",
       };
       for (const [selector, token] of Object.entries(sizes)) {
         const size = Number.parseFloat(await page.style(selector, "font-size"));

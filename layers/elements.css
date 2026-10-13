@@ -77,15 +77,15 @@
    before it; --space-2xs after it at every level. Adjacent margins collapse, so a heading right
    after another heading sits its own level's space below it. */
 :where(h1, h2, hgroup:has(> :is(h1, h2))) {
-  margin-block: var(--space-xl) var(--space-2xs);
-}
-
-:where(h3, h4, hgroup:has(> :is(h3, h4))) {
   margin-block: var(--space-l) var(--space-2xs);
 }
 
-:where(h5, h6, hgroup:has(> :is(h5, h6))) {
+:where(h3, h4, hgroup:has(> :is(h3, h4))) {
   margin-block: var(--space-m) var(--space-2xs);
+}
+
+:where(h5, h6, hgroup:has(> :is(h5, h6))) {
+  margin-block: var(--space-s) var(--space-2xs);
 }
 
 /* A heading group's lines are one item: the heading and its subtitle sit --space-3xs apart,
@@ -119,28 +119,31 @@
   text-wrap-style: pretty;
 }
 
+/* Heading levels are told apart by size alone, h1 at --text-3xl down to h6 at --text-s; --text-4xl
+   is left for text larger than a heading. Case, tracking, or a font per level is a template's,
+   a component's, or an application's. */
 :where(h1) {
-  font-size: var(--text-4xl);
-}
-
-:where(h2) {
   font-size: var(--text-3xl);
 }
 
-:where(h3) {
+:where(h2) {
   font-size: var(--text-2xl);
 }
 
-:where(h4) {
+:where(h3) {
   font-size: var(--text-xl);
 }
 
-:where(h5) {
+:where(h4) {
   font-size: var(--text-l);
 }
 
-:where(h6) {
+:where(h5) {
   font-size: var(--text-m);
+}
+
+:where(h6) {
+  font-size: var(--text-s);
 }
 
 /* A heading group's lines after its heading are its subtitle. */
