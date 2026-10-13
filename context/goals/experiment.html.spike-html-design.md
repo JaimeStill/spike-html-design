@@ -154,7 +154,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 2/7 committed (2b21e96, f1bd346) · review stop — · standards — · spec — · editor —
+slices 3/7 committed (2b21e96, f1bd346, 2ac62e0) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -562,6 +562,9 @@ slices 2/7 committed (2b21e96, f1bd346) · review stop — · standards — · s
 - plan profiles: kbd is an outlined key with a --line-m bottom edge; --kbd-color colors border and
   text.
 - plan profiles: no surface hooks for code or kbd.
+- profiles BUILD (architect): every color profile, Flexoki included, is its own file and
+  export; color.css keeps only the facet's contract (scheme rules, scope paint rule, the token
+  roles). Space and type split the same way when preferences adds their second profiles.
 
 ## Pending edits
 
