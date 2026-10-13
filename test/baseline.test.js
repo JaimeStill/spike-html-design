@@ -572,16 +572,40 @@ describe("tokens", () => {
   });
 });
 
-// VIEWPORTS are emulated displays, named, as { width, height } in CSS px.
-const VIEWPORTS = {
-  narrow: { width: 320, height: 800 },
-  phone: { width: 360, height: 800 },
-  laptop: { width: 1024, height: 768 },
-  desktop: { width: 1440, height: 900 },
-  ultrawide: { width: 3440, height: 1440 },
-  short: { width: 844, height: 390 },
-  tall: { width: 844, height: 1200 },
+// RATIOS are the display shapes the fluid tests run at, name to [inline, block] proportion: the
+// landscape shapes from the widest down to square, then their portrait mirrors. No one monitor
+// is a target: a shape at a size stands for every display of it.
+const RATIOS = {
+  "21:9": [21, 9],
+  "16:9": [16, 9],
+  "16:10": [16, 10],
+  "4:3": [4, 3],
+  "1:1": [1, 1],
+  "3:4": [3, 4],
+  "9:16": [9, 16],
+  "9:21": [9, 21],
 };
+
+// LANDSCAPE and PORTRAIT split RATIOS: shapes at least as wide as tall, and shapes taller than
+// wide.
+const LANDSCAPE = Object.keys(RATIOS).filter((ratio) => RATIOS[ratio][0] >= RATIOS[ratio][1]);
+const PORTRAIT = Object.keys(RATIOS).filter((ratio) => !LANDSCAPE.includes(ratio));
+
+// SIZES are the inline sizes, in CSS px, each shape runs at: small below the range's 22.5rem,
+// medium inside it, large above its 80rem. Both ends clamp every token, so only the medium size
+// shows the block size's bound at work.
+const SIZES = { small: 320, medium: 1024, large: 2560 };
+
+// display returns the viewport of a shape at a size, as { width, height } in CSS px: the size's
+// inline size, and the block size the ratio gives, rounded to a whole px.
+function display(ratio, size) {
+  const [inline, block] = RATIOS[ratio];
+  const width = SIZES[size];
+  return { width, height: Math.round((width * block) / inline) };
+}
+
+// widthAlone returns the viewport the formula reads as width alone: no block size bounds it.
+const widthAlone = ({ width }) => ({ width, height: Number.POSITIVE_INFINITY });
 
 // resolveFluid resolves every fluid token on page, name to px.
 async function resolveFluid(page) {
@@ -598,74 +622,135 @@ function expectFluid(values, viewport, rem = 16) {
   }
 }
 
-describe("fluid space and type", () => {
-  for (const name of ["narrow", "phone"]) {
-    test(`hold their smallest value at or below the range, on a ${name} display`, async () => {
-      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
-      const values = await resolveFluid(page);
-      for (const [token, [min]] of Object.entries(FLUID)) {
-        expect([token, values[token]]).toEqual([token, expect.closeTo(min * 16, 2)]);
+describe("fluid space and type, by display shape", () => {
+  for (const ratio of Object.keys(RATIOS)) {
+    test(`stay within their bounds at ${ratio}, small, medium and large, as the formula gives`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: display(ratio, "small") });
+      for (const size of Object.keys(SIZES)) {
+        const viewport = display(ratio, size);
+        await page.setViewport(viewport);
+        const values = await resolveFluid(page);
+        for (const [name, [min, max]] of Object.entries(FLUID)) {
+          const value = values[name];
+          expect([ratio, size, name, value >= min * 16 - 0.01 && value <= max * 16 + 0.01]).toEqual(
+            [ratio, size, name, true],
+          );
+          // Below the range every token holds its smallest value, above it its largest.
+          if (size === "small") {
+            expect([ratio, size, name, value]).toEqual([
+              ratio,
+              size,
+              name,
+              expect.closeTo(min * 16, 2),
+            ]);
+          }
+          if (size === "large") {
+            expect([ratio, size, name, value]).toEqual([
+              ratio,
+              size,
+              name,
+              expect.closeTo(max * 16, 2),
+            ]);
+          }
+        }
+        expectFluid(values, viewport);
       }
     });
   }
 
-  for (const name of ["desktop", "ultrawide"]) {
-    test(`hold their largest value above the range, on a ${name} display`, async () => {
-      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
-      const values = await resolveFluid(page);
-      for (const [token, [, max]] of Object.entries(FLUID)) {
-        expect([token, values[token]]).toEqual([token, expect.closeTo(max * 16, 2)]);
-      }
-    });
-  }
-
-  test("lie strictly between their bounds mid-range, as the formula gives", async () => {
-    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.laptop });
-    const values = await resolveFluid(page);
-    for (const [name, [min, max]] of Object.entries(FLUID)) {
-      expect([name, values[name] > min * 16 && values[name] < max * 16]).toEqual([name, true]);
+  test("at 16:9 and narrower, depend on the width alone", async () => {
+    // Every shape no wider than 16:9 at the same inline size, where it sits inside the range,
+    // reads the same values, and they are the formula's for that width with no block bound.
+    const narrower = Object.keys(RATIOS).filter(
+      (ratio) => RATIOS[ratio][0] / RATIOS[ratio][1] <= 16 / 9,
+    );
+    const reads = {};
+    for (const ratio of narrower) {
+      reads[ratio] = await resolveFluid(
+        await open(specimen, { scheme: "light", viewport: display(ratio, "medium") }),
+      );
     }
-    expectFluid(values, VIEWPORTS.laptop);
+    for (const ratio of narrower) expect([ratio, reads[ratio]]).toEqual([ratio, reads["16:9"]]);
+    expectFluid(reads["16:9"], widthAlone(display("16:9", "medium")));
+    for (const [name, [min, max]] of Object.entries(FLUID)) {
+      const value = reads["16:9"][name];
+      expect([name, value > min * 16 && value < max * 16]).toEqual([name, true]);
+    }
   });
+
+  for (const size of Object.keys(SIZES)) {
+    test(`at 21:9, ${size}, read what a 16:9 window of the same height reads`, async () => {
+      // A shape wider than 16:9 is bounded by its height: it measures 16/9 of its block size, so
+      // the extra width reads nothing. The 16:9 window is the 21:9 window's height, and a width
+      // rounded up so its own bound stays the height's.
+      const wide = display("21:9", size);
+      const matched = { width: Math.ceil((wide.height * 16) / 9), height: wide.height };
+      const values = await resolveFluid(await open(specimen, { scheme: "light", viewport: wide }));
+      const reference = await resolveFluid(
+        await open(specimen, { scheme: "light", viewport: matched }),
+      );
+      expect(values).toEqual(reference);
+      expectFluid(values, wide);
+      if (size === "medium") {
+        // Inside the range, the height's bound reads strictly smaller than the width alone gives.
+        for (const [name, bounds] of Object.entries(FLUID)) {
+          expect([name, values[name] < fluid(bounds, widthAlone(wide)) - 0.01]).toEqual([
+            name,
+            true,
+          ]);
+        }
+      }
+    });
+  }
+
+  for (const ratio of PORTRAIT) {
+    test(`at ${ratio}, track the width`, async () => {
+      // A portrait shape's height never bounds it: at each size it reads the width alone, and
+      // grows with the width from the smallest value to the largest.
+      const page = await open(specimen, { scheme: "light", viewport: display(ratio, "small") });
+      const reads = [];
+      for (const size of Object.keys(SIZES)) {
+        await page.setViewport(display(ratio, size));
+        const values = await resolveFluid(page);
+        expectFluid(values, widthAlone(display(ratio, size)));
+        reads.push(values);
+      }
+      const [small, medium, large] = reads;
+      for (const name of Object.keys(FLUID)) {
+        expect([name, small[name] < medium[name] && medium[name] < large[name]]).toEqual([
+          name,
+          true,
+        ]);
+      }
+    });
+  }
 
   test("follow a resize without a reload", async () => {
-    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.narrow });
-    await page.setViewport(VIEWPORTS.laptop);
-    expectFluid(await resolveFluid(page), VIEWPORTS.laptop);
-  });
-
-  test("read smaller in a short, wide window than in a tall one of the same width", async () => {
-    const short = await resolveFluid(
-      await open(specimen, { scheme: "light", viewport: VIEWPORTS.short }),
-    );
-    const tall = await resolveFluid(
-      await open(specimen, { scheme: "light", viewport: VIEWPORTS.tall }),
-    );
-    expectFluid(short, VIEWPORTS.short);
-    expectFluid(tall, VIEWPORTS.tall);
-    for (const name of Object.keys(FLUID)) {
-      expect([name, short[name] < tall[name]]).toEqual([name, true]);
-    }
+    const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
+    await page.setViewport(display("4:3", "medium"));
+    expectFluid(await resolveFluid(page), display("4:3", "medium"));
   });
 
   test("scale with the root font size, which shifts the range, as browser zoom does", async () => {
     // Browser zoom by z shrinks the viewport, in CSS px, by z and scales every CSS px by z on
-    // screen, while 1rem stays 16 CSS px. Doubling the root font size at a fixed viewport gives
-    // the same tokens in screen px, since every bound is rem: at 200% zoom a 1440px window is a
-    // 720px viewport, and a token there, doubled, is the token at 1440px with a 32px root. So a
-    // 32px root stands for 200% zoom, and for a user's 32px default font size alike.
-    const zoomed = await open(specimen, { scheme: "light", viewport: VIEWPORTS.desktop });
-    await zoomed.evaluate(`document.documentElement.style.fontSize = "32px"`);
+    // screen, while 1rem stays 16 CSS px. Scaling the root font size by z at a fixed viewport
+    // gives the same tokens in screen px, since every bound is rem: at 250% zoom a large 16:9
+    // window, 2560 by 1440, is a medium 16:9 viewport, 1024 by 576, and a token there, times
+    // 2.5, is the token at 2560 by 1440 with a 40px root. So a 40px root stands for 250% zoom,
+    // and for a user's 40px default font size alike.
+    const large = display("16:9", "large");
+    const zoomed = await open(specimen, { scheme: "light", viewport: large });
+    await zoomed.evaluate(`document.documentElement.style.fontSize = "40px"`);
     const values = await resolveFluid(zoomed);
-    expectFluid(values, VIEWPORTS.desktop, 32);
-    const half = await resolveFluid(
-      await open(specimen, { scheme: "light", viewport: { width: 720, height: 450 } }),
+    expectFluid(values, large, 40);
+    const medium = await resolveFluid(
+      await open(specimen, { scheme: "light", viewport: display("16:9", "medium") }),
     );
     for (const [name, [min, max]] of Object.entries(FLUID)) {
-      expect([name, values[name]]).toEqual([name, expect.closeTo(half[name] * 2, 2)]);
-      // The range shifted: 1440px is past 80rem at 16px but inside it at 32px, so each token is
-      // more than twice its smallest value and less than twice its largest.
-      expect([name, values[name] > min * 32 && values[name] < max * 32]).toEqual([name, true]);
+      expect([name, values[name]]).toEqual([name, expect.closeTo(medium[name] * 2.5, 2)]);
+      // The range shifted: 2560px is past 80rem at 16px but inside it at 40px, so each token is
+      // more than 2.5 times its smallest value and less than 2.5 times its largest.
+      expect([name, values[name] > min * 40 && values[name] < max * 40]).toEqual([name, true]);
     }
   });
 });
@@ -730,7 +815,7 @@ const PROFILES = {
 describe("facet independence", () => {
   for (const [facet, { css, changes }] of Object.entries(PROFILES)) {
     test(`a profile in ${facet} changes only that facet's tokens`, async () => {
-      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.laptop });
+      const page = await open(specimen, { scheme: "light", viewport: display("4:3", "medium") });
       const before = await resolveAll(page);
       await addAppStyle(page, `@layer ${PACKAGE}.${facet} { ${css} }`);
       const after = await resolveAll(page);
@@ -760,7 +845,7 @@ describe("reset", () => {
 
   test("zeroes margins and sets the body's line height and minimum height", async () => {
     // Below the range, so the body's text is --text-m's smallest value, 16px.
-    const page = await open(fixture, { scheme: "light", viewport: VIEWPORTS.narrow });
+    const page = await open(fixture, { scheme: "light", viewport: display("9:16", "small") });
     for (const selector of ["body", "p", "button"]) {
       expect(await page.style(selector, "margin")).toBe("0px");
     }
@@ -836,9 +921,14 @@ describe("elements", () => {
     }
   });
 
-  for (const name of ["narrow", "laptop", "ultrawide"]) {
-    test(`sets the body and headings on the text scale, on a ${name} display`, async () => {
-      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
+  for (const [ratio, size] of [
+    ["9:16", "small"],
+    ["4:3", "medium"],
+    ["21:9", "large"],
+  ]) {
+    test(`sets the body and headings on the text scale, at ${ratio}, ${size}`, async () => {
+      const viewport = display(ratio, size);
+      const page = await open(specimen, { scheme: "light", viewport });
       const sizes = {
         body: "--text-m",
         "#prose h1": "--text-4xl",
@@ -852,7 +942,7 @@ describe("elements", () => {
         const size = Number.parseFloat(await page.style(selector, "font-size"));
         expect([selector, size]).toEqual([
           selector,
-          expect.closeTo(fluid(FLUID[token], VIEWPORTS[name]), 2),
+          expect.closeTo(fluid(FLUID[token], viewport), 2),
         ]);
         if (selector !== "body") expect(await page.style(selector, "font-weight")).toBe("600");
       }
@@ -906,7 +996,7 @@ describe("elements", () => {
 
   test("spaces adjacent prose blocks", async () => {
     // Above the range, so --space-s is its largest value, 18px.
-    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.desktop });
+    const page = await open(specimen, { scheme: "light", viewport: display("16:9", "large") });
     expect(await page.style("#prose h1", "margin-top")).toBe("18px");
     expect(await page.style("#prose hr + p", "margin-top")).toBe("18px");
   });
@@ -974,7 +1064,7 @@ describe("tools", () => {
 
   test("scroll-y and scroll-x scroll their overflow on one axis", async () => {
     // Below the range, so --space-2xs is its smallest value, 8px.
-    const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS.narrow });
+    const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
     for (const [axis, overflow, size, padding] of [
       ["y", "overflow-y", "Height", "padding-right"],
       ["x", "overflow-x", "Width", "padding-bottom"],
@@ -1081,9 +1171,9 @@ describe("specimen", () => {
     });
   }
 
-  for (const name of ["narrow", "phone"]) {
-    test(`the contrast matrices scroll inside their wrappers, not the page, on a ${name} display`, async () => {
-      const page = await open(specimen, { scheme: "light", viewport: VIEWPORTS[name] });
+  for (const ratio of ["9:16", "1:1"]) {
+    test(`the contrast matrices scroll inside their wrappers, not the page, at ${ratio}, small`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: display(ratio, "small") });
       const boxes = await page.evaluate(`[...document.querySelectorAll("#contrast table")]
         .map((table) => {
           const wrapper = table.parentElement;
