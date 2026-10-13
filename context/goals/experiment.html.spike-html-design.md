@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 4/6 committed · review stop: changes in progress · standards — · spec — · editor —
+slices 4/6 committed · review stop: changes landed, second look pending · standards — · spec — · editor —
 
 ## Decisions
 
