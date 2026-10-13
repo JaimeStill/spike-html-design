@@ -18,9 +18,10 @@ The architecture pages that apply, in the architecture repository:
 - A published tag is never changed or re-cut; jsDelivr caches it as immutable.
 - Features: Baseline Newly available, plus non-Baseline features only as progressive
   enhancement, where a browser without them still renders a correct page.
-- Fluid tokens need `progress()`; a browser without it loses fluid sizing, not the page.
+- Fluid tokens need `progress()`. A browser without it computes them as invalid: fluid margins
+  and padding fall to 0 and headings to body size.
 - A variant is a suffix, never a prefix: `--red-bright`, `.button-red`.
-- Sizes are reported, not enforced; the budget is enforced from profiles on.
+- The check reports each entry's size and enforces no budget; profiles adds the budget.
 
 ## Tokens
 
@@ -31,10 +32,12 @@ The architecture pages that apply, in the architecture repository:
 
 ## Layers
 
-- elements is class-free with zero specificity, and sets only paint, type, border (including
-  `border-collapse` and `border-spacing`), radius, margin, and padding.
-- tools is opt-in and unprefixed, with one hook per family; a variant is a suffix, and a variant
-  named `button-<name>` gets the button treatment.
+- The elements layer is class-free with zero specificity, and sets only paint, type, border
+  (including `border-collapse` and `border-spacing`), radius, margin, and padding.
+- The tools layer is opt-in and unprefixed. A family has a hook where it has a treatment to
+  extend: `--button-color` for buttons, `--table-stripe` for tables. Scroll and forms have none;
+  a consumer extends them in its own later layer. A variant named `button-<name>` gets the
+  button treatment.
 - The reset changes only its listed allowances.
 - The specimen's arrangement lives in its own layer: composition, not baseline.
 

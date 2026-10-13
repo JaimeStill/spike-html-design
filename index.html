@@ -902,9 +902,10 @@ const answer = 42;</code></pre>
         <header>
           <h2>Tools</h2>
           <p>
-            Opt-in classes, each labeled with its class. Each family is open for extension
-            through one hook a consumer sets in its own layer: <code>--button-color</code> for
-            buttons, <code>--table-stripe</code> for tables.
+            Opt-in classes, each labeled with its class. A consumer extends buttons and tables
+            by setting their hooks in its own layer: <code>--button-color</code> for buttons,
+            <code>--table-stripe</code> for tables. Scroll and forms have no hook; a consumer's
+            own layer restates their classes.
           </p>
         </header>
 
@@ -1062,11 +1063,11 @@ const answer = 42;</code></pre>
           <h2>Contrast</h2>
           <p>
             Contrast is graded where legibility matters: text over a color. Each matrix, one per
-            scheme, grades every text token and hue, its rows, over every surface, its columns, by
-            the WCAG 2 ratio from relative luminance. AA meets 4.5 for body text; AA large meets 3
-            for large text; fail is below 3. Each mark is judged on the unrounded ratio, so a 4.50
-            can still be AA large and a 3.00 can still fail. Surfaces get no ratio of their own.
-            Failures are recorded here, not corrected.
+            scheme, grades every text token and hue, its rows, over every surface and border, its
+            columns, by the WCAG 2 ratio from relative luminance. AA meets 4.5 for body text; AA
+            large meets 3 for large text; fail is below 3. Each mark is judged on the unrounded
+            ratio, so a 4.50 can still be AA large and a 3.00 can still fail. Surfaces and borders
+            get no ratio of their own. Failures are recorded here, not corrected.
           </p>
         </header>
         <div class="cells wide">
@@ -1075,7 +1076,8 @@ const answer = 42;</code></pre>
             <div class="scroll-x">
               <table id="contrast-light">
                 <caption>
-                  Light: each text token's and hue's WCAG 2 contrast ratio over each surface.
+                  Light: each text token's and hue's WCAG 2 contrast ratio over each surface and
+                  border.
                 </caption>
                 <thead>
                   <tr>
@@ -1185,7 +1187,8 @@ const answer = 42;</code></pre>
             <div class="scroll-x">
               <table id="contrast-dark">
                 <caption>
-                  Dark: each text token's and hue's WCAG 2 contrast ratio over each surface.
+                  Dark: each text token's and hue's WCAG 2 contrast ratio over each surface and
+                  border.
                 </caption>
                 <thead>
                   <tr>

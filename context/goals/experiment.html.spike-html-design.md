@@ -121,17 +121,19 @@ Release       v0.3.0
 
 ## Progress
 
-slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10:16 fixed; hooks amended) · editor —
+slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10:16 fixed; hooks amended) · editor ✓
 
 ## Decisions
 
-- setup: the evidence is the nine items in `context/README.md`, "The evidence".
+- setup: the evidence is the nine items in `context/README.md`, "The evidence". Superseded by
+  plan (facets redirect): eleven items.
 - setup: one dark and one light theme from Flexoki (MIT); rejected omarchy's 22 themes, which add
   a generator and vendored files and whose hue slots aren't semantic (hackerman's `red` is
   green; no theme has a bright orange), and rejected kanagawa wave and lotus, mapped by hand.
 - setup: 18 hue tokens, the ANSI 16 plus orange and bright orange; brown dropped.
 - setup: `<theme-toggle>` cycles system, light, dark on T, stored in localStorage; with nothing
-  stored the theme follows the system setting, live.
+  stored the theme follows the system setting, live. Superseded by plan (facets redirect):
+  preferences replaces toggle.
 - setup: kind code; `mise run check` = biome ci, shellcheck, actionlint over workflows, bun test;
   no package dependencies. Rejected Deno (no CSS lint, needs jsr:@std/toml) and Python (a second
   language).
@@ -140,7 +142,8 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   happy-dom (no real focus or storage).
 - setup: this spike deploys the first Pages workflow; the other two spikes copy it.
 - setup: one minor tag per task, v0.1.0 to v0.4.0; each task brief carries a Release line and a
-  one-way door, since jsDelivr caches a tag as immutable.
+  one-way door, since jsDelivr caches a tag as immutable. The range is now v0.1.0 to v0.6.0
+  (plan, facets redirect).
 - setup: the section tree with reading progress is spike-html-artifacts'; this spike ships the
   key-hint styling.
 - setup: no gate; merge is plain `gh pr merge --merge --delete-branch`; `[remote] ci` waits for
@@ -159,9 +162,10 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   now (bright values before themes picks them) and the full Flexoki scale as tokens (~120
   step-named tokens the settled 18 replace).
 - layers: components are herald's six plain classes; `.badge` takes color-named variants, tints
-  come from color-mix(), `.card` uses a border for elevation.
+  come from color-mix(), `.card` uses a border for elevation. Superseded by plan (facets
+  redirect): components leave the foundation.
 - layers: the theme layer styles prose elements (headings, links, lists, tables, blockquote, hr,
-  code, pre).
+  code, pre). Superseded by facets: the elements layer styles every rendered element.
 - layers: the check proves the @v0.1.0 page by intercepting cdn.jsdelivr.net and answering with
   the working-tree stylesheet; rejected a live skip-until-tagged fetch and a post-tag commit to
   main outside the pull request.
@@ -175,10 +179,13 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   system states no preference.
 - layers: the theme layer gives adjacent prose blocks a `--space-4` top margin through one
   `:where()` rule; h1–h6 take text 4xl down to base at weight 600; `kbd` is outlined as prose,
-  and key-hint styling stays with keys.
+  and key-hint styling stays with keys. Superseded by facets (review stop): whitespace by
+  proximity, under the space and type facets' names; `kbd` still has an outline, and key-hint
+  styling still stays with keys.
 - layers: components keep herald's `.btn-muted` (on `--color-2`, not the muted token themes
   adds), add no orange button (herald has none), write badge variants `.badge.badge-*`, and keep
-  herald's 0.05em letter spacing, 0.4 disabled opacity, and 0.15s transitions.
+  herald's 0.05em letter spacing, 0.4 disabled opacity, and 0.15s transitions. Superseded by
+  plan (facets redirect): components leave the foundation.
 - layers: a pinned page is flat `pinned/vX.Y.Z.html`, a copy of the specimen that a test holds
   identical; its hermetic test answers the pin from the working tree and answers every other
   https request 404.
@@ -195,44 +202,58 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   file, which herald avoids and gets away with only because its bundler inlines the imports. The
   pinned URL is unchanged; the extra round trip is measured under evidence 9.
 - layers: the layer files live in `layers/` (tokens.css, reset.css, theme.css, components.css);
-  their paths freeze at v0.1.0 with baseline.css's.
+  their paths freeze at v0.1.0 with baseline.css's. Superseded in part by facets: baseline.css
+  keeps its path, and from v0.3.0 each nested layer's file sits at the path its name spells
+  (`layers/tokens/color.css`).
 - themes: two color layers: eight hue tokens, and role tokens that alias them; supersedes setup's
   "18 hue tokens". Rejected ANSI 16 as the token model: across nine palettes "bright" has no
-  stable look, and black or white sits at 1.0–1.6:1 on one of the two backgrounds.
+  stable look, and black or white sits at 1.0–1.6:1 on one of the two backgrounds. The role
+  tokens are superseded by facets: hues only.
 - themes: colors derive from Primer's resolved values, @primer/primitives 11.10.0 (3f51f80),
   without adopting its layered system; supersedes setup's Flexoki. Rejected Flexoki (3 light hues
   and 1 dark under 4.5, faint text 2.0 / 2.6), Selenized (brights barely distinct), Modus
   (GPL-3.0, no orange), Gruvbox (its cyan is green), Solarized (brights are grays), Tokyo Night
   day (13 of 13 hues under 4.5), Catppuccin latte (8 hues under 3), Rosé Pine (brights equal
-  normals; hues not semantic), Nord (dark only).
+  normals; hues not semantic), Nord (dark only). Superseded from v0.3.0 by facets' Flexoki
+  profile; v0.2.0 stays Primer.
 - themes: the hues are red, orange, yellow, green, cyan, blue, purple, magenta, from Primer's
   display-*-fgColor (magenta is its "pink"), 5.9:1 or more in light and 7.0:1 in dark; no bright
   or tint tokens, tints stay color-mix() at use. Rejected Primer's ANSI normals (light yellow
   #4d2d00 is brown). Supersedes layers' "themes adds the other 13 hues, muted, and accent".
+  From v0.3.0 the eight names hold and the values are Flexoki's (facets).
 - themes: --accent, --success, --warning, --danger alias blue, green, yellow, red, so a hue
   override carries to its role; rejected Primer's own role values (4.87–5.24 in light).
+  Superseded by facets: no role tokens.
 - themes: the roles are accent, success, warning (not Primer's "attention"), and danger; no info,
   muted, link, focus, or syntax tokens. Links, focus outlines, and selection read --accent.
+  Superseded by facets: no role tokens; links, focus outlines, and selection read --blue.
 - themes: usage rule: a role marks state or interaction; a hue marks a category and never implies
   status; on a page that shows status, categories draw first from cyan, purple, magenta, orange.
-  Stated in STANDARDS.md and in a specimen section.
+  Stated in STANDARDS.md and in a specimen section. Superseded by facets: a hue carries no
+  meaning, and semantic variants are the consumer's.
 - themes: tiers take Primer's bgColor-default, bgColor-muted, control-bgColor-hover,
   borderColor-default (opaque), fgColor-default, fgColor-muted, fgColor-disabled; --fg-2 at
-  3.45 / 3.57 and the divider are recorded, not corrected.
+  3.45 / 3.57 and the divider are recorded, not corrected. Superseded from v0.3.0 by facets'
+  Flexoki tiers.
 - themes: --color, --color-1, --color-2 become --fg, --fg-1, --fg-2 at v0.2.0, no aliases; each
   tag freezes its own names, and v0.1.0 stays as tagged. No outside consumer linked the pin.
+  facets renames the tokens again at v0.3.0, with no aliases (plan, facets redirect).
 - themes: a variant is always a suffix, never a prefix (STANDARDS.md).
 - themes: badges add cyan, purple, magenta, success, warning, danger, accent; buttons keep
   herald's set. Supersedes layers' "a badge says its color, not its meaning" for role variants.
+  Superseded by plan (facets redirect): components leave the foundation.
 - themes: Primer is credited by a comment heading the tokens layer, "Colors derived from
   @primer/primitives (MIT, GitHub Inc.), https://github.com/primer/primitives", with no version
-  (11.10.0 recorded here); rejected the full MIT notice.
+  (11.10.0 recorded here); rejected the full MIT notice. From v0.3.0 the color facet credits
+  Flexoki instead.
 - themes: :root[data-theme="light"|"dark"] sets color-scheme in the tokens layer, and toggle
-  writes it later; with no attribute the page follows the system, live.
+  writes it later; with no attribute the page follows the system, live. Superseded by facets:
+  data-scheme replaces data-theme.
 - themes: the contrast table is static in the specimen, and the check recomputes it in chromium
   under each emulated scheme, failing on a mismatch at 2 decimals; no script, no generated file.
 - themes: the table measures every color token against --bg, WCAG 2, marked at 4.5 and 3;
-  failures recorded, not corrected. Rejected APCA and --bg-1 rows.
+  failures recorded, not corrected. Rejected APCA and --bg-1 rows. Superseded by facets (BUILD,
+  architect): text and hues graded over every surface and border.
 - themes: pinned pages are tested from one table, against `git show <tag>:` once the tag exists
   and the working tree before, with per-tag probes shared by the pin script and the layers
   helper. Resolves layers' "standards review deferred to themes".
@@ -241,13 +262,17 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   last.
 - themes: BUILD: a tag's stylesheet list is `git ls-tree <tag> layers/`, in the pinned test and
   `scripts/pin.js`; the read-only git helpers live in `test/tags.js`, and the pinned test writes
-  a tag's files to a temp directory to answer intercepted requests.
-- themes: BUILD: `::selection` is a 30% color-mix() of --accent; hover fills stay 15%.
-- themes: BUILD: a role badge reads its role token (`var(--success)`), not the hue.
+  a tag's files to a temp directory to answer intercepted requests. The list is superseded by
+  facets (BUILD): every .css file in the tag.
+- themes: BUILD: `::selection` is a 30% color-mix() of --accent; hover fills stay 15%. From
+  facets, the mix is of --blue.
+- themes: BUILD: a role badge reads its role token (`var(--success)`), not the hue. Superseded
+  by facets: no role tokens and no badges.
 - themes: BUILD: the contrast table marks "AA", "AA large", and "fail", judged on the unrounded
   ratio, and shows them on the success, warning, and danger badges; it is the specimen's last
-  section.
-- themes: BUILD: the data-theme rules follow the `:root` token block.
+  section. From facets the marks are plain text, since the badges are gone.
+- themes: BUILD: the data-theme rules follow the `:root` token block. Superseded by facets: the
+  data-scheme rules follow it.
 - themes: standards review: forced-theme tests over every color token replace the light-dark()
   declaration test, which depended on the source's structure; the duplicate no-alias test is
   removed.
@@ -258,7 +283,8 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   role model, and dropping ANSI 16 as the token model.
 - plan: a new task, `aesthetic`, runs before toggle: a modern web and terminal look inspired by
   cassette futurism, Flexoki values in the hue and role model, a type system, and a designed
-  specimen layout. Tags shift: aesthetic v0.3.0, toggle v0.4.0, keys v0.5.0.
+  specimen layout. Tags shift: aesthetic v0.3.0, toggle v0.4.0, keys v0.5.0. Superseded by plan
+  (facets redirect): facets takes v0.3.0, and the path runs to validate.
 - plan: looks are chosen from rendered options, not numbers: aesthetic's plan rounds show 2–3
   rendered specimen variants, and every later session brief that changes how pages look embeds
   screenshots of the specimen in both themes. themes' palette was accepted from contrast ratios
@@ -325,7 +351,7 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   Night (night and day), and Catppuccin (mocha and latte). Contrast is a per-profile fact,
   recorded and not corrected.
 - plan (facets redirect): the color token contract is open again; the hue and role model is not
-  assumed.
+  assumed. Resolved by facets: tiers and hues, no role tokens.
 - plan (facets redirect): the token contract is new, with herald as inspiration only: fluid space
   and type scales in modern units, radius scaled from one base (variant C's 4/6/8px are reference
   only), and fonts keyed by role (body, heading, ui, code). Tokens are renamed at v0.3.0 with no
@@ -338,7 +364,8 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`. jsDelivr stays a tested secondary
   channel, with pinned pages and `mise run pin` per tag. The lean entry holds the foundation and
   the default profiles, the full entry every profile, and the check enforces a compressed byte
-  budget per entry from facets on.
+  budget per entry from facets on. The budget is superseded by facets: enforced from profiles
+  on.
 - plan (facets redirect): no build in the foundation; bundling at release waits until validate
   measures the @import chain's cost from the CDN.
 - plan (facets redirect): the specimen becomes a workbench: a section per layer and facet, and
@@ -376,14 +403,17 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
 - facets: starting points for the review stop, not decisions: type 16px at ratio 1.2 to 18px at
   1.25 over eight steps; space from its own 16–18px base at 0.25–6 times; radius from a 0.375rem
   base (sm 2/3, lg 4/3, full); leading 1.5 / 1.2 / 1.25 / 1.5; measure 68ch; Flexoki tiers with
-  variant A's surfaces and borders and variant B's text, hues 600 light / 400 dark.
+  variant A's surfaces and borders and variant B's text, hues 600 light / 400 dark. The review
+  stop changed the type scale and dropped the measure (below).
 - facets: mono heading and ui fonts, sans body, mono code; system stacks only.
 - facets: the elements behavior test compares tokens and elements alone against no stylesheet.
 - facets: elements covers every rendered element; tools ships buttons, scroll, forms, and
   tables, unprefixed, each family open for extension through one hook property; .button is a
   base class plus eight outline hue variants; the native button is neutral. Rejected filled
-  variants (wait for a consumer) and dialog, details, and media tools (layout or motion).
-- facets: the measure is a token only; capping width is layout.
+  variants (wait for a consumer) and dialog, details, and media tools (layout or motion). The
+  hook rule is amended by facets (BUILD, escalation).
+- facets: the measure is a token only; capping width is layout. Superseded by facets (review
+  stop): --measure is dropped.
 - facets: facets reports sizes and enforces none; the budget is enforced from profiles on.
   Supersedes the packaging line "the check enforces a compressed byte budget per entry from
   facets on".
@@ -432,6 +462,9 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   through a consumer's later layer. Amends behavior 11's "one hook per family". Rejected
   --field-gap and --scroll-padding: a hook feeding one declaration is frozen API with no gain,
   and adding one later breaks nothing.
+- facets (BUILD): a tag's stylesheet list is every .css file in `git ls-tree -r <tag>` outside
+  `test/`, baseline.css first, in the pinned test and `scripts/pin.js`, so a layer file nested
+  under `layers/tokens/` is covered. Supersedes themes' `git ls-tree <tag> layers/`.
 
 ## Pending edits
 
@@ -440,7 +473,7 @@ slices 6/6 committed · review stop ✓ · standards ✓ · spec ✓ (2 gaps: 10
   replaces the layers and themes edits to "Style baseline", "Palette", and "Themes").
 - coordinator · roadmap.toml: facets summary "the lean entry point and its enforced size budget"
   becomes "the lean entry point with its size measured and reported"; the profiles summary adds
-  "the enforced size budget for the lean and full entries".
+  "the enforced size budget for the lean and full entries" after "the full entry point".
 - coordinator · roadmap.toml, for the experiment.html intake (the architect's direction, during
   facets): v1.client takes every client-oriented item instead of the backlog. It absorbs
   `client-layouts`: structural custom elements, the layout engine, and layout sheets, reusable

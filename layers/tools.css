@@ -2,8 +2,8 @@
  * layers/tools.css, the tools layer.
  *
  * Opt-in classes a page adds to native elements, unprefixed, which may change layout. Four
- * families: buttons, scroll, forms and tables. A family is open for extension through one hook,
- * a custom property its treatment reads, so a consumer adds a variant in its own later layer by
+ * families: buttons, scroll, forms and tables. A family with a treatment to extend has a hook, a
+ * custom property its treatment reads, so a consumer adds a variant in its own later layer by
  * setting the hook alone, and the variant renders with the family's whole treatment:
  *
  *   @layer spike-html-design, app;

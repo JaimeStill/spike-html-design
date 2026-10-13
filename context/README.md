@@ -23,6 +23,8 @@ baseline".
   radius), or type.
 - **Profile:** one set of values for one facet.
 - **Scheme:** light, dark, or system, a choice inside every color profile.
+- **Tier:** a color token for a surface, a border, or text.
+- **Hue:** one of eight color tokens, each named for the color it shows.
 - **Theme:** a named selection of one profile per facet.
 
 ## The question
@@ -118,9 +120,10 @@ layers, the facet tokens under new names with no aliases, the elements and tools
   `::backdrop` included. A test checks each element's layout properties, under the reset and
   elements, against chromium's defaults; the reset changes only its listed allowances.
 - **Tools** (facets): opt-in, unprefixed classes for native elements, which may change layout:
-  buttons (`.button` and a `.button-<hue>` variant per hue), scroll, forms, and tables. Each
-  family is open for extension through one hook, such as `--button-color`, which a consumer's
-  variant sets in its own layer.
+  buttons (`.button` and a `.button-<hue>` variant per hue), scroll, forms, and tables. A family
+  has a hook where it has a treatment to extend: a consumer's variant sets `--button-color` or
+  `--table-stripe` in its own layer. Scroll and forms have no hook; a consumer extends them in
+  its own later layer.
 - **JS modules** (preferences, keys): a profile registry that the package and each extension
   package register into; preferences, where T opens a theming menu with a section per facet and
   the scheme; `keys.js`, the ? help dialog, and key-hint styling.
@@ -143,10 +146,10 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
 2. `themes`: Primer-derived dark and light, the `data-theme` hook, the system default, the
    contrast table; v0.2.0.
 3. `facets`: the nested layers, the facet token interfaces, the elements layer and its behavior
-   test, the tools layer, one profile per facet, the components layer removed, `package.json`,
-   the lean entry point with its size measured and reported, the specimen's section per layer
-   and facet, `mise run serve`, and a planned visual review after the tokens and elements
-   render; v0.3.0 (evidence 1, 2, 4).
+   test, the tools layer and its extension fixture, one profile per facet with Flexoki's
+   contrast table, the components layer removed, `package.json`, the lean entry point with its
+   size measured and reported, the specimen's section per layer and facet, `mise run serve`,
+   and a visual review after the tokens and elements render; v0.3.0 (evidence 1, 2, 4).
 4. `profiles`: Kanagawa, Tokyo Night, and Catppuccin, preview containers, the specimen's grid of
    every profile and scheme, the full entry point, the enforced size budget, contrast per
    profile, and a planned visual review after the grid renders; v0.4.0 (evidence 3, 5).

@@ -5,7 +5,7 @@
  * and text-level elements, edits, embedded content, tables, forms, details and dialog, and the
  * ::file-selector-button, ::marker, ::placeholder and ::backdrop pseudo-elements. An element
  * whose native look already sits on the tokens, through the body's font, color and accent, has
- * no rule of its own; every element has been considered.
+ * no rule of its own.
  *
  * Two limits hold for every rule here:
  *
