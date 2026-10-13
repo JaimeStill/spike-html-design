@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 4/6 committed · review stop: changes landed, second look pending · standards — · spec — · editor —
+slices 4/6 committed · review stop ✓ · standards — · spec — · editor —
 
 ## Decisions
 
@@ -421,6 +421,9 @@ slices 4/6 committed · review stop: changes landed, second look pending · stan
 - facets (review stop): layout sheets, reusable templates for page categories, sit in their own
   layer between the foundation and the application; they are the client-layouts goal's, not
   this task's.
+- facets (review stop): the architect accepted the design layer after a second look as the
+  starting point, adjusted as issues surface. Workbench layout feedback waits for profiles'
+  comparison grid and its review stop; the specimen layer is composition, not baseline.
 
 ## Pending edits
 
