@@ -468,31 +468,21 @@ Release       v0.3.0
   (case, tracking, font changes per level) is a template, component, or application concern.
 - facets (final review, architect): heading top margins move one step down: h1/h2 --space-l,
   h3/h4 --space-m, h5/h6 --space-s; bottom stays --space-2xs.
+- plan web-client (2026-10-13, architect): experiment.html's spikes run one at a time, this spike
+  first, then spike-html-components, spike-html-hosting (renamed from spike-html-artifacts),
+  spike-html-go-wasm, and spike-html-apps; they run beside v1.messaging, and v1.client waits on
+  both (`standards-lab/context/web-client.md`). The plan-web-client pull request applied the
+  roadmap, v1.client, and strategy-note pending edits; client-layouts, docs-site, and
+  external-client leave the backlog for v1.client and the spikes.
+- plan web-client (architect): the workbench layout rework lands in profiles, judged at its
+  comparison-grid review stop; the architect's screenshots of what fails are its plan round's
+  input.
+- plan web-client (architect): HTML is for persistent artifacts (reports, stats) hosted in the
+  coordinator; task briefs, plan rounds, session briefs, and context notes stay Markdown. The
+  section tree and review script move with spike-html-artifacts to spike-html-hosting.
 
 ## Pending edits
 
 - coordinator · html-artifacts.md, "Style baseline": rewritten at the answer to describe the
   faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
   replaces the layers and themes edits to "Style baseline", "Palette", and "Themes").
-- coordinator · roadmap.toml: facets summary "the lean entry point and its enforced size budget"
-  becomes "the lean entry point with its size measured and reported"; the profiles summary adds
-  "the enforced size budget for the lean and full entries" after "the full entry point".
-- coordinator · roadmap.toml, for the experiment.html intake (the architect's direction, during
-  facets): v1.client takes every client-oriented item instead of the backlog. It absorbs
-  `client-layouts`: structural custom elements, the layout engine, and layout sheets, reusable
-  templates for page categories in their own cascade layer between the foundation and the
-  application (consumer order: spike-html-design, layouts, components, app), which own line
-  length and aspect-ratio queries. It builds a reference client beside go-web-service, in parity
-  with the service as slab is on the command line. Generative context, the HTML artifacts agents
-  write in place of Markdown context (the question experiment.html was opened on: briefs, plan
-  rounds, reports), becomes a subset of v1.client. v1.client runs right after the experiment.html
-  intake. Open for its planning: whether the reference client absorbs `external-client`.
-- coordinator · next session (the architect's direction, during facets): plan experiment.html and
-  v1.client together as one web-client strategy before profiles starts: a coordinator strategy
-  note naming the stack (foundation, layouts, components, and consumers: the reference client,
-  generative context, Pages sites and per-repository docs, live Go demos) and what each layer
-  owns; v1.client as the umbrella; docs-site and v1.repository-docs as consumers; the remaining
-  spikes (spike-html-artifacts, spike-html-go-wasm) and this spike's profiles, preferences, and
-  keys re-checked against it; and any additional spikes the strategy needs established, so
-  v1.client covers the reference client, the artifacts, and the repository docs sites. Runs
-  right after this session. The pending edits above feed it.
