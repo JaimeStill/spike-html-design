@@ -121,7 +121,7 @@ Release       v0.3.0
 
 ## Progress
 
-slices 4/6 committed · review stop ✓ · standards — · spec — · editor —
+slices 5/6 committed · review stop ✓ · standards — · spec — · editor —
 
 ## Decisions
 
@@ -433,7 +433,20 @@ slices 4/6 committed · review stop ✓ · standards — · spec — · editor �
 - coordinator · roadmap.toml: facets summary "the lean entry point and its enforced size budget"
   becomes "the lean entry point with its size measured and reported"; the profiles summary adds
   "the enforced size budget for the lean and full entries".
-- coordinator · roadmap.toml, backlog `client-layouts`: layout sheets are reusable templates for
-  page categories, in their own cascade layer between the foundation and the application
-  (consumer order: spike-html-design, layouts, components, app); they own line length (the
-  measure) and aspect-ratio queries.
+- coordinator · roadmap.toml, for the experiment.html intake (the architect's direction, during
+  facets): v1.client takes every client-oriented item instead of the backlog. It absorbs
+  `client-layouts`: structural custom elements, the layout engine, and layout sheets, reusable
+  templates for page categories in their own cascade layer between the foundation and the
+  application (consumer order: spike-html-design, layouts, components, app), which own line
+  length and aspect-ratio queries. It builds a reference client beside go-web-service, in parity
+  with the service as slab is on the command line. Generative context, the HTML artifacts agents
+  write in place of Markdown context (the question experiment.html was opened on: briefs, plan
+  rounds, reports), becomes a subset of v1.client. v1.client runs right after the experiment.html
+  intake. Open for its planning: whether the reference client absorbs `external-client`.
+- coordinator · next session (the architect's direction, during facets): plan experiment.html and
+  v1.client together as one web-client strategy before profiles starts: a coordinator strategy
+  note naming the stack (foundation, layouts, components, and consumers: the reference client,
+  generative context, Pages sites and per-repository docs, live Go demos) and what each layer
+  owns; v1.client as the umbrella; docs-site and v1.repository-docs as consumers; the remaining
+  spikes and this spike's profiles, preferences, and keys re-checked against it. The pending
+  edits above feed that session.
