@@ -369,6 +369,36 @@ function layerSheet(layer) {
     .find((r) => r.layerName === ${JSON.stringify(`${PACKAGE}.${layer}`)}).styleSheet`;
 }
 
+// layerRules resolves to every style rule in the files of the nested layers named, rules nested
+// in at-rules included, each as { selector, declarations }: its selector text, absent for a rule
+// without one, and its declarations as [name, value] pairs. It reads the baseline linked by a
+// page served over http, as layerSheet does.
+function layerRules(page, ...layers) {
+  return page.evaluate(`(() => {
+    const rules = [];
+    const walk = (list) => {
+      for (const rule of list) {
+        if (rule.style) {
+          rules.push({
+            selector: rule.selectorText,
+            declarations: [...rule.style].map((name) => [name, rule.style.getPropertyValue(name)]),
+          });
+        }
+        if (rule.cssRules) walk(rule.cssRules);
+      }
+    };
+    for (const sheet of [${layers.map(layerSheet)}]) walk(sheet.cssRules);
+    return rules;
+  })()`);
+}
+
+// selectorsOf and propertiesOf return layerRules' selectors, and the distinct properties its
+// rules set.
+const selectorsOf = (rules) => rules.map((rule) => rule.selector).filter(Boolean);
+const propertiesOf = (rules) => [
+  ...new Set(rules.flatMap((rule) => rule.declarations.map(([name]) => name))),
+];
+
 // hover moves the mouse, a trusted CDP event, to the center of the element matching selector,
 // scrolled into view first, so it alone takes :hover.
 async function hover(page, selector) {
@@ -492,25 +522,13 @@ describe("tokens", () => {
     test(`the ${facet} sub-layer declares exactly its facet's tokens, and reads only those`, async () => {
       // Over http, since chromium hides a file:// stylesheet's rules from the page.
       const page = await open(server.url, { scheme: "light" });
-      const { names, reads } = await page.evaluate(`(() => {
-        const names = [];
-        const reads = [];
-        const walk = (rules) => {
-          for (const rule of rules) {
-            if (rule.style) {
-              for (const name of rule.style) {
-                if (!name.startsWith("--")) continue;
-                names.push(name);
-                const value = rule.style.getPropertyValue(name);
-                reads.push(...[...value.matchAll(/var\\((--[\\w-]+)/g)].map((m) => m[1]));
-              }
-            }
-            if (rule.cssRules) walk(rule.cssRules);
-          }
-        };
-        walk(${layerSheet(facet)}.cssRules);
-        return { names, reads };
-      })()`);
+      const declarations = (await layerRules(page, facet))
+        .flatMap((rule) => rule.declarations)
+        .filter(([name]) => name.startsWith("--"));
+      const names = declarations.map(([name]) => name);
+      const reads = declarations.flatMap(([, value]) =>
+        [...value.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]),
+      );
       expect(names.sort()).toEqual(Object.keys(tokens).sort());
       // A facet that read another facet's token would change when that facet's profile swaps.
       expect(reads.filter((name) => !(name in tokens))).toEqual([]);
@@ -523,15 +541,9 @@ describe("tokens", () => {
 
   test("every fluid token's bounds are rem, never px, and it interpolates with progress()", async () => {
     const page = await open(server.url, { scheme: "light" });
-    const declared = await page.evaluate(`(() => {
-      const declared = {};
-      for (const sheet of [${["tokens.space", "tokens.type"].map(layerSheet)}]) {
-        for (const rule of sheet.cssRules) {
-          for (const name of rule.style ?? []) declared[name] = rule.style.getPropertyValue(name);
-        }
-      }
-      return declared;
-    })()`);
+    const declared = Object.fromEntries(
+      (await layerRules(page, "tokens.space", "tokens.type")).flatMap((rule) => rule.declarations),
+    );
     // Each fluid token reads its facet's progress, or the space base that does; the progress
     // tokens measure the two-axis bound over the range.
     for (const facet of ["space", "type"]) {
@@ -985,24 +997,6 @@ describe("reset", () => {
 const ALLOWED =
   /^(color|background-color|accent-color|caret-color|line-height|letter-spacing|word-spacing|font-[\w-]+|text-(align|transform|wrap-style|decoration-[\w-]+|underline-[\w-]+)|border-[\w-]+|outline-[\w-]+|margin-[\w-]+|padding-[\w-]+)$/;
 
-// elementsDeclarations resolves to the elements layer's selectors and the properties its rules
-// set, from the baseline linked by a page served over http.
-function elementsDeclarations(page) {
-  return page.evaluate(`(() => {
-    const selectors = [];
-    const properties = new Set();
-    const walk = (rules) => {
-      for (const rule of rules) {
-        if (rule.selectorText) selectors.push(rule.selectorText);
-        for (const name of rule.style ?? []) properties.add(name);
-        if (rule.cssRules) walk(rule.cssRules);
-      }
-    };
-    walk(${layerSheet("elements")}.cssRules);
-    return { selectors, properties: [...properties] };
-  })()`);
-}
-
 // splitList splits a selector list at its top-level commas, never at a comma inside parentheses.
 function splitList(list) {
   const parts = [""];
@@ -1040,7 +1034,7 @@ describe("elements", () => {
   test("every elements rule has zero specificity, apart from a pseudo-element's own", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
-    const { selectors } = await elementsDeclarations(page);
+    const selectors = selectorsOf(await layerRules(page, "elements"));
     expect(selectors.length).toBeGreaterThan(0);
     // With every :where() group taken out, a selector holds only combinators and, last, at most
     // one pseudo-element: nothing left to carry specificity but the pseudo-element's (0,0,1).
@@ -1052,7 +1046,7 @@ describe("elements", () => {
 
   test("the elements layer sets only paint, type, border, radius, margin and padding", async () => {
     const page = await open(server.url, { scheme: "light" });
-    const { properties } = await elementsDeclarations(page);
+    const properties = propertiesOf(await layerRules(page, "elements"));
     expect(properties.length).toBeGreaterThan(0);
     expect(properties.filter((name) => !ALLOWED.test(name))).toEqual([]);
   });
@@ -1558,17 +1552,7 @@ describe("elements behavior", () => {
   test("the reset sets only properties the behavior test compares, and type properties", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
-    const properties = await page.evaluate(`(() => {
-      const properties = new Set();
-      const walk = (rules) => {
-        for (const rule of rules) {
-          for (const name of rule.style ?? []) properties.add(name);
-          if (rule.cssRules) walk(rule.cssRules);
-        }
-      };
-      walk(${layerSheet("reset")}.cssRules);
-      return [...properties];
-    })()`);
+    const properties = propertiesOf(await layerRules(page, "reset"));
     expect(properties.length).toBeGreaterThan(0);
     // A logical longhand computes to its physical one, which the test compares.
     const physical = (name) =>
@@ -1629,34 +1613,15 @@ describe("tools", () => {
   test("the tools layer styles exactly the tools classes", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
     const page = await open(server.url, { scheme: "light" });
-    const classes = await page.evaluate(`(() => {
-      const selectors = [];
-      const walk = (rules) => {
-        for (const rule of rules) {
-          if (rule.selectorText) selectors.push(rule.selectorText);
-          if (rule.cssRules) walk(rule.cssRules);
-        }
-      };
-      walk(${layerSheet("tools")}.cssRules);
-      return [...new Set(selectors.join(" ").match(/\\.[\\w-]+/g))].map((c) => c.slice(1));
-    })()`);
+    const selectors = selectorsOf(await layerRules(page, "tools"));
+    const classes = [...new Set(selectors.join(" ").match(/\.[\w-]+/g))].map((c) => c.slice(1));
     expect(classes.sort()).toEqual([...TOOLS].sort());
   });
 
   test("no other layer styles a class", async () => {
     const page = await open(server.url, { scheme: "light" });
     const others = LAYERS.filter((layer) => layer !== "tools");
-    const selectors = await page.evaluate(`(() => {
-      const selectors = [];
-      const walk = (rules) => {
-        for (const rule of rules) {
-          if (rule.selectorText) selectors.push(rule.selectorText);
-          if (rule.cssRules) walk(rule.cssRules);
-        }
-      };
-      for (const sheet of [${others.map(layerSheet)}]) walk(sheet.cssRules);
-      return selectors;
-    })()`);
+    const selectors = selectorsOf(await layerRules(page, ...others));
     expect(selectors.length).toBeGreaterThan(0);
     expect(selectors.filter((selector) => /\.[A-Za-z_-]/.test(selector))).toEqual([]);
   });
