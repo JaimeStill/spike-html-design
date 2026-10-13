@@ -21,11 +21,32 @@
  *   layer's work: a pre that must scroll takes .scroll-x.
  *
  * Fonts and leadings read the type facet's role tokens, spacing reads the space scale, and
- * border and outline widths read the line tokens. Colors read tiers and hues by name: links,
- * focus outlines, selected text, the caret and form controls' accent take --blue; the native
- * button is neutral, built from tiers alone. Control boundaries (text fields, selects, buttons,
- * dialogs, kbd) take --border-2; dividers and containers take --border. Everything is flat:
- * borders, no shadows, no gradients.
+ * border and outline widths read the line tokens. Colors read tiers and hues by name, apart from
+ * three hooks below; the native button is neutral, built from tiers alone. Control boundaries
+ * (text fields, selects, buttons, dialogs, kbd) take --border-2; dividers and containers take
+ * --border; table headers and inline code sit on the element surface, --bg-2. Everything is
+ * flat: borders, no shadows, no gradients.
+ *
+ * The hooks are public API, frozen with each tag. Each is a custom property this layer reads with
+ * a fallback and never declares, nor does any profile, so a consumer sets one on any element, in
+ * its own layer or a style attribute, and everything that reads it in that subtree follows:
+ *
+ *   --interaction-color  links, the focus outline, the caret, accent-color, selected text's 30%
+ *                        mix, and the hover border of text fields, selects, text areas and
+ *                        neutral buttons (the tools layer's .button reads it too); by default
+ *                        --blue.
+ *   --code-color         inline code's text; by default --fg.
+ *   --kbd-color          kbd's border and text; by default --border-2 for the border and --fg
+ *                        for the text.
+ *
+ *   @layer spike-html-design, app;
+ *   @layer app {
+ *     .danger-zone { --interaction-color: var(--red); }
+ *   }
+ *
+ * A hook is read on the element that uses it, never inherited as a resolved color from the body,
+ * so it resolves in that element's own palette and scheme, inside a data-palette or data-scheme
+ * scope as at the root.
  *
  * baseline.css imports this file into spike-html-design.elements. Pages link baseline.css,
  * never this file: linked on its own, its rules would be unlayered.
@@ -39,22 +60,27 @@
   font-size: var(--text-m);
   background-color: var(--bg);
   color: var(--fg);
-  /* Both inherit, so every text field's caret and every checkbox, radio, range, and progress
-     takes the hue. */
-  caret-color: var(--blue);
-  accent-color: var(--blue);
 }
 
-/* Selected text sits on a translucent mix of blue, so the text keeps its own color and
-   stays legible in either scheme. */
+/* Every element sets its own caret and accent from the interaction hook, so every text field's
+   caret and every checkbox, radio, range and progress takes it. Both properties inherit, but as a
+   resolved color: set once on the body, they would keep the page's palette and scheme inside a
+   scope, and ignore a hook set on an element below the body. */
+:where(*) {
+  caret-color: var(--interaction-color, var(--blue));
+  accent-color: var(--interaction-color, var(--blue));
+}
+
+/* Selected text sits on a translucent mix of the interaction color, so the text keeps its own
+   color and stays legible in either scheme. */
 ::selection {
-  background-color: color-mix(in srgb, var(--blue) 30%, transparent);
+  background-color: color-mix(in srgb, var(--interaction-color, var(--blue)) 30%, transparent);
 }
 
 /* Every focusable element, not only links, shows the same outline when the keyboard reaches it.
    An outline takes no space, so it changes no layout. */
 :where(:focus-visible) {
-  outline: var(--line-m) solid var(--blue);
+  outline: var(--line-m) solid var(--interaction-color, var(--blue));
   outline-offset: 2px;
 }
 
@@ -212,7 +238,7 @@
 /* Text-level. */
 
 :where(a) {
-  color: var(--blue);
+  color: var(--interaction-color, var(--blue));
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
@@ -230,10 +256,23 @@
   font-size: inherit;
 }
 
+/* Inline code is a chip: the element surface, a little room at either end, and no border. Code
+   inside a pre is the block's, and stays plain. */
+:where(code:not(pre code)) {
+  padding: 0 var(--space-3xs);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-2);
+  color: var(--code-color, var(--fg));
+}
+
+/* A key is outlined, with a heavier bottom edge, over no fill. All key-hint styling is kbd's: a
+   shortcut hint is marked up as kbd and needs no class. */
 :where(kbd) {
   padding: 0 var(--space-3xs);
-  border: var(--line-s) solid var(--border-2);
+  border: var(--line-s) solid var(--kbd-color, var(--border-2));
+  border-block-end-width: var(--line-m);
   border-radius: var(--radius-sm);
+  color: var(--kbd-color, var(--fg));
 }
 
 :where(abbr[title]) {
@@ -295,7 +334,9 @@
   text-align: start;
 }
 
+/* Header cells sit on the element surface, so a header row reads apart from the body rows. */
 :where(th) {
+  background-color: var(--bg-2);
   font-weight: 600;
   color: var(--fg-2);
 }
@@ -326,13 +367,32 @@
   color: var(--fg);
 }
 
+/* Hovered, an enabled field's boundary takes the interaction color. Focus keeps its outline. */
+:where(
+  input:not(
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="color"],
+    [type="file"],
+    [type="image"],
+    [type="button"],
+    [type="submit"],
+    [type="reset"]
+  ),
+  select,
+  textarea
+):where(:enabled:hover) {
+  border-color: var(--interaction-color, var(--blue));
+}
+
 ::placeholder {
   color: var(--fg-3);
 }
 
 /* The native button, the button-type inputs and the file input's button are neutral: text on
-   the element surface, --bg-2, an outline in the control boundary, --border-2, and a fill one
-   tier up, --border, on hover. */
+   the element surface, --bg-2, an outline in the control boundary, --border-2, and on hover a
+   fill one tier up, --border, and a boundary in the interaction color. */
 :where(button, input[type="button"], input[type="submit"], input[type="reset"]),
 ::file-selector-button {
   padding: var(--space-3xs) var(--space-s);
@@ -347,6 +407,7 @@
   input:is([type="button"], [type="submit"], [type="reset"]):enabled:hover
 ),
 :where(input[type="file"]:enabled:hover)::file-selector-button {
+  border-color: var(--interaction-color, var(--blue));
   background-color: var(--border);
 }
 

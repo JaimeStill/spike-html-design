@@ -1442,6 +1442,293 @@ describe("elements", () => {
   });
 });
 
+// HOOKS are the custom properties the elements layer reads with a fallback and never declares.
+const HOOKS = ["--interaction-color", "--code-color", "--kbd-color"];
+
+// HOVERED are the controls whose boundary takes the interaction color on hover, as markup, each
+// with the pseudo-element its boundary is drawn on, if any; DISABLED are their disabled twins.
+const HOVERED = [
+  ['<input type="text" id="h-text" />', "#h-text", ""],
+  ['<input type="search" id="h-search" />', "#h-search", ""],
+  ['<input type="number" id="h-number" />', "#h-number", ""],
+  ['<select id="h-select"><option>One</option></select>', "#h-select", ""],
+  ['<textarea id="h-textarea"></textarea>', "#h-textarea", ""],
+  ['<button type="button" id="h-button">Button</button>', "#h-button", ""],
+  ['<input type="button" id="h-input-button" value="Input" />', "#h-input-button", ""],
+  ['<input type="submit" id="h-submit" />', "#h-submit", ""],
+  ['<input type="reset" id="h-reset" />', "#h-reset", ""],
+  ['<input type="file" id="h-file" />', "#h-file", "::file-selector-button"],
+  ['<a class="button" id="h-base" href="#hooks">Base</a>', "#h-base", ""],
+];
+const DISABLED = [
+  ['<input type="text" id="d-text" disabled />', "#d-text", ""],
+  ['<select id="d-select" disabled><option>One</option></select>', "#d-select", ""],
+  ['<textarea id="d-textarea" disabled></textarea>', "#d-textarea", ""],
+  ['<button type="button" id="d-button" disabled>Button</button>', "#d-button", ""],
+  ['<input type="submit" id="d-submit" disabled />', "#d-submit", ""],
+  ['<input type="file" id="d-file" disabled />', "#d-file", "::file-selector-button"],
+  ['<button type="button" class="button" id="d-base" disabled>Base</button>', "#d-base", ""],
+];
+
+// addControls puts html, one sample per line, in a container of its own first in the body, so
+// the first Tab reaches its first focusable element and nothing in the specimen's layout lays it
+// out.
+function addControls(page, html, attributes = "") {
+  return page.evaluate(`document.body.insertAdjacentHTML("afterbegin",
+    ${JSON.stringify(`<div id="hooks" ${attributes}>${html.map((line) => `<p>${line}</p>`).join("")}</div>`)})`);
+}
+
+// boundary resolves to the computed [border-top-color, background-color] of the element matching
+// selector, or of its pseudo-element.
+function boundary(page, selector, pseudo = "") {
+  return page.evaluate(`(() => {
+    const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}),
+      ${JSON.stringify(pseudo || null)});
+    return [style.borderTopColor, style.backgroundColor];
+  })()`);
+}
+
+// interaction resolves to the interaction paint inside the element matching within: a link's
+// color, a text field's caret, a checkbox's accent, and selected text's mix, as a tint.
+async function interaction(page, within) {
+  const read = await page.evaluate(`(() => {
+    const scope = document.querySelector(${JSON.stringify(within)});
+    return {
+      link: getComputedStyle(scope.querySelector("a")).color,
+      caret: getComputedStyle(scope.querySelector("input[type=text]")).caretColor,
+      accent: getComputedStyle(scope.querySelector("input[type=checkbox]")).accentColor,
+      selection: getComputedStyle(scope.querySelector("p"), "::selection").backgroundColor,
+    };
+  })()`);
+  return { ...read, selection: tint(read.selection)?.hue };
+}
+
+// channels parses a computed opaque color, rgb() or color(srgb), into its 0..255 channels.
+function channels(value) {
+  const srgb = value.match(/^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)\)$/);
+  if (srgb) return srgb.slice(1).map((c) => Number(c) * 255);
+  return value
+    .match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+    .slice(1)
+    .map(Number);
+}
+
+const INTERACTIVE = [
+  '<a href="#hooks" id="i-link">A link</a>',
+  '<input type="text" id="i-text" /> <input type="checkbox" id="i-check" />',
+];
+
+describe("element hooks", () => {
+  test("neither the baseline nor its color profile declares a hook", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const declared = (await layerRules(page, ...LAYERS)).flatMap((rule) =>
+      rule.declarations.map(([name]) => name).filter((name) => HOOKS.includes(name)),
+    );
+    expect(declared).toEqual([]);
+    for (const hook of HOOKS) expect(await page.style("body", hook)).toBe("");
+  });
+
+  test("interaction falls back to --blue: link, caret, accent, selected text and focus outline", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addControls(page, INTERACTIVE);
+    const [blue] = COLORS["--blue"];
+    expect(await interaction(page, "#hooks")).toEqual({
+      link: blue,
+      caret: blue,
+      accent: blue,
+      selection: blue,
+    });
+    await tabTo(page, "#i-link");
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineColor`)).toBe(blue);
+  });
+
+  test("a consumer setting --interaction-color on an ancestor re-colors all interaction in its subtree", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addControls(page, [...INTERACTIVE, HOVERED[0][0], HOVERED[5][0]]);
+    await addAppStyle(page, "@layer app { #hooks { --interaction-color: rgb(1, 2, 3); } }");
+    const hook = "rgb(1, 2, 3)";
+    expect(await interaction(page, "#hooks")).toEqual({
+      link: hook,
+      caret: hook,
+      accent: hook,
+      selection: hook,
+    });
+    await tabTo(page, "#i-link");
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineColor`)).toBe(hook);
+    for (const selector of ["#h-text", "#h-button"]) {
+      await hover(page, selector);
+      expect([selector, (await boundary(page, selector))[0]]).toEqual([selector, hook]);
+    }
+    // Outside the subtree, interaction keeps --blue.
+    expect(await page.style("#prose a", "color")).toBe(COLORS["--blue"][0]);
+    expect(await page.style("#prose p", "caret-color")).toBe(COLORS["--blue"][0]);
+  });
+
+  for (const [index, forced] of ["light", "dark"].entries()) {
+    const system = index ? "light" : "dark";
+    test(`interaction resolves in a data-scheme="${forced}" container's own scheme, in a ${system} page`, async () => {
+      const page = await open(specimen, { scheme: system });
+      await addControls(page, [...INTERACTIVE, HOVERED[0][0]], `data-scheme="${forced}"`);
+      const blue = COLORS["--blue"][index];
+      expect(await interaction(page, "#hooks")).toEqual({
+        link: blue,
+        caret: blue,
+        accent: blue,
+        selection: blue,
+      });
+      await hover(page, "#h-text");
+      expect((await boundary(page, "#h-text"))[0]).toBe(blue);
+      // The page outside keeps its own scheme's blue.
+      expect(await page.style("#prose p", "caret-color")).toBe(COLORS["--blue"][1 - index]);
+    });
+  }
+
+  test("interaction resolves in a data-palette container's own profile", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addProbePalette(page);
+    await addControls(page, INTERACTIVE, 'data-palette="probe"');
+    const blue = PROBE_PALETTE["--blue"];
+    expect(await interaction(page, "#hooks")).toEqual({
+      link: blue,
+      caret: blue,
+      accent: blue,
+      selection: blue,
+    });
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`hovered, every enabled field and neutral button takes a boundary in the interaction color, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      await addControls(
+        page,
+        HOVERED.map(([html]) => html),
+      );
+      await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+      const rest = COLORS["--border-2"][index];
+      for (const [, selector, pseudo] of HOVERED) {
+        expect([selector, (await boundary(page, selector, pseudo))[0]]).toEqual([selector, rest]);
+      }
+      for (const [, selector, pseudo] of HOVERED) {
+        await hover(page, selector);
+        expect([selector, (await boundary(page, selector, pseudo))[0]]).toEqual([
+          selector,
+          COLORS["--blue"][index],
+        ]);
+      }
+    });
+  }
+
+  test("hovered, a disabled control doesn't change", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addControls(
+      page,
+      DISABLED.map(([html]) => html),
+    );
+    for (const [, selector, pseudo] of DISABLED) {
+      await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+      const rest = await boundary(page, selector, pseudo);
+      expect([selector, rest[0]]).toEqual([selector, COLORS["--border-2"][0]]);
+      await hover(page, selector);
+      expect([selector, await boundary(page, selector, pseudo)]).toEqual([selector, rest]);
+    }
+  });
+
+  test("hovered, a hue variant keeps its own hook color for its boundary", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const [red] = COLORS["--red"];
+    for (const selector of ["#buttons button.button-red", "#buttons a.button-red"]) {
+      await hover(page, selector);
+      expect([selector, (await boundary(page, selector))[0]]).toEqual([selector, red]);
+    }
+  });
+
+  test("inline code is a chip on the element surface; code in a pre is not", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const chip = (selector) =>
+      page.evaluate(`(() => {
+        const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+        return [style.backgroundColor, style.paddingLeft, style.paddingRight, style.paddingTop,
+          style.borderTopLeftRadius, style.borderTopWidth, style.color];
+      })()`);
+    const inline = "#prose p > code";
+    expect(await chip(inline)).toEqual([
+      COLORS["--bg-2"][0],
+      `${await resolveToken(page, "--space-3xs", "length")}px`,
+      `${await resolveToken(page, "--space-3xs", "length")}px`,
+      "0px",
+      `${await resolveToken(page, "--radius-sm", "length")}px`,
+      "0px",
+      COLORS["--fg"][0],
+    ]);
+    const block = "#prose pre > code";
+    expect(await chip(block)).toEqual([
+      "rgba(0, 0, 0, 0)",
+      "0px",
+      "0px",
+      "0px",
+      "0px",
+      "0px",
+      await page.style("#prose pre", "color"),
+    ]);
+  });
+
+  test("a consumer re-colors inline code's text through --code-color, and code in a pre keeps its own", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { #prose { --code-color: rgb(1, 2, 3); } }");
+    expect(await page.style("#prose p > code", "color")).toBe("rgb(1, 2, 3)");
+    expect(await page.style("#prose p > code", "background-color")).toBe(COLORS["--bg-2"][0]);
+    expect(await page.style("#prose pre > code", "color")).toBe(COLORS["--fg"][0]);
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`kbd is an outlined key with a heavier bottom edge over no fill, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      const key = await page.evaluate(`(() => {
+        const style = getComputedStyle(document.querySelector("#prose kbd"));
+        return {
+          widths: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth,
+            style.borderLeftWidth],
+          colors: [...new Set([style.borderTopColor, style.borderRightColor,
+            style.borderBottomColor, style.borderLeftColor])],
+          style: style.borderTopStyle,
+          fill: style.backgroundColor,
+          color: style.color,
+          radius: style.borderTopLeftRadius,
+        };
+      })()`);
+      const [s, m] = [
+        await resolveToken(page, "--line-s", "length"),
+        await resolveToken(page, "--line-m", "length"),
+      ];
+      expect(key).toEqual({
+        widths: [`${s}px`, `${s}px`, `${m}px`, `${s}px`],
+        colors: [COLORS["--border-2"][index]],
+        style: "solid",
+        fill: "rgba(0, 0, 0, 0)",
+        color: COLORS["--fg"][index],
+        radius: `${await resolveToken(page, "--radius-sm", "length")}px`,
+      });
+    });
+  }
+
+  test("a consumer re-colors kbd's border and text through --kbd-color", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { #prose { --kbd-color: rgb(1, 2, 3); } }");
+    for (const property of [
+      "border-top-color",
+      "border-right-color",
+      "border-bottom-color",
+      "border-left-color",
+      "color",
+    ]) {
+      expect([property, await page.style("#prose kbd", property)]).toEqual([
+        property,
+        "rgb(1, 2, 3)",
+      ]);
+    }
+  });
+});
+
 // The elements fixture over http, so the bare load can answer its one stylesheet 404.
 const elementsFixture = `${server.url}test/fixtures/elements.html`;
 
@@ -2052,12 +2339,26 @@ describe("tools", () => {
   });
 
   for (const [index, scheme] of ["light", "dark"].entries()) {
-    test(`.table-striped puts alternate body rows on --bg-2, in ${scheme}`, async () => {
+    test(`.table-striped's stripe lies between the page and the header surface, apart from both, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
+      const table = "#tables-tools .table-striped";
       const rows = await page.evaluate(`[...document.querySelectorAll(
-        "#tables-tools .table-striped > tbody > tr")].map((tr) => getComputedStyle(tr).backgroundColor)`);
-      const stripe = COLORS["--bg-2"][index];
+        "${table} > tbody > tr")].map((tr) => getComputedStyle(tr).backgroundColor)`);
+      const [stripe] = [rows[1]];
       expect(rows).toEqual(["rgba(0, 0, 0, 0)", stripe, "rgba(0, 0, 0, 0)", stripe]);
+      // The header cells sit on --bg-2, the page on --bg.
+      const header = await page.style(`${table} th`, "background-color");
+      expect(header).toBe(COLORS["--bg-2"][index]);
+      const [mixed, surface, bg] = [stripe, header, COLORS["--bg"][index]].map(channels);
+      // Each channel between the page's and the header's, and the stripe at least two levels
+      // from either on the channel they differ most in, so each pair is told apart.
+      for (const [c, value] of mixed.entries()) {
+        expect(value).toBeGreaterThanOrEqual(Math.min(surface[c], bg[c]) - 0.5);
+        expect(value).toBeLessThanOrEqual(Math.max(surface[c], bg[c]) + 0.5);
+      }
+      const apart = (a, b) => Math.max(...a.map((value, c) => Math.abs(value - b[c])));
+      expect(apart(mixed, surface)).toBeGreaterThanOrEqual(2);
+      expect(apart(mixed, bg)).toBeGreaterThanOrEqual(2);
     });
   }
 });

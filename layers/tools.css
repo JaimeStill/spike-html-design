@@ -14,6 +14,8 @@
  * The hooks are public API, frozen with each tag's class names: --button-color for buttons and
  * --table-stripe for tables. Scroll and forms have none: each of their classes sets its layout
  * in a declaration or two that a consumer's own class restates as cheaply as it would set a hook.
+ * The neutral .button also reads the elements layer's --interaction-color, for its hover border,
+ * as the native button does.
  *
  * baseline.css imports this file into spike-html-design.tools. Pages link baseline.css, never
  * this file: linked on its own, its rules would be unlayered.
@@ -43,6 +45,7 @@
 }
 
 .button:hover:where(:not(:disabled)) {
+  border-color: var(--interaction-color, var(--blue));
   background-color: var(--border);
 }
 
@@ -153,8 +156,10 @@
 }
 
 /* --table-stripe (public API): the surface a striped table's alternate body rows sit on, by
-   default --bg-2. Set it on the table or any ancestor; it is read with a fallback, never
-   declared here, so a value set on an ancestor reaches every striped table inside it. */
+   default halfway from the element surface, --bg-2, to the page, --bg, so a stripe reads apart
+   from both the page and the header cells, which sit on --bg-2. Set it on the table or any
+   ancestor; it is read with a fallback, never declared here, so a value set on an ancestor
+   reaches every striped table inside it. */
 .table-striped > tbody > tr:nth-child(even) {
-  background-color: var(--table-stripe, var(--bg-2));
+  background-color: var(--table-stripe, color-mix(in srgb, var(--bg-2) 50%, var(--bg)));
 }

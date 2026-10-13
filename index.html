@@ -167,6 +167,13 @@
           background: var(--sample);
         }
 
+        /* A hook sample: a consumer's subtree setting the elements layer's three hooks. */
+        .hook-sample {
+          --interaction-color: var(--magenta);
+          --code-color: var(--purple);
+          --kbd-color: var(--orange);
+        }
+
         /* A row of button samples, wrapping with a gap between lines. */
         .sample-row {
           display: flex;
@@ -466,7 +473,11 @@
           <p>
             Every rendered element as the elements layer styles it, with no classes: paint, type,
             borders, radius, margins and paddings only, so each keeps its native layout and
-            behavior. Each cell's label names the elements it shows.
+            behavior. Each cell's label names the elements it shows. A consumer re-colors them
+            through three hooks, set on any element for its subtree:
+            <code>--interaction-color</code> for links, focus, the caret, accents, selection and
+            hover borders, by default <code>--blue</code>; <code>--code-color</code> for inline
+            code; and <code>--kbd-color</code> for keys.
           </p>
         </header>
 
@@ -496,6 +507,25 @@
                 <em>emphasis</em>, inline <code>code</code>, and a key, <kbd>T</kbd>.
               </p>
               <p>A second paragraph, a block after a block.</p>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>&lt;a&gt;</code> <code>&lt;code&gt;</code> <code>&lt;kbd&gt;</code>
+                <code>&lt;input&gt;</code> <code>&lt;button&gt;</code>, under a consumer's
+                <code>--interaction-color</code>, <code>--code-color</code> and
+                <code>--kbd-color</code>
+              </p>
+              <div class="hook-sample">
+                <p>
+                  <a href="#prose">A link in magenta</a>, <code>code in purple</code>, and a key,
+                  <kbd>Ctrl</kbd> <kbd>K</kbd>, in orange.
+                </p>
+                <p>
+                  <input type="text" aria-label="A hooked field" placeholder="Hover or type" />
+                  <input type="checkbox" aria-label="A hooked checkbox" checked />
+                  <button type="button">Hover</button>
+                </p>
+              </div>
             </div>
             <div class="cell">
               <p class="label"><code>&lt;ul&gt;</code> <code>&lt;ol&gt;</code> <code>&lt;li&gt;</code></p>
@@ -940,7 +970,8 @@ const answer = 42;</code></pre>
             Opt-in classes, each labeled with its class. A consumer extends buttons and tables
             by setting their hooks in its own layer: <code>--button-color</code> for buttons,
             <code>--table-stripe</code> for tables. Scroll and forms have no hook; a consumer's
-            own layer restates their classes.
+            own layer restates their classes. The neutral <code>.button</code> takes the elements
+            layer's <code>--interaction-color</code> for its hover border.
           </p>
         </header>
 
@@ -1076,7 +1107,7 @@ const answer = 42;</code></pre>
                   </tr>
                   <tr>
                     <td>2</td>
-                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code> mixed into <code>--bg</code></td>
                   </tr>
                   <tr>
                     <td>3</td>
@@ -1084,7 +1115,7 @@ const answer = 42;</code></pre>
                   </tr>
                   <tr>
                     <td>4</td>
-                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code> mixed into <code>--bg</code></td>
                   </tr>
                 </tbody>
               </table>
