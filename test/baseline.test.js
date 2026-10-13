@@ -223,11 +223,29 @@ const SOURCES = [
   "index.html",
   "pinned/v0.3.0.html",
   "test/fixtures/baseline.html",
+  "test/fixtures/extension.html",
   "test/fixtures/index.html",
 ];
 
-// TOOLS are the tools classes: v0.2.0's scroll helpers.
-const TOOLS = ["scroll-y", "scroll-x"];
+// TOOLS are the tools classes, by family: the button base and its eight hue variants, the scroll
+// helpers, the form helpers and the table helpers.
+const TOOLS = [
+  "button",
+  "button-red",
+  "button-orange",
+  "button-yellow",
+  "button-green",
+  "button-cyan",
+  "button-blue",
+  "button-purple",
+  "button-magenta",
+  "scroll-y",
+  "scroll-x",
+  "field",
+  "field-grow",
+  "table-full",
+  "table-striped",
+];
 
 // rootTokens resolves to every custom property declared on :root, name to computed value.
 function rootTokens(page) {
@@ -349,6 +367,20 @@ function mark(ratio) {
 function layerSheet(layer) {
   return `[...[...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css")).cssRules]
     .find((r) => r.layerName === ${JSON.stringify(`${PACKAGE}.${layer}`)}).styleSheet`;
+}
+
+// hover moves the mouse, a trusted CDP event, to the center of the element matching selector,
+// scrolled into view first, so it alone takes :hover.
+async function hover(page, selector) {
+  await page.evaluate(
+    `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
+  );
+  const center = await page.evaluate(`(() => {
+    const { x, y, width, height } = document.querySelector(${JSON.stringify(selector)})
+      .getBoundingClientRect();
+    return { x: x + width / 2, y: y + height / 2 };
+  })()`);
+  await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", ...center });
 }
 
 // tabTo presses Tab, a trusted keyboard event, until the element matching selector has focus,
@@ -1051,15 +1083,7 @@ describe("elements", () => {
       expect([selector, await paint(selector, pseudo)]).toEqual([selector, tiers]);
     }
     // Hovered, the native button fills one tier up, with --border.
-    await page.evaluate(
-      `document.querySelector("#forms button").scrollIntoView({ block: "center" })`,
-    );
-    const center = await page.evaluate(`(() => {
-      const { x, y, width, height } = document.querySelector("#forms button")
-        .getBoundingClientRect();
-      return { x: x + width / 2, y: y + height / 2 };
-    })()`);
-    await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", ...center });
+    await hover(page, "#forms button");
     expect(await page.style("#forms button", "background-color")).toBe(COLORS["--border"][0]);
   });
 
@@ -1580,6 +1604,27 @@ describe("elements behavior", () => {
   });
 });
 
+// BUTTON_LOOK are the computed properties .button shares with the native button, which a test
+// holds equal in each state: display, padding, border, radius, paint, font and alignment.
+const BUTTON_LOOK = [
+  "display",
+  ...["top", "right", "bottom", "left"].flatMap((side) => [
+    `padding-${side}`,
+    `border-${side}-width`,
+    `border-${side}-style`,
+    `border-${side}-color`,
+  ]),
+  ...["top-left", "top-right", "bottom-right", "bottom-left"].map((c) => `border-${c}-radius`),
+  "background-color",
+  "color",
+  "font-family",
+  "font-size",
+  "font-style",
+  "font-weight",
+  "line-height",
+  "text-align",
+];
+
 describe("tools", () => {
   test("the tools layer styles exactly the tools classes", async () => {
     // Over http, since chromium hides a file:// stylesheet's rules from the page.
@@ -1634,6 +1679,266 @@ describe("tools", () => {
       })()`);
       expect([axis, scrolled]).toEqual([axis, 10]);
     }
+  });
+
+  test(".button computes as the native button, rule for rule: at rest, hovered and disabled", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.querySelector("#buttons .cell").insertAdjacentHTML("beforeend",
+      '<p id="sync"><button type="button" id="native">Native</button> ' +
+      '<a class="button" id="base" href="#sync">Base</a> ' +
+      '<button type="button" id="native-disabled" disabled>Native</button> ' +
+      '<button type="button" class="button" id="base-disabled" disabled>Base</button></p>')`);
+    const look = (selector) =>
+      page.evaluate(`(() => {
+        const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+        return Object.fromEntries(${JSON.stringify(BUTTON_LOOK)}
+          .map((name) => [name, style.getPropertyValue(name)]));
+      })()`);
+    // Each state twice: on the baseline's tokens, then with every token the rules read moved, so
+    // equal looks prove both read the same tokens, not values that happen to agree.
+    for (const round of ["baseline", "moved"]) {
+      if (round === "moved") {
+        await addAppStyle(
+          page,
+          `@layer app { :root { --bg: rgb(1, 1, 1); --bg-2: rgb(2, 2, 2); --border: rgb(3, 3, 3);
+            --border-3: rgb(4, 4, 4); --fg: rgb(5, 5, 5); --fg-3: rgb(6, 6, 6); --space-3xs: 3px;
+            --space-s: 7px; --line-s: 3px; --radius-sm: 5px; --font-ui: fantasy;
+            --leading-ui: 2; } }`,
+        );
+      }
+      await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+      const rest = await look("#native");
+      expect([round, "rest", await look("#base")]).toEqual([round, "rest", rest]);
+      expect([round, "disabled", await look("#base-disabled")]).toEqual([
+        round,
+        "disabled",
+        await look("#native-disabled"),
+      ]);
+      await hover(page, "#native");
+      const hovered = await look("#native");
+      expect(hovered["background-color"]).not.toBe(rest["background-color"]);
+      await hover(page, "#base");
+      expect([round, "hover", await look("#base")]).toEqual([round, "hover", hovered]);
+    }
+  });
+
+  test(".button adds inline-block display, centered text, no underline, a pointer and the focus outline", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    // A link of its own, in a paragraph: the specimen's sample rows are flex containers, which
+    // make every item a block. First in the body, so the first Tab reaches it.
+    await page.evaluate(`document.body.insertAdjacentHTML("afterbegin",
+      '<p><a class="button" id="lone" href="#buttons">A link</a></p>')`);
+    const link = "#lone";
+    expect(await page.style(link, "display")).toBe("inline-block");
+    expect(await page.style(link, "text-align")).toBe("center");
+    expect(await page.style(link, "text-decoration-line")).toBe("none");
+    expect(await page.style(link, "cursor")).toBe("pointer");
+    await tabTo(page, link);
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outline`)).toBe(
+      `${COLORS["--blue"][0]} solid 2px`,
+    );
+  });
+
+  test("each hue variant sets only the hook, --button-color, to its hue", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const variants = await page.evaluate(`(() => {
+      const variants = {};
+      const walk = (rules) => {
+        for (const rule of rules) {
+          if (/^\\.button-[\\w-]+$/.test(rule.selectorText ?? "")) {
+            variants[rule.selectorText] = [...rule.style]
+              .map((name) => [name, rule.style.getPropertyValue(name).trim()]);
+          }
+          if (rule.cssRules) walk(rule.cssRules);
+        }
+      };
+      walk(${layerSheet("tools")}.cssRules);
+      return variants;
+    })()`);
+    expect(variants).toEqual(
+      Object.fromEntries(
+        Object.keys(HUES).map((hue) => [
+          `.button-${hue.slice(2)}`,
+          [["--button-color", `var(${hue})`]],
+        ]),
+      ),
+    );
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`each variant draws its border and text in its hue over no fill, on <button> and <a class="button">, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      for (const hue of Object.keys(HUES)) {
+        const values = COLORS[hue];
+        for (const element of ["button", "a.button"]) {
+          const selector = `#buttons ${element}.button-${hue.slice(2)}`;
+          const paint = [
+            await page.style(selector, "border-top-color"),
+            await page.style(selector, "border-left-color"),
+            await page.style(selector, "color"),
+            await page.style(selector, "background-color"),
+          ];
+          expect([selector, paint]).toEqual([
+            selector,
+            [values[index], values[index], values[index], "rgba(0, 0, 0, 0)"],
+          ]);
+        }
+      }
+    });
+  }
+
+  test("each variant fills with a 15% tint of its hue on hover", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    for (const hue of Object.keys(HUES)) {
+      const [light] = COLORS[hue];
+      for (const element of ["button", "a.button"]) {
+        const selector = `#buttons ${element}.button-${hue.slice(2)}`;
+        await hover(page, selector);
+        const fill = tint(await page.style(selector, "background-color"));
+        expect([selector, fill?.hue]).toEqual([selector, light]);
+        expect(fill.alpha).toBeCloseTo(0.15);
+      }
+    }
+  });
+
+  test("a variant's treatment reads the hook: setting it alone recolors border, text and hover", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { .button-red { --button-color: rgb(1, 2, 3); } }");
+    for (const selector of ["#buttons button.button-red", "#buttons a.button-red"]) {
+      expect(await page.style(selector, "border-top-color")).toBe("rgb(1, 2, 3)");
+      expect(await page.style(selector, "color")).toBe("rgb(1, 2, 3)");
+      await hover(page, selector);
+      expect(tint(await page.style(selector, "background-color"))?.hue).toBe("rgb(1, 2, 3)");
+    }
+  });
+
+  test("a disabled variant keeps the neutral disabled look", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.querySelector("#buttons .cell").insertAdjacentHTML("beforeend",
+      '<p><button type="button" id="plain" disabled>Plain</button> ' +
+      '<button type="button" class="button-red" id="variant" disabled>Variant</button> ' +
+      '<button type="button" class="button button-red" id="base-variant" disabled>Base</button></p>')`);
+    const paint = async (selector) => [
+      await page.style(selector, "border-top-color"),
+      await page.style(selector, "color"),
+      await page.style(selector, "background-color"),
+    ];
+    const plain = await paint("#plain");
+    expect(await paint("#variant")).toEqual(plain);
+    expect(await paint("#base-variant")).toEqual(plain);
+  });
+
+  test(".field stacks its label, control and hint --space-3xs apart, each at its own size", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    expect(await page.style("#fields .field", "display")).toBe("grid");
+    const gap = await resolveToken(page, "--space-3xs", "length");
+    const boxes = await page.evaluate(`(() => {
+      const field = document.querySelector("#fields .field").getBoundingClientRect();
+      return [...document.querySelector("#fields .field").children].map((el) => {
+        const { top, bottom, left, width } = el.getBoundingClientRect();
+        return { top, bottom, left, width, field: { left: field.left, width: field.width } };
+      });
+    })()`);
+    expect(boxes.length).toBe(3);
+    for (const [i, box] of boxes.entries()) {
+      expect(box.left).toBeCloseTo(box.field.left, 1);
+      if (i > 0) expect(box.top - boxes[i - 1].bottom).toBeCloseTo(gap, 1);
+    }
+    // The control keeps its own width rather than stretching across the field.
+    expect(boxes[1].width).toBeLessThan(boxes[1].field.width);
+  });
+
+  test(".field-grow sizes its control to its content, from a few characters wide to its container", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const control = "#fields .field-grow";
+    expect(await page.style(control, "field-sizing")).toBe("content");
+    const width = (value) =>
+      page.evaluate(`(() => {
+        const el = document.querySelector(${JSON.stringify(control)});
+        el.value = ${JSON.stringify(value)};
+        return [el.getBoundingClientRect().width, el.parentElement.getBoundingClientRect().width];
+      })()`);
+    const [short] = await width("short");
+    const [long] = await width("a longer value than the first, by several words");
+    expect(long).toBeGreaterThan(short);
+    // Empty, it holds its minimum, a few characters wide; past its container, it stops there.
+    const [empty] = await width("");
+    expect(empty).toBeCloseTo(Number.parseFloat(await page.style(control, "min-inline-size")), 0);
+    expect(empty).toBeGreaterThan(0);
+    const [huge, container] = await width("x".repeat(500));
+    expect(huge).toBeCloseTo(container, 0);
+  });
+
+  test(".table-full takes its container's full inline size", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const [table, label] = await page.evaluate(`[
+      document.querySelector("#tables-tools .table-full").getBoundingClientRect().width,
+      document.querySelector("#tables-tools .table-full").previousElementSibling
+        .getBoundingClientRect().width,
+    ]`);
+    expect(table).toBeCloseTo(label, 1);
+  });
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`.table-striped puts alternate body rows on --bg-2, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      const rows = await page.evaluate(`[...document.querySelectorAll(
+        "#tables-tools .table-striped > tbody > tr")].map((tr) => getComputedStyle(tr).backgroundColor)`);
+      const stripe = COLORS["--bg-2"][index];
+      expect(rows).toEqual(["rgba(0, 0, 0, 0)", stripe, "rgba(0, 0, 0, 0)", stripe]);
+    });
+  }
+});
+
+// The extension fixture: a consumer's own layer after the package layer, extending the tools
+// families through their hooks, and overriding foundation rules without !important.
+const extensionFixture = fileUrl(join(import.meta.dir, "fixtures", "extension.html"));
+
+describe("extension", () => {
+  test("a consumer's variant, setting only --button-color in its own layer, renders the full treatment", async () => {
+    const page = await open(extensionFixture, { scheme: "light" });
+    const [red] = COLORS["--red"];
+    for (const selector of ["#danger", "#danger-link"]) {
+      expect([
+        selector,
+        await page.style(selector, "border-top-color"),
+        await page.style(selector, "color"),
+        await page.style(selector, "background-color"),
+      ]).toEqual([selector, red, red, "rgba(0, 0, 0, 0)"]);
+      await hover(page, selector);
+      const fill = tint(await page.style(selector, "background-color"));
+      expect([selector, fill?.hue]).toEqual([selector, red]);
+      expect(fill.alpha).toBeCloseTo(0.15);
+    }
+  });
+
+  test("a consumer re-colors a striped table through --table-stripe", async () => {
+    const page = await open(extensionFixture, { scheme: "light" });
+    const rows = await page.evaluate(`[...document.querySelectorAll("#striped > tbody > tr")]
+      .map((tr) => getComputedStyle(tr).backgroundColor)`);
+    expect(rows[0]).toBe("rgba(0, 0, 0, 0)");
+    expect(rows[2]).toBe("rgba(0, 0, 0, 0)");
+    const stripe = tint(rows[1]);
+    expect(stripe?.hue).toBe(COLORS["--blue"][0]);
+    expect(stripe.alpha).toBeCloseTo(0.15);
+  });
+
+  test("a later layer and unlayered CSS, at zero specificity, beat a tools variant and an elements rule", async () => {
+    // The tools variant's treatment carries (0,2,0) and its hook (0,1,0); every elements rule
+    // carries none, so the consumer's zero-specificity rules win by layer alone.
+    const page = await open(extensionFixture, { scheme: "light" });
+    for (const [selector, color] of [
+      ["#app-variant", "rgb(0, 128, 0)"],
+      ["#unlayered-variant", "rgb(128, 0, 128)"],
+    ]) {
+      expect([
+        selector,
+        await page.style(selector, "border-top-color"),
+        await page.style(selector, "color"),
+      ]).toEqual([selector, color, color]);
+    }
+    expect(await page.style("#app-link", "color")).toBe("rgb(0, 128, 0)");
+    expect(await page.style("#unlayered-link", "color")).toBe("rgb(128, 0, 128)");
   });
 });
 
@@ -1702,13 +2007,24 @@ describe("specimen", () => {
     expect(squash(note)).toContain("is composition");
   });
 
-  test("shows every tools class", async () => {
+  test("shows every tools class in a labeled cell", async () => {
     const page = await open(specimen, { scheme: "light" });
     for (const name of TOOLS) {
-      expect([name, await page.evaluate(`!!document.querySelector("#tools .${name}")`)]).toEqual([
-        name,
-        true,
-      ]);
+      const labeled = await page.evaluate(`(() => {
+        const samples = [...document.querySelectorAll("#tools .${name}")];
+        return samples.length > 0 &&
+          samples.every((el) => el.closest(".cell")?.querySelector(":scope > .label"));
+      })()`);
+      expect([name, labeled]).toEqual([name, true]);
+    }
+    // The variants show on a native button and on a link with the base class.
+    for (const hue of Object.keys(HUES)) {
+      const variant = `button-${hue.slice(2)}`;
+      const shown = await page.evaluate(`[
+        !!document.querySelector("#tools button.${variant}:not(.button)"),
+        !!document.querySelector("#tools a.button.${variant}"),
+      ]`);
+      expect([variant, shown]).toEqual([variant, [true, true]]);
     }
   });
 

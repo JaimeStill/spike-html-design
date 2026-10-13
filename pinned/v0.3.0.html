@@ -164,6 +164,13 @@
           background: var(--sample);
         }
 
+        /* A row of button samples, wrapping with a gap between lines. */
+        .sample-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-2xs);
+        }
+
         /* Bounded boxes, so the scroll samples overflow. */
         .scroll-sample {
           max-inline-size: calc(5 * var(--space-2xl));
@@ -899,29 +906,160 @@ const answer = 42;</code></pre>
       <section id="tools">
         <header>
           <h2>Tools</h2>
-          <p>Opt-in classes, each labeled with its class.</p>
+          <p>
+            Opt-in classes, each labeled with its class. Each family is open for extension
+            through one hook a consumer sets in its own layer: <code>--button-color</code> for
+            buttons, <code>--table-stripe</code> for tables.
+          </p>
         </header>
 
-        <h3>Scroll</h3>
-        <div class="cells">
-          <div class="cell">
-            <p class="label"><code>.scroll-y</code></p>
-            <div class="scroll-sample scroll-y">
-              <p>.scroll-y scrolls its overflow vertically, with a stable gutter.</p>
-              <p>A second paragraph.</p>
-              <p>A third paragraph.</p>
-              <p>A fourth paragraph.</p>
-              <p>A fifth paragraph.</p>
+        <section id="buttons">
+          <h3>Buttons</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label">
+                <code>.button</code> on <code>&lt;a&gt;</code>, beside a native
+                <code>&lt;button&gt;</code>
+              </p>
+              <div class="sample-row">
+                <a class="button" href="#buttons">Jump to buttons</a>
+                <button type="button">A button</button>
+              </div>
             </div>
           </div>
-          <div class="cell">
-            <p class="label"><code>.scroll-x</code></p>
-            <div class="scroll-sample scroll-x">
-              .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that will
-              not wrap stays readable to its end in a box narrower than itself.
+          <div class="cells wide">
+            <div class="cell">
+              <p class="label"><code>.button-&lt;hue&gt;</code> on <code>&lt;button&gt;</code></p>
+              <div class="sample-row">
+                <button type="button" class="button-red">red</button>
+                <button type="button" class="button-orange">orange</button>
+                <button type="button" class="button-yellow">yellow</button>
+                <button type="button" class="button-green">green</button>
+                <button type="button" class="button-cyan">cyan</button>
+                <button type="button" class="button-blue">blue</button>
+                <button type="button" class="button-purple">purple</button>
+                <button type="button" class="button-magenta">magenta</button>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label">
+                <code>.button-&lt;hue&gt;</code> on <code>&lt;a class="button"&gt;</code>
+              </p>
+              <div class="sample-row">
+                <a class="button button-red" href="#buttons">red</a>
+                <a class="button button-orange" href="#buttons">orange</a>
+                <a class="button button-yellow" href="#buttons">yellow</a>
+                <a class="button button-green" href="#buttons">green</a>
+                <a class="button button-cyan" href="#buttons">cyan</a>
+                <a class="button button-blue" href="#buttons">blue</a>
+                <a class="button button-purple" href="#buttons">purple</a>
+                <a class="button button-magenta" href="#buttons">magenta</a>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        <section id="scroll">
+          <h3>Scroll</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>.scroll-y</code></p>
+              <div class="scroll-sample scroll-y">
+                <p>.scroll-y scrolls its overflow vertically, with a stable gutter.</p>
+                <p>A second paragraph.</p>
+                <p>A third paragraph.</p>
+                <p>A fourth paragraph.</p>
+                <p>A fifth paragraph.</p>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label"><code>.scroll-x</code></p>
+              <div class="scroll-sample scroll-x">
+                .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that
+                will not wrap stays readable to its end in a box narrower than itself.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="fields">
+          <h3>Forms</h3>
+          <div class="cells">
+            <div class="cell">
+              <p class="label"><code>.field</code></p>
+              <div class="field">
+                <label for="tools-field">A label</label>
+                <input id="tools-field" type="text" placeholder="Its control" />
+                <small>An optional hint, under its control.</small>
+              </div>
+            </div>
+            <div class="cell">
+              <p class="label"><code>.field-grow</code> in <code>.field</code></p>
+              <div class="field">
+                <label for="tools-field-grow">A growing field</label>
+                <input
+                  id="tools-field-grow"
+                  class="field-grow"
+                  type="text"
+                  value="It grows as you type"
+                />
+                <small>Its width follows its content, from a few characters wide.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="tables-tools">
+          <h3>Tables</h3>
+          <div class="cells wide">
+            <div class="cell">
+              <p class="label"><code>.table-full</code></p>
+              <table class="table-full">
+                <thead>
+                  <tr>
+                    <th scope="col">Class</th>
+                    <th scope="col">Effect</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>.table-full</code></td>
+                    <td>Takes the full inline size.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="cell">
+              <p class="label"><code>.table-striped</code></p>
+              <table class="table-striped">
+                <thead>
+                  <tr>
+                    <th scope="col">Row</th>
+                    <th scope="col">Surface</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td><code>--bg</code></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td><code>--bg</code></td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section id="contrast">
