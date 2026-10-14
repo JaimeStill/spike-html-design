@@ -176,7 +176,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 1–6 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a); 7 to go · review stop 1 done · review stop 2 done · standards — · spec — · editor —
+slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards — · spec — · editor —
 
 ## Decisions
 
@@ -610,6 +610,10 @@ slices 1–6 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
   layout and copy fixes. Full budget raised to 18,000 B brotli (five profiles with swatch
   comments). .scroll-x drops scrollbar-gutter: stable, which left wrapped tables short of their
   container; .scroll-y keeps it.
+- profiles (architect): Flexoki's --green is #408739 light / #61a25a dark, its own green
+  (#66800b / #879a39, OKLCH hue ~123°) rotated to hue 142° at Flexoki's lightness and chroma
+  (L 0.559 / C 0.134 light, L 0.651 / C 0.124 dark), away from yellow. A documented departure
+  from upstream Flexoki.
 
 ## Pending edits
 
