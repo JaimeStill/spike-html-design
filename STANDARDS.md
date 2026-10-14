@@ -67,6 +67,9 @@ restating it.
 - The specimen's arrangement lives in its own layer: composition, not baseline.
 - `kbd` styling, including every key hint, belongs to the elements layer. The keys module binds
   keys and styles nothing.
+- The modules add nothing to the baseline's layers. A component's CSS, such as the theming
+  menu's, is one constructed sheet the component adopts, in the layer
+  `spike-html-design.<component>`, under every consumer layer; it reads only tokens.
 
 ## Whitespace
 

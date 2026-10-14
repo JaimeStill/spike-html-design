@@ -135,9 +135,10 @@ Test seams    the harness page: a page in headless chromium, read for computed s
               exported entries.
 
 Slices
-  1. Space and type profiles: split facets, compact and serif, data-space/data-type scopes,
-     independence and preview-equivalence tests, both entries' imports, v0.5.0's probes,
-     package.json at 0.5.0. Demo: a compact, serif container inside a regular, mono page.
+  1. Space and type profiles: split facets, compact and sans (amended: built as serif, which
+     sans replaced at the review stop), data-space/data-type scopes, independence and
+     preview-equivalence tests, both entries' imports, v0.5.0's probes, package.json at 0.5.0.
+     Demo: a compact, sans container inside a regular, mono page.
   2. Registry and registration: the shared global store, ./register and ./register/full, a
      two-copies-one-store test; the harness gains the CORS header. Demo: a fixture page lists
      the lean and full registrations.
@@ -147,8 +148,9 @@ Slices
   4. The menu: menu module loaded on first open, radio rows, keys, live preview, Save/Cancel
      with snapshot, adopted sheet in spike-html-design.theme-menu, the specimen's Theme button.
      Demo: the served workbench with the menu in use.
-  ── REVIEW STOP (after slice 4): the architect uses the menu and views compact and serif on
-     the served workbench (`mise run serve`), before any tag; redirects go to Decisions ──
+  ── REVIEW STOP (after slice 4): the architect uses the menu and views compact and the second
+     type profile (amended: serif then, replaced there by sans) on the served workbench
+     (`mise run serve`), before any tag; redirects go to Decisions ──
   4b. Review-stop fixes: sans replaces serif; the Theme button sits beneath the title and
       above the intro; the specimen's Color, Space, and Type sections follow the selection
       (behavior 20a). Demo: the served workbench, switching profiles in the menu.
@@ -163,8 +165,8 @@ Out of scope  keys.js, the ? dialog, page-wide j/k/g, a leader key (keys); promo
               <theme-menu> to a shadow-DOM web component (spike-html-components); the git-tag
               install, extension fixture, exported conformance test, CDN import-chain cost,
               bundling (validate); measuring Firefox's flash; backdrop-click close and
-              closedby; space or type profiles beyond compact and serif; dialing in serif's ui
-              font past the review stop; role tokens and new hooks; color profile values.
+              closedby; space or type profiles beyond compact and sans (amended from serif at the
+              review stop); role tokens and new hooks; color profile values.
 Door          one-way for tag v0.5.0, which jsDelivr caches as immutable: the nested profile
               keys, JS export keys, the <theme-menu> name, the --open command, the registry's
               global store shape, and the storage key freeze with it (v0.4.0 keeps its flat
@@ -174,7 +176,7 @@ Release       v0.5.0
 
 ## Progress
 
-slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe590) · review stop 2 accepted · standards done (03cda5e, d68c240) · spec done, no gaps · editor —
+slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe590) · review stop 2 accepted · standards done (03cda5e, d68c240) · spec done, no gaps · editor done
 
 ## Decisions
 
@@ -751,6 +753,43 @@ slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe
   hex values filled by a specimen-only script, captions per profile.
 - preferences review stop 2 (architect): accepted slice 4b, with the whole Light and Dark cell
   scoped to its scheme (the Dark column paints its own dark surface on a light page).
+- preferences BUILD: the modules live in a top-level `modules/` directory, beside `layers/`.
+- preferences BUILD: DEFAULTS are constants (flexoki, regular, mono), the profiles both CSS
+  entries apply with no attribute, not whichever name registered first.
+- preferences BUILD: register throws a TypeError on an unknown facet or an empty name.
+- preferences BUILD: the preferences module exports the hooks the menu builds on: KEY,
+  ATTRIBUTES, SCHEMES, read, apply, save, setOpen, isOpen.
+- preferences BUILD: with nothing stored, the preferences module leaves the root untouched, so a
+  page's own profile attributes stand.
+- preferences BUILD: T counts with Shift (caps lock), and not with Ctrl, Alt, or Meta, or in a
+  field (input, textarea, select, contenteditable).
+- preferences BUILD: <theme-menu> loads theme-menu.js by `new URL("./theme-menu.js",
+  import.meta.url)`, so the menu comes from the same URL and tag as the preferences module.
+- preferences BUILD: a space profile sets only --space-base, the two lines, and --radius-base;
+  space.css declares the steps and derived radii again on `:where(:root, [data-space])`, since a
+  custom property inherits with its var() already substituted.
+- preferences BUILD: a type profile sets the four role fonts and four leadings; `:where([data-type])`
+  re-sets font-family and line-height on its scope, since both inherit as resolved values.
+- preferences BUILD: data-space gets no paint rule: a space scope changes no paint and no text.
+- preferences BUILD: a JS entry's size is the module plus every module its static imports reach,
+  each counted once; a dynamic import() counts toward the module it loads, so theme-menu.js is
+  its own entry.
+- preferences BUILD: Cancel compares the stored string at open and at close, so another tab's
+  save during the open menu is what Cancel restores.
+- preferences BUILD: the menu is rebuilt on each open, so its rows list the registry as it is.
+- preferences BUILD: the specimen's hex-value script is inline, so it runs from file://, where
+  relative module scripts don't; the Space and Type captions follow the selection through
+  inherited custom properties, with no script.
+- preferences BUILD: `test/menu.js` drives a pinned page's menu as a reader would, shared by
+  the pinned tests and the live pin check.
+- preferences BUILD: the pin check accepts a module served as text/javascript or
+  application/javascript.
+- preferences standards review: two tests that passed without proving their behavior were fixed
+  (03cda5e), and STANDARDS.md's "a profile sets color tokens only" became "a profile sets its own
+  facet's tokens only" (d68c240).
+- preferences editor: context/file-modules.md is integrated: README "Modules from `file://`"
+  states the exception, and the coordinator edit to html-artifacts.md "Build" is in Pending
+  edits.
 
 ## Pending edits
 
