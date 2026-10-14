@@ -8,7 +8,7 @@
     <style>
       /* The preview cards: one per color profile and scheme, each a preview container, an
          element with data-palette and data-scheme, holding the same markup. The page links the
-         lean entry and imports the three profiles past the default into its color sub-layer, as
+         lean entry and imports the four profiles past the default into its color sub-layer, as
          a consumer of the profile exports would. Its arrangement, the grid of cards and the
          swatch strip, is the page's own, in its fixture layer after the package layer; none of
          it is the baseline.
@@ -21,9 +21,10 @@
          --sample. Only its label, its attributes and its ids change from card to card. */
       @layer spike-html-design, fixture;
 
-      @import url(../../layers/tokens/color/kanagawa.css) layer(spike-html-design.tokens.color);
       @import url(../../layers/tokens/color/tokyo-night.css) layer(spike-html-design.tokens.color);
       @import url(../../layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
+      @import url(../../layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
+      @import url(../../layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
 
       @layer fixture {
         body {
@@ -164,128 +165,6 @@
         <div class="field">
           <label for="preview-flexoki-dark-branch">Branch</label>
           <input type="text" id="preview-flexoki-dark-branch" value="main" />
-        </div>
-        <table class="table-striped">
-          <thead>
-            <tr>
-              <th scope="col">Run</th>
-              <th scope="col">Status</th>
-              <th scope="col">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1204</td>
-              <td>passed</td>
-              <td>2m 14s</td>
-            </tr>
-            <tr>
-              <td>1205</td>
-              <td>failed</td>
-              <td>48s</td>
-            </tr>
-            <tr>
-              <td>1206</td>
-              <td>queued</td>
-              <td>—</td>
-            </tr>
-          </tbody>
-        </table>
-        <ul class="preview-swatches">
-          <li style="--sample: var(--bg-0)" title="--bg-0"></li>
-          <li style="--sample: var(--bg)" title="--bg"></li>
-          <li style="--sample: var(--bg-2)" title="--bg-2"></li>
-          <li style="--sample: var(--border)" title="--border"></li>
-          <li style="--sample: var(--border-2)" title="--border-2"></li>
-          <li style="--sample: var(--fg)" title="--fg"></li>
-          <li style="--sample: var(--fg-2)" title="--fg-2"></li>
-          <li style="--sample: var(--fg-3)" title="--fg-3"></li>
-          <li style="--sample: var(--red)" title="--red"></li>
-          <li style="--sample: var(--orange)" title="--orange"></li>
-          <li style="--sample: var(--yellow)" title="--yellow"></li>
-          <li style="--sample: var(--green)" title="--green"></li>
-          <li style="--sample: var(--cyan)" title="--cyan"></li>
-          <li style="--sample: var(--blue)" title="--blue"></li>
-          <li style="--sample: var(--purple)" title="--purple"></li>
-          <li style="--sample: var(--magenta)" title="--magenta"></li>
-        </ul>
-      </article>
-      <article class="preview-card" data-palette="kanagawa" data-scheme="light">
-        <p class="preview-label">Kanagawa lotus · light</p>
-        <h3>Nightly build</h3>
-        <p>
-          Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
-          or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
-        </p>
-        <p class="preview-buttons">
-          <button type="button">Cancel</button>
-          <button type="button" class="button-blue">Deploy</button>
-          <button type="button" class="button-red">Delete</button>
-        </p>
-        <div class="field">
-          <label for="preview-kanagawa-light-branch">Branch</label>
-          <input type="text" id="preview-kanagawa-light-branch" value="main" />
-        </div>
-        <table class="table-striped">
-          <thead>
-            <tr>
-              <th scope="col">Run</th>
-              <th scope="col">Status</th>
-              <th scope="col">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1204</td>
-              <td>passed</td>
-              <td>2m 14s</td>
-            </tr>
-            <tr>
-              <td>1205</td>
-              <td>failed</td>
-              <td>48s</td>
-            </tr>
-            <tr>
-              <td>1206</td>
-              <td>queued</td>
-              <td>—</td>
-            </tr>
-          </tbody>
-        </table>
-        <ul class="preview-swatches">
-          <li style="--sample: var(--bg-0)" title="--bg-0"></li>
-          <li style="--sample: var(--bg)" title="--bg"></li>
-          <li style="--sample: var(--bg-2)" title="--bg-2"></li>
-          <li style="--sample: var(--border)" title="--border"></li>
-          <li style="--sample: var(--border-2)" title="--border-2"></li>
-          <li style="--sample: var(--fg)" title="--fg"></li>
-          <li style="--sample: var(--fg-2)" title="--fg-2"></li>
-          <li style="--sample: var(--fg-3)" title="--fg-3"></li>
-          <li style="--sample: var(--red)" title="--red"></li>
-          <li style="--sample: var(--orange)" title="--orange"></li>
-          <li style="--sample: var(--yellow)" title="--yellow"></li>
-          <li style="--sample: var(--green)" title="--green"></li>
-          <li style="--sample: var(--cyan)" title="--cyan"></li>
-          <li style="--sample: var(--blue)" title="--blue"></li>
-          <li style="--sample: var(--purple)" title="--purple"></li>
-          <li style="--sample: var(--magenta)" title="--magenta"></li>
-        </ul>
-      </article>
-      <article class="preview-card" data-palette="kanagawa" data-scheme="dark">
-        <p class="preview-label">Kanagawa wave · dark</p>
-        <h3>Nightly build</h3>
-        <p>
-          Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
-          or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
-        </p>
-        <p class="preview-buttons">
-          <button type="button">Cancel</button>
-          <button type="button" class="button-blue">Deploy</button>
-          <button type="button" class="button-red">Delete</button>
-        </p>
-        <div class="field">
-          <label for="preview-kanagawa-dark-branch">Branch</label>
-          <input type="text" id="preview-kanagawa-dark-branch" value="main" />
         </div>
         <table class="table-striped">
           <thead>
@@ -530,6 +409,250 @@
         <div class="field">
           <label for="preview-catppuccin-dark-branch">Branch</label>
           <input type="text" id="preview-catppuccin-dark-branch" value="main" />
+        </div>
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Run</th>
+              <th scope="col">Status</th>
+              <th scope="col">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1204</td>
+              <td>passed</td>
+              <td>2m 14s</td>
+            </tr>
+            <tr>
+              <td>1205</td>
+              <td>failed</td>
+              <td>48s</td>
+            </tr>
+            <tr>
+              <td>1206</td>
+              <td>queued</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul class="preview-swatches">
+          <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+          <li style="--sample: var(--bg)" title="--bg"></li>
+          <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+          <li style="--sample: var(--border)" title="--border"></li>
+          <li style="--sample: var(--border-2)" title="--border-2"></li>
+          <li style="--sample: var(--fg)" title="--fg"></li>
+          <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+          <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+          <li style="--sample: var(--red)" title="--red"></li>
+          <li style="--sample: var(--orange)" title="--orange"></li>
+          <li style="--sample: var(--yellow)" title="--yellow"></li>
+          <li style="--sample: var(--green)" title="--green"></li>
+          <li style="--sample: var(--cyan)" title="--cyan"></li>
+          <li style="--sample: var(--blue)" title="--blue"></li>
+          <li style="--sample: var(--purple)" title="--purple"></li>
+          <li style="--sample: var(--magenta)" title="--magenta"></li>
+        </ul>
+      </article>
+      <article class="preview-card" data-palette="everforest" data-scheme="light">
+        <p class="preview-label">Everforest hard · light</p>
+        <h3>Nightly build</h3>
+        <p>
+          Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+          or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+        </p>
+        <p class="preview-buttons">
+          <button type="button">Cancel</button>
+          <button type="button" class="button-blue">Deploy</button>
+          <button type="button" class="button-red">Delete</button>
+        </p>
+        <div class="field">
+          <label for="preview-everforest-light-branch">Branch</label>
+          <input type="text" id="preview-everforest-light-branch" value="main" />
+        </div>
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Run</th>
+              <th scope="col">Status</th>
+              <th scope="col">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1204</td>
+              <td>passed</td>
+              <td>2m 14s</td>
+            </tr>
+            <tr>
+              <td>1205</td>
+              <td>failed</td>
+              <td>48s</td>
+            </tr>
+            <tr>
+              <td>1206</td>
+              <td>queued</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul class="preview-swatches">
+          <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+          <li style="--sample: var(--bg)" title="--bg"></li>
+          <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+          <li style="--sample: var(--border)" title="--border"></li>
+          <li style="--sample: var(--border-2)" title="--border-2"></li>
+          <li style="--sample: var(--fg)" title="--fg"></li>
+          <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+          <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+          <li style="--sample: var(--red)" title="--red"></li>
+          <li style="--sample: var(--orange)" title="--orange"></li>
+          <li style="--sample: var(--yellow)" title="--yellow"></li>
+          <li style="--sample: var(--green)" title="--green"></li>
+          <li style="--sample: var(--cyan)" title="--cyan"></li>
+          <li style="--sample: var(--blue)" title="--blue"></li>
+          <li style="--sample: var(--purple)" title="--purple"></li>
+          <li style="--sample: var(--magenta)" title="--magenta"></li>
+        </ul>
+      </article>
+      <article class="preview-card" data-palette="everforest" data-scheme="dark">
+        <p class="preview-label">Everforest hard · dark</p>
+        <h3>Nightly build</h3>
+        <p>
+          Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+          or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+        </p>
+        <p class="preview-buttons">
+          <button type="button">Cancel</button>
+          <button type="button" class="button-blue">Deploy</button>
+          <button type="button" class="button-red">Delete</button>
+        </p>
+        <div class="field">
+          <label for="preview-everforest-dark-branch">Branch</label>
+          <input type="text" id="preview-everforest-dark-branch" value="main" />
+        </div>
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Run</th>
+              <th scope="col">Status</th>
+              <th scope="col">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1204</td>
+              <td>passed</td>
+              <td>2m 14s</td>
+            </tr>
+            <tr>
+              <td>1205</td>
+              <td>failed</td>
+              <td>48s</td>
+            </tr>
+            <tr>
+              <td>1206</td>
+              <td>queued</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul class="preview-swatches">
+          <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+          <li style="--sample: var(--bg)" title="--bg"></li>
+          <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+          <li style="--sample: var(--border)" title="--border"></li>
+          <li style="--sample: var(--border-2)" title="--border-2"></li>
+          <li style="--sample: var(--fg)" title="--fg"></li>
+          <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+          <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+          <li style="--sample: var(--red)" title="--red"></li>
+          <li style="--sample: var(--orange)" title="--orange"></li>
+          <li style="--sample: var(--yellow)" title="--yellow"></li>
+          <li style="--sample: var(--green)" title="--green"></li>
+          <li style="--sample: var(--cyan)" title="--cyan"></li>
+          <li style="--sample: var(--blue)" title="--blue"></li>
+          <li style="--sample: var(--purple)" title="--purple"></li>
+          <li style="--sample: var(--magenta)" title="--magenta"></li>
+        </ul>
+      </article>
+      <article class="preview-card" data-palette="primer" data-scheme="light">
+        <p class="preview-label">Primer Light Default · light</p>
+        <h3>Nightly build</h3>
+        <p>
+          Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+          or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+        </p>
+        <p class="preview-buttons">
+          <button type="button">Cancel</button>
+          <button type="button" class="button-blue">Deploy</button>
+          <button type="button" class="button-red">Delete</button>
+        </p>
+        <div class="field">
+          <label for="preview-primer-light-branch">Branch</label>
+          <input type="text" id="preview-primer-light-branch" value="main" />
+        </div>
+        <table class="table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Run</th>
+              <th scope="col">Status</th>
+              <th scope="col">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1204</td>
+              <td>passed</td>
+              <td>2m 14s</td>
+            </tr>
+            <tr>
+              <td>1205</td>
+              <td>failed</td>
+              <td>48s</td>
+            </tr>
+            <tr>
+              <td>1206</td>
+              <td>queued</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul class="preview-swatches">
+          <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+          <li style="--sample: var(--bg)" title="--bg"></li>
+          <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+          <li style="--sample: var(--border)" title="--border"></li>
+          <li style="--sample: var(--border-2)" title="--border-2"></li>
+          <li style="--sample: var(--fg)" title="--fg"></li>
+          <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+          <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+          <li style="--sample: var(--red)" title="--red"></li>
+          <li style="--sample: var(--orange)" title="--orange"></li>
+          <li style="--sample: var(--yellow)" title="--yellow"></li>
+          <li style="--sample: var(--green)" title="--green"></li>
+          <li style="--sample: var(--cyan)" title="--cyan"></li>
+          <li style="--sample: var(--blue)" title="--blue"></li>
+          <li style="--sample: var(--purple)" title="--purple"></li>
+          <li style="--sample: var(--magenta)" title="--magenta"></li>
+        </ul>
+      </article>
+      <article class="preview-card" data-palette="primer" data-scheme="dark">
+        <p class="preview-label">Primer Dark Dimmed · dark</p>
+        <h3>Nightly build</h3>
+        <p>
+          Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+          or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+        </p>
+        <p class="preview-buttons">
+          <button type="button">Cancel</button>
+          <button type="button" class="button-blue">Deploy</button>
+          <button type="button" class="button-red">Delete</button>
+        </p>
+        <div class="field">
+          <label for="preview-primer-dark-branch">Branch</label>
+          <input type="text" id="preview-primer-dark-branch" value="main" />
         </div>
         <table class="table-striped">
           <thead>

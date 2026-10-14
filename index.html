@@ -17,14 +17,15 @@
          are this page's, and none of it is the baseline. What sits inside each cell, under its
          label, is the baseline alone. Samples read the token they show from --sample.
 
-         The page links the lean entry, which holds Flexoki, and imports the three profiles past
+         The page links the lean entry, which holds Flexoki, and imports the four profiles past
          the default into the color sub-layer, as a consumer of the profile exports would, so its
          comparison grid and contrast records can name each profile. */
       @layer spike-html-design, specimen;
 
-      @import url(./layers/tokens/color/kanagawa.css) layer(spike-html-design.tokens.color);
       @import url(./layers/tokens/color/tokyo-night.css) layer(spike-html-design.tokens.color);
       @import url(./layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
+      @import url(./layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
+      @import url(./layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
 
       @layer specimen {
         /* The page: one centered column, capped, inside gutters. */
@@ -442,7 +443,7 @@
   <body>
     <header>
       <h1>spike-html-design</h1>
-      <p class="meta"><small>Specimen · four color profiles, light and dark</small></p>
+      <p class="meta"><small>Specimen · five color profiles, light and dark</small></p>
       <p>
         The baseline's tokens, every element its elements layer styles, and its tools, rendered
         by <code>baseline.css</code> alone. It follows the system scheme; a
@@ -1571,128 +1572,6 @@ const answer = 42;</code></pre>
               <li style="--sample: var(--magenta)" title="--magenta"></li>
             </ul>
           </article>
-          <article class="preview-card" data-palette="kanagawa" data-scheme="light">
-            <p class="preview-label">Kanagawa lotus · light</p>
-            <h3>Nightly build</h3>
-            <p>
-              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
-              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
-            </p>
-            <p class="preview-buttons">
-              <button type="button">Cancel</button>
-              <button type="button" class="button-blue">Deploy</button>
-              <button type="button" class="button-red">Delete</button>
-            </p>
-            <div class="field">
-              <label for="preview-kanagawa-light-branch">Branch</label>
-              <input type="text" id="preview-kanagawa-light-branch" value="main" />
-            </div>
-            <table class="table-striped">
-              <thead>
-                <tr>
-                  <th scope="col">Run</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1204</td>
-                  <td>passed</td>
-                  <td>2m 14s</td>
-                </tr>
-                <tr>
-                  <td>1205</td>
-                  <td>failed</td>
-                  <td>48s</td>
-                </tr>
-                <tr>
-                  <td>1206</td>
-                  <td>queued</td>
-                  <td>—</td>
-                </tr>
-              </tbody>
-            </table>
-            <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
-              <li style="--sample: var(--bg)" title="--bg"></li>
-              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
-              <li style="--sample: var(--border)" title="--border"></li>
-              <li style="--sample: var(--border-2)" title="--border-2"></li>
-              <li style="--sample: var(--fg)" title="--fg"></li>
-              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
-              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
-              <li style="--sample: var(--red)" title="--red"></li>
-              <li style="--sample: var(--orange)" title="--orange"></li>
-              <li style="--sample: var(--yellow)" title="--yellow"></li>
-              <li style="--sample: var(--green)" title="--green"></li>
-              <li style="--sample: var(--cyan)" title="--cyan"></li>
-              <li style="--sample: var(--blue)" title="--blue"></li>
-              <li style="--sample: var(--purple)" title="--purple"></li>
-              <li style="--sample: var(--magenta)" title="--magenta"></li>
-            </ul>
-          </article>
-          <article class="preview-card" data-palette="kanagawa" data-scheme="dark">
-            <p class="preview-label">Kanagawa wave · dark</p>
-            <h3>Nightly build</h3>
-            <p>
-              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
-              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
-            </p>
-            <p class="preview-buttons">
-              <button type="button">Cancel</button>
-              <button type="button" class="button-blue">Deploy</button>
-              <button type="button" class="button-red">Delete</button>
-            </p>
-            <div class="field">
-              <label for="preview-kanagawa-dark-branch">Branch</label>
-              <input type="text" id="preview-kanagawa-dark-branch" value="main" />
-            </div>
-            <table class="table-striped">
-              <thead>
-                <tr>
-                  <th scope="col">Run</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1204</td>
-                  <td>passed</td>
-                  <td>2m 14s</td>
-                </tr>
-                <tr>
-                  <td>1205</td>
-                  <td>failed</td>
-                  <td>48s</td>
-                </tr>
-                <tr>
-                  <td>1206</td>
-                  <td>queued</td>
-                  <td>—</td>
-                </tr>
-              </tbody>
-            </table>
-            <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
-              <li style="--sample: var(--bg)" title="--bg"></li>
-              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
-              <li style="--sample: var(--border)" title="--border"></li>
-              <li style="--sample: var(--border-2)" title="--border-2"></li>
-              <li style="--sample: var(--fg)" title="--fg"></li>
-              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
-              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
-              <li style="--sample: var(--red)" title="--red"></li>
-              <li style="--sample: var(--orange)" title="--orange"></li>
-              <li style="--sample: var(--yellow)" title="--yellow"></li>
-              <li style="--sample: var(--green)" title="--green"></li>
-              <li style="--sample: var(--cyan)" title="--cyan"></li>
-              <li style="--sample: var(--blue)" title="--blue"></li>
-              <li style="--sample: var(--purple)" title="--purple"></li>
-              <li style="--sample: var(--magenta)" title="--magenta"></li>
-            </ul>
-          </article>
           <article class="preview-card" data-palette="tokyo-night" data-scheme="light">
             <p class="preview-label">Tokyo Night day · light</p>
             <h3>Nightly build</h3>
@@ -1891,6 +1770,250 @@ const answer = 42;</code></pre>
             <div class="field">
               <label for="preview-catppuccin-dark-branch">Branch</label>
               <input type="text" id="preview-catppuccin-dark-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="everforest" data-scheme="light">
+            <p class="preview-label">Everforest hard · light</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-everforest-light-branch">Branch</label>
+              <input type="text" id="preview-everforest-light-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="everforest" data-scheme="dark">
+            <p class="preview-label">Everforest hard · dark</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-everforest-dark-branch">Branch</label>
+              <input type="text" id="preview-everforest-dark-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="primer" data-scheme="light">
+            <p class="preview-label">Primer Light Default · light</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-primer-light-branch">Branch</label>
+              <input type="text" id="preview-primer-light-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="primer" data-scheme="dark">
+            <p class="preview-label">Primer Dark Dimmed · dark</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-primer-dark-branch">Branch</label>
+              <input type="text" id="preview-primer-dark-branch" value="main" />
             </div>
             <table class="table-striped">
               <thead>
@@ -2179,228 +2302,6 @@ const answer = 42;</code></pre>
                     <td>4.00 <span>AA-L</span></td>
                     <td>3.39 <span>AA-L</span></td>
                     <td>2.86 <span>fail</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="cell" data-palette="kanagawa" data-scheme="light">
-            <div class="label">Kanagawa, light (lotus)</div>
-            <div class="scroll-x">
-              <table id="contrast-kanagawa-light">
-                <caption>
-                  Kanagawa, light: the WCAG 2 contrast ratio of each text token and hue over
-                  each surface and border.
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
-                    <th scope="col"><code>--bg</code></th>
-                    <th scope="col"><code>--bg-2</code></th>
-                    <th scope="col"><code>--border</code></th>
-                    <th scope="col"><code>--border-2</code></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row"><code>--fg</code></th>
-                    <td>5.41 <span>AA</span></td>
-                    <td>6.19 <span>AA</span></td>
-                    <td>5.32 <span>AA</span></td>
-                    <td>5.11 <span>AA</span></td>
-                    <td>2.77 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--fg-2</code></th>
-                    <td>3.73 <span>AA-L</span></td>
-                    <td>4.26 <span>AA-L</span></td>
-                    <td>3.66 <span>AA-L</span></td>
-                    <td>3.52 <span>AA-L</span></td>
-                    <td>1.91 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--fg-3</code></th>
-                    <td>2.56 <span>fail</span></td>
-                    <td>2.93 <span>fail</span></td>
-                    <td>2.52 <span>fail</span></td>
-                    <td>2.42 <span>fail</span></td>
-                    <td>1.31 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--red</code></th>
-                    <td>3.55 <span>AA-L</span></td>
-                    <td>4.06 <span>AA-L</span></td>
-                    <td>3.49 <span>AA-L</span></td>
-                    <td>3.35 <span>AA-L</span></td>
-                    <td>1.82 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--orange</code></th>
-                    <td>1.89 <span>fail</span></td>
-                    <td>2.16 <span>fail</span></td>
-                    <td>1.86 <span>fail</span></td>
-                    <td>1.78 <span>fail</span></td>
-                    <td>1.03 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--yellow</code></th>
-                    <td>1.78 <span>fail</span></td>
-                    <td>2.04 <span>fail</span></td>
-                    <td>1.75 <span>fail</span></td>
-                    <td>1.68 <span>fail</span></td>
-                    <td>1.10 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--green</code></th>
-                    <td>2.85 <span>fail</span></td>
-                    <td>3.26 <span>AA-L</span></td>
-                    <td>2.80 <span>fail</span></td>
-                    <td>2.69 <span>fail</span></td>
-                    <td>1.46 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--cyan</code></th>
-                    <td>3.39 <span>AA-L</span></td>
-                    <td>3.88 <span>AA-L</span></td>
-                    <td>3.33 <span>AA-L</span></td>
-                    <td>3.20 <span>AA-L</span></td>
-                    <td>1.74 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--blue</code></th>
-                    <td>4.02 <span>AA-L</span></td>
-                    <td>4.59 <span>AA</span></td>
-                    <td>3.95 <span>AA-L</span></td>
-                    <td>3.79 <span>AA-L</span></td>
-                    <td>2.06 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--purple</code></th>
-                    <td>5.31 <span>AA</span></td>
-                    <td>6.07 <span>AA</span></td>
-                    <td>5.22 <span>AA</span></td>
-                    <td>5.01 <span>AA</span></td>
-                    <td>2.72 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--magenta</code></th>
-                    <td>3.26 <span>AA-L</span></td>
-                    <td>3.73 <span>AA-L</span></td>
-                    <td>3.21 <span>AA-L</span></td>
-                    <td>3.08 <span>AA-L</span></td>
-                    <td>1.67 <span>fail</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="cell" data-palette="kanagawa" data-scheme="dark">
-            <div class="label">Kanagawa, dark (wave)</div>
-            <div class="scroll-x">
-              <table id="contrast-kanagawa-dark">
-                <caption>
-                  Kanagawa, dark: the WCAG 2 contrast ratio of each text token and hue over
-                  each surface and border.
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
-                    <th scope="col"><code>--bg</code></th>
-                    <th scope="col"><code>--bg-2</code></th>
-                    <th scope="col"><code>--border</code></th>
-                    <th scope="col"><code>--border-2</code></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row"><code>--fg</code></th>
-                    <td>11.91 <span>AA</span></td>
-                    <td>11.26 <span>AA</span></td>
-                    <td>9.75 <span>AA</span></td>
-                    <td>8.16 <span>AA</span></td>
-                    <td>5.05 <span>AA</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--fg-2</code></th>
-                    <td>9.40 <span>AA</span></td>
-                    <td>8.89 <span>AA</span></td>
-                    <td>7.69 <span>AA</span></td>
-                    <td>6.44 <span>AA</span></td>
-                    <td>3.98 <span>AA-L</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--fg-3</code></th>
-                    <td>3.52 <span>AA-L</span></td>
-                    <td>3.33 <span>AA-L</span></td>
-                    <td>2.88 <span>fail</span></td>
-                    <td>2.41 <span>fail</span></td>
-                    <td>1.49 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--red</code></th>
-                    <td>3.40 <span>AA-L</span></td>
-                    <td>3.22 <span>AA-L</span></td>
-                    <td>2.78 <span>fail</span></td>
-                    <td>2.33 <span>fail</span></td>
-                    <td>1.44 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--orange</code></th>
-                    <td>8.62 <span>AA</span></td>
-                    <td>8.15 <span>AA</span></td>
-                    <td>7.05 <span>AA</span></td>
-                    <td>5.91 <span>AA</span></td>
-                    <td>3.65 <span>AA-L</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--yellow</code></th>
-                    <td>7.17 <span>AA</span></td>
-                    <td>6.78 <span>AA</span></td>
-                    <td>5.86 <span>AA</span></td>
-                    <td>4.91 <span>AA</span></td>
-                    <td>3.04 <span>AA-L</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--green</code></th>
-                    <td>5.12 <span>AA</span></td>
-                    <td>4.84 <span>AA</span></td>
-                    <td>4.19 <span>AA-L</span></td>
-                    <td>3.51 <span>AA-L</span></td>
-                    <td>2.17 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--cyan</code></th>
-                    <td>5.16 <span>AA</span></td>
-                    <td>4.88 <span>AA</span></td>
-                    <td>4.22 <span>AA-L</span></td>
-                    <td>3.54 <span>AA-L</span></td>
-                    <td>2.19 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--blue</code></th>
-                    <td>6.28 <span>AA</span></td>
-                    <td>5.94 <span>AA</span></td>
-                    <td>5.14 <span>AA</span></td>
-                    <td>4.31 <span>AA-L</span></td>
-                    <td>2.66 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--purple</code></th>
-                    <td>4.94 <span>AA</span></td>
-                    <td>4.67 <span>AA</span></td>
-                    <td>4.04 <span>AA-L</span></td>
-                    <td>3.39 <span>AA-L</span></td>
-                    <td>2.10 <span>fail</span></td>
-                  </tr>
-                  <tr>
-                    <th scope="row"><code>--magenta</code></th>
-                    <td>5.91 <span>AA</span></td>
-                    <td>5.59 <span>AA</span></td>
-                    <td>4.84 <span>AA</span></td>
-                    <td>4.05 <span>AA-L</span></td>
-                    <td>2.51 <span>fail</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -2845,6 +2746,450 @@ const answer = 42;</code></pre>
                     <td>8.23 <span>AA</span></td>
                     <td>5.97 <span>AA</span></td>
                     <td>3.20 <span>AA-L</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="everforest" data-scheme="light">
+            <div class="label">Everforest, light (hard)</div>
+            <div class="scroll-x">
+              <table id="contrast-everforest-light">
+                <caption>
+                  Everforest, light: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>4.84 <span>AA</span></td>
+                    <td>5.40 <span>AA</span></td>
+                    <td>5.10 <span>AA</span></td>
+                    <td>4.62 <span>AA</span></td>
+                    <td>3.14 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>2.88 <span>fail</span></td>
+                    <td>3.21 <span>AA-L</span></td>
+                    <td>3.04 <span>AA-L</span></td>
+                    <td>2.75 <span>fail</span></td>
+                    <td>1.87 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>2.39 <span>fail</span></td>
+                    <td>2.67 <span>fail</span></td>
+                    <td>2.52 <span>fail</span></td>
+                    <td>2.28 <span>fail</span></td>
+                    <td>1.55 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>2.84 <span>fail</span></td>
+                    <td>3.17 <span>AA-L</span></td>
+                    <td>2.99 <span>fail</span></td>
+                    <td>2.71 <span>fail</span></td>
+                    <td>1.84 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>2.32 <span>fail</span></td>
+                    <td>2.59 <span>fail</span></td>
+                    <td>2.44 <span>fail</span></td>
+                    <td>2.22 <span>fail</span></td>
+                    <td>1.51 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>1.98 <span>fail</span></td>
+                    <td>2.21 <span>fail</span></td>
+                    <td>2.09 <span>fail</span></td>
+                    <td>1.90 <span>fail</span></td>
+                    <td>1.29 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>2.52 <span>fail</span></td>
+                    <td>2.81 <span>fail</span></td>
+                    <td>2.65 <span>fail</span></td>
+                    <td>2.40 <span>fail</span></td>
+                    <td>1.63 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>2.61 <span>fail</span></td>
+                    <td>2.91 <span>fail</span></td>
+                    <td>2.75 <span>fail</span></td>
+                    <td>2.49 <span>fail</span></td>
+                    <td>1.70 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>2.92 <span>fail</span></td>
+                    <td>3.26 <span>AA-L</span></td>
+                    <td>3.08 <span>AA-L</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>1.90 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>2.65 <span>fail</span></td>
+                    <td>2.96 <span>fail</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>2.53 <span>fail</span></td>
+                    <td>1.72 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>2.65 <span>fail</span></td>
+                    <td>2.96 <span>fail</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>2.53 <span>fail</span></td>
+                    <td>1.72 <span>fail</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="everforest" data-scheme="dark">
+            <div class="label">Everforest, dark (hard)</div>
+            <div class="scroll-x">
+              <table id="contrast-everforest-dark">
+                <caption>
+                  Everforest, dark: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>9.39 <span>AA</span></td>
+                    <td>8.15 <span>AA</span></td>
+                    <td>7.11 <span>AA</span></td>
+                    <td>6.20 <span>AA</span></td>
+                    <td>4.18 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>6.51 <span>AA</span></td>
+                    <td>5.65 <span>AA</span></td>
+                    <td>4.93 <span>AA</span></td>
+                    <td>4.30 <span>AA-L</span></td>
+                    <td>2.90 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>4.89 <span>AA</span></td>
+                    <td>4.24 <span>AA-L</span></td>
+                    <td>3.70 <span>AA-L</span></td>
+                    <td>3.23 <span>AA-L</span></td>
+                    <td>2.18 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>5.79 <span>AA</span></td>
+                    <td>5.02 <span>AA</span></td>
+                    <td>4.38 <span>AA-L</span></td>
+                    <td>3.82 <span>AA-L</span></td>
+                    <td>2.58 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>6.88 <span>AA</span></td>
+                    <td>5.98 <span>AA</span></td>
+                    <td>5.22 <span>AA</span></td>
+                    <td>4.55 <span>AA</span></td>
+                    <td>3.07 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>8.70 <span>AA</span></td>
+                    <td>7.55 <span>AA</span></td>
+                    <td>6.59 <span>AA</span></td>
+                    <td>5.74 <span>AA</span></td>
+                    <td>3.88 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>7.93 <span>AA</span></td>
+                    <td>6.88 <span>AA</span></td>
+                    <td>6.01 <span>AA</span></td>
+                    <td>5.24 <span>AA</span></td>
+                    <td>3.53 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>7.49 <span>AA</span></td>
+                    <td>6.51 <span>AA</span></td>
+                    <td>5.68 <span>AA</span></td>
+                    <td>4.95 <span>AA</span></td>
+                    <td>3.34 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>7.30 <span>AA</span></td>
+                    <td>6.34 <span>AA</span></td>
+                    <td>5.53 <span>AA</span></td>
+                    <td>4.82 <span>AA</span></td>
+                    <td>3.25 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>6.87 <span>AA</span></td>
+                    <td>5.96 <span>AA</span></td>
+                    <td>5.20 <span>AA</span></td>
+                    <td>4.54 <span>AA</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>6.87 <span>AA</span></td>
+                    <td>5.96 <span>AA</span></td>
+                    <td>5.20 <span>AA</span></td>
+                    <td>4.54 <span>AA</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="primer" data-scheme="light">
+            <div class="label">Primer, light (Light Default)</div>
+            <div class="scroll-x">
+              <table id="contrast-primer-light">
+                <caption>
+                  Primer, light: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>14.84 <span>AA</span></td>
+                    <td>15.80 <span>AA</span></td>
+                    <td>13.55 <span>AA</span></td>
+                    <td>11.65 <span>AA</span></td>
+                    <td>10.88 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>4.93 <span>AA</span></td>
+                    <td>5.25 <span>AA</span></td>
+                    <td>4.50 <span>AA-L</span></td>
+                    <td>3.87 <span>AA-L</span></td>
+                    <td>3.61 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>4.27 <span>AA-L</span></td>
+                    <td>4.55 <span>AA</span></td>
+                    <td>3.90 <span>AA-L</span></td>
+                    <td>3.35 <span>AA-L</span></td>
+                    <td>3.13 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>5.03 <span>AA</span></td>
+                    <td>5.36 <span>AA</span></td>
+                    <td>4.59 <span>AA</span></td>
+                    <td>3.95 <span>AA-L</span></td>
+                    <td>3.69 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>4.73 <span>AA</span></td>
+                    <td>5.03 <span>AA</span></td>
+                    <td>4.32 <span>AA-L</span></td>
+                    <td>3.71 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>4.57 <span>AA</span></td>
+                    <td>4.87 <span>AA</span></td>
+                    <td>4.17 <span>AA-L</span></td>
+                    <td>3.59 <span>AA-L</span></td>
+                    <td>3.35 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>4.77 <span>AA</span></td>
+                    <td>5.08 <span>AA</span></td>
+                    <td>4.36 <span>AA-L</span></td>
+                    <td>3.75 <span>AA-L</span></td>
+                    <td>3.50 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>4.63 <span>AA</span></td>
+                    <td>4.93 <span>AA</span></td>
+                    <td>4.23 <span>AA-L</span></td>
+                    <td>3.64 <span>AA-L</span></td>
+                    <td>3.40 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>4.88 <span>AA</span></td>
+                    <td>5.19 <span>AA</span></td>
+                    <td>4.45 <span>AA-L</span></td>
+                    <td>3.83 <span>AA-L</span></td>
+                    <td>3.57 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>4.74 <span>AA</span></td>
+                    <td>5.05 <span>AA</span></td>
+                    <td>4.33 <span>AA-L</span></td>
+                    <td>3.72 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>4.74 <span>AA</span></td>
+                    <td>5.05 <span>AA</span></td>
+                    <td>4.33 <span>AA-L</span></td>
+                    <td>3.72 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="primer" data-scheme="dark">
+            <div class="label">Primer, dark (Dark Dimmed)</div>
+            <div class="scroll-x">
+              <table id="contrast-primer-dark">
+                <caption>
+                  Primer, dark: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>8.19 <span>AA</span></td>
+                    <td>7.60 <span>AA</span></td>
+                    <td>6.45 <span>AA</span></td>
+                    <td>5.47 <span>AA</span></td>
+                    <td>4.40 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>4.18 <span>AA-L</span></td>
+                    <td>3.88 <span>AA-L</span></td>
+                    <td>3.29 <span>AA-L</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>2.25 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>3.12 <span>AA-L</span></td>
+                    <td>2.90 <span>fail</span></td>
+                    <td>2.46 <span>fail</span></td>
+                    <td>2.08 <span>fail</span></td>
+                    <td>1.68 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>4.37 <span>AA-L</span></td>
+                    <td>4.06 <span>AA-L</span></td>
+                    <td>3.44 <span>AA-L</span></td>
+                    <td>2.92 <span>fail</span></td>
+                    <td>2.35 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>4.40 <span>AA-L</span></td>
+                    <td>4.08 <span>AA-L</span></td>
+                    <td>3.46 <span>AA-L</span></td>
+                    <td>2.94 <span>fail</span></td>
+                    <td>2.36 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>5.72 <span>AA</span></td>
+                    <td>5.31 <span>AA</span></td>
+                    <td>4.50 <span>AA</span></td>
+                    <td>3.82 <span>AA-L</span></td>
+                    <td>3.07 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>5.69 <span>AA</span></td>
+                    <td>5.28 <span>AA</span></td>
+                    <td>4.48 <span>AA-L</span></td>
+                    <td>3.80 <span>AA-L</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>7.75 <span>AA</span></td>
+                    <td>7.20 <span>AA</span></td>
+                    <td>6.10 <span>AA</span></td>
+                    <td>5.18 <span>AA</span></td>
+                    <td>4.17 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>5.68 <span>AA</span></td>
+                    <td>5.28 <span>AA</span></td>
+                    <td>4.47 <span>AA-L</span></td>
+                    <td>3.80 <span>AA-L</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>4.36 <span>AA-L</span></td>
+                    <td>4.05 <span>AA-L</span></td>
+                    <td>3.44 <span>AA-L</span></td>
+                    <td>2.92 <span>fail</span></td>
+                    <td>2.35 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>4.35 <span>AA-L</span></td>
+                    <td>4.04 <span>AA-L</span></td>
+                    <td>3.43 <span>AA-L</span></td>
+                    <td>2.91 <span>fail</span></td>
+                    <td>2.34 <span>fail</span></td>
                   </tr>
                 </tbody>
               </table>

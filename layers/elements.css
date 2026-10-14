@@ -24,8 +24,8 @@
  * border and outline widths read the line tokens. Colors read tiers and hues by name, apart from
  * three hooks below; the native button is neutral, built from tiers alone. Control boundaries
  * (text fields, selects, buttons, dialogs, kbd) take --border-2; dividers and containers take
- * --border; table headers and inline code sit on the element surface, --bg-2. Everything is
- * flat: borders, no shadows, no gradients.
+ * --border; table headers sit on the element surface, --bg-2. Everything is flat: borders, no
+ * shadows, no gradients.
  *
  * The hooks are public API, frozen with each tag. Each is a custom property this layer reads with
  * a fallback and never declares, nor does any profile, so a consumer sets one on any element, in
@@ -35,7 +35,7 @@
  *                        mix, and the hover border of text fields, selects, text areas and
  *                        neutral buttons (the tools layer's .button reads it too); by default
  *                        --blue.
- *   --code-color         inline code's text; by default --fg.
+ *   --code-color         inline code's text; by default --green.
  *   --kbd-color          kbd's border and text; by default --border-2 for the border and --fg
  *                        for the text.
  *
@@ -205,9 +205,11 @@
   margin-block-start: var(--space-3xs);
 }
 
+/* A quotation's start edge is a neutral rule, the control boundary's step: the interaction color
+   marks only what can be acted on. */
 :where(blockquote) {
   padding-inline-start: var(--space-s);
-  border-inline-start: var(--line-m) solid var(--border);
+  border-inline-start: var(--line-m) solid var(--border-2);
   color: var(--fg-2);
 }
 
@@ -256,13 +258,11 @@
   font-size: inherit;
 }
 
-/* Inline code is a chip: the element surface, a little room at either end, and no border. Code
-   inside a pre is the block's, and stays plain. */
-:where(code:not(pre code)) {
-  padding: 0 var(--space-3xs);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-2);
-  color: var(--code-color, var(--fg));
+/* Inline code is colored text, with no chip: the code font, read in --code-color, green by
+   default. Code inside a pre is the block's, and stays plain; code inside a link is the link's,
+   so it inherits the link's color, and the link's underline runs under it. */
+:where(code:not(pre code, a code)) {
+  color: var(--code-color, var(--green));
 }
 
 /* A key is outlined, with a heavier bottom edge, over no fill. All key-hint styling is kbd's: a
@@ -444,11 +444,18 @@
 }
 
 :where(dialog) {
-  padding: var(--space-m);
+  padding: var(--space-s);
   border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-md);
   background-color: var(--bg);
   color: var(--fg);
+}
+
+/* A dialog's actions, its last block when it is a form, a menu or a footer after other content,
+   as a form method="dialog" holding the close button is, sit --space-m below the content: more
+   than the --space-s between blocks, and space where a form would otherwise get none. */
+:where(dialog > :is(form, menu, footer):last-child:not(:first-child)) {
+  margin-block-start: var(--space-m);
 }
 
 /* A modal dialog veils the page in its own surface, so the page behind recedes in either

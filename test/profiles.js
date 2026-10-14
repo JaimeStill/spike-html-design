@@ -85,79 +85,6 @@ export const COLOR_PROFILES = {
       ],
     },
   },
-  kanagawa: {
-    title: "Kanagawa",
-    source: "https://github.com/rebelot/kanagawa.nvim",
-    license: "MIT",
-    version: "commit bb85e4b",
-    variants: ["lotus", "wave"],
-    tokens: {
-      "--bg-0": [
-        ["lotusWhite2", "#e5ddb0"],
-        ["sumiInk2", "#1a1a22"],
-      ],
-      "--bg": [
-        ["lotusWhite3", "#f2ecbc"],
-        ["sumiInk3", "#1f1f28"],
-      ],
-      "--bg-2": [
-        ["lotusWhite4", "#e7dba0"],
-        ["sumiInk4", "#2a2a37"],
-      ],
-      "--border": [
-        ["lotusWhite5", "#e4d794"],
-        ["sumiInk5", "#363646"],
-      ],
-      "--border-2": [
-        ["lotusViolet1", "#a09cac"],
-        ["sumiInk6", "#54546d"],
-      ],
-      "--fg": [
-        ["lotusInk1", "#545464"],
-        ["fujiWhite", "#dcd7ba"],
-      ],
-      "--fg-2": [
-        ["lotusGray2", "#716e61"],
-        ["oldWhite", "#c8c093"],
-      ],
-      "--fg-3": [
-        ["lotusGray3", "#8a8980"],
-        ["fujiGray", "#727169"],
-      ],
-      "--red": [
-        ["lotusRed", "#c84053"],
-        ["autumnRed", "#c34043"],
-      ],
-      "--orange": [
-        ["lotusOrange2", "#e98a00"],
-        ["surimiOrange", "#ffa066"],
-      ],
-      "--yellow": [
-        ["lotusYellow3", "#de9800"],
-        ["boatYellow2", "#c0a36e"],
-      ],
-      "--green": [
-        ["lotusGreen", "#6f894e"],
-        ["autumnGreen", "#76946a"],
-      ],
-      "--cyan": [
-        ["lotusAqua", "#597b75"],
-        ["waveAqua1", "#6a9589"],
-      ],
-      "--blue": [
-        ["lotusBlue4", "#4d699b"],
-        ["crystalBlue", "#7e9cd8"],
-      ],
-      "--purple": [
-        ["lotusViolet4", "#624c83"],
-        ["oniViolet", "#957fb8"],
-      ],
-      "--magenta": [
-        ["lotusPink", "#b35b79"],
-        ["sakuraPink", "#d27e99"],
-      ],
-    },
-  },
   "tokyo-night": {
     title: "Tokyo Night",
     source: "https://github.com/folke/tokyonight.nvim",
@@ -301,6 +228,152 @@ export const COLOR_PROFILES = {
       "--magenta": [
         ["pink", "#ea76cb"],
         ["pink", "#f5c2e7"],
+      ],
+    },
+  },
+  everforest: {
+    title: "Everforest",
+    source: "https://github.com/sainnhe/everforest",
+    license: "MIT",
+    version: "v0.3.0",
+    variants: ["hard", "hard"],
+    tokens: {
+      "--bg-0": [
+        ["bg_dim", "#f2efdf"],
+        ["bg_dim", "#1e2326"],
+      ],
+      "--bg": [
+        ["bg0", "#fffbef"],
+        ["bg0", "#272e33"],
+      ],
+      "--bg-2": [
+        ["bg1", "#f8f5e4"],
+        ["bg1", "#2e383c"],
+      ],
+      "--border": [
+        ["bg3", "#edeada"],
+        ["bg2", "#374145"],
+      ],
+      "--border-2": [
+        ["bg5", "#bec5b2"],
+        ["bg5", "#4f5b58"],
+      ],
+      "--fg": [
+        ["fg", "#5c6a72"],
+        ["fg", "#d3c6aa"],
+      ],
+      "--fg-2": [
+        ["grey2", "#829181"],
+        ["grey2", "#9da9a0"],
+      ],
+      "--fg-3": [
+        ["grey1", "#939f91"],
+        ["grey1", "#859289"],
+      ],
+      "--red": [
+        ["red", "#f85552"],
+        ["red", "#e67e80"],
+      ],
+      "--orange": [
+        ["orange", "#f57d26"],
+        ["orange", "#e69875"],
+      ],
+      "--yellow": [
+        ["yellow", "#dfa000"],
+        ["yellow", "#dbbc7f"],
+      ],
+      "--green": [
+        ["green", "#8da101"],
+        ["green", "#a7c080"],
+      ],
+      "--cyan": [
+        ["aqua", "#35a77c"],
+        ["aqua", "#83c092"],
+      ],
+      "--blue": [
+        ["blue", "#3a94c5"],
+        ["blue", "#7fbbb3"],
+      ],
+      "--purple": [
+        ["purple", "#df69ba"],
+        ["purple", "#d699b6"],
+      ],
+      "--magenta": [
+        ["purple", "#df69ba"],
+        ["purple", "#d699b6"],
+      ],
+    },
+  },
+  primer: {
+    title: "Primer",
+    source: "https://github.com/primer/github-vscode-theme",
+    license: "MIT",
+    version: "v6.3.5",
+    variants: ["GitHub Light Default", "GitHub Dark Dimmed"],
+    tokens: {
+      "--bg-0": [
+        ["canvas.inset", "#f6f8fa"],
+        ["canvas.inset", "#1c2128"],
+      ],
+      "--bg": [
+        ["canvas.default", "#ffffff"],
+        ["canvas.default", "#22272e"],
+      ],
+      "--bg-2": [
+        ["scale.gray[1]", "#eaeef2"],
+        ["canvas.subtle", "#2d333b"],
+      ],
+      "--border": [
+        ["border.muted", "#d8dee4"],
+        ["border.muted", "#373e47"],
+      ],
+      "--border-2": [
+        ["border.default", "#d0d7de"],
+        ["border.default", "#444c56"],
+      ],
+      "--fg": [
+        ["fg.default", "#1f2328"],
+        ["fg.default", "#adbac7"],
+      ],
+      "--fg-2": [
+        ["fg.muted", "#656d76"],
+        ["fg.muted", "#768390"],
+      ],
+      "--fg-3": [
+        ["fg.subtle", "#6e7781"],
+        ["fg.subtle", "#636e7b"],
+      ],
+      "--red": [
+        ["danger.fg", "#cf222e"],
+        ["danger.fg", "#e5534b"],
+      ],
+      "--orange": [
+        ["severe.fg", "#bc4c00"],
+        ["severe.fg", "#cc6b2c"],
+      ],
+      "--yellow": [
+        ["attention.fg", "#9a6700"],
+        ["attention.fg", "#c69026"],
+      ],
+      "--green": [
+        ["success.fg", "#1a7f37"],
+        ["success.fg", "#57ab5a"],
+      ],
+      "--cyan": [
+        ["ansi.cyan", "#1b7c83"],
+        ["ansi.cyan", "#39c5cf"],
+      ],
+      "--blue": [
+        ["accent.fg", "#0969da"],
+        ["accent.fg", "#539bf5"],
+      ],
+      "--purple": [
+        ["done.fg", "#8250df"],
+        ["done.fg", "#986ee2"],
+      ],
+      "--magenta": [
+        ["sponsors.fg", "#bf3989"],
+        ["sponsors.fg", "#c96198"],
       ],
     },
   },

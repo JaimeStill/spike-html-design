@@ -1072,7 +1072,7 @@ describe("color profiles", () => {
       expect(await resolveColors(page, "body")).toEqual(catppuccin);
       expect(await paint(page, "body")).toEqual([catppuccin["--fg"], catppuccin["--bg"]]);
       // A profile the page didn't import names nothing: its scope keeps the root's tokens.
-      expect(await resolveColors(page, "#kanagawa p")).toEqual(catppuccin);
+      expect(await resolveColors(page, "#everforest p")).toEqual(catppuccin);
     }
   });
 });
@@ -1602,7 +1602,10 @@ describe("elements", () => {
     for (const cell of ["th", "td"]) {
       expect(await page.style(`#prose ${cell}`, "border-top")).toBe(`1px solid ${divider}`);
     }
-    expect(await page.style("#prose blockquote", "border-left")).toBe(`2px solid ${divider}`);
+    // A quotation's edge is neutral, the control boundary's step, not the interaction color.
+    expect(await page.style("#prose blockquote", "border-left")).toBe(
+      `2px solid ${COLORS["--border-2"][0]}`,
+    );
     expect(await page.style("#prose hr", "border-top")).toBe(`1px solid ${divider}`);
     expect(await page.style("#prose hr", "border-bottom-width")).toBe("0px");
     expect(await page.style("#prose pre", "border-top")).toBe(`1px solid ${divider}`);
@@ -1888,42 +1891,82 @@ describe("element hooks", () => {
     }
   });
 
-  test("inline code is a chip on the element surface; code in a pre is not", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const chip = (selector) =>
-      page.evaluate(`(() => {
-        const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
-        return [style.backgroundColor, style.paddingLeft, style.paddingRight, style.paddingTop,
-          style.borderTopLeftRadius, style.borderTopWidth, style.color];
-      })()`);
-    const inline = "#prose p > code";
-    expect(await chip(inline)).toEqual([
-      COLORS["--bg-2"][0],
-      `${await resolveToken(page, "--space-3xs", "length")}px`,
-      `${await resolveToken(page, "--space-3xs", "length")}px`,
-      "0px",
-      `${await resolveToken(page, "--radius-sm", "length")}px`,
-      "0px",
-      COLORS["--fg"][0],
-    ]);
-    const block = "#prose pre > code";
-    expect(await chip(block)).toEqual([
-      "rgba(0, 0, 0, 0)",
-      "0px",
-      "0px",
-      "0px",
-      "0px",
-      "0px",
-      await page.style("#prose pre", "color"),
-    ]);
-  });
+  // chip reads, in the page, what would make an element a chip: its background, its paddings,
+  // its radius and its border, then its color.
+  const chip = (page, selector) =>
+    page.evaluate(`(() => {
+      const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+      return [style.backgroundColor, style.paddingLeft, style.paddingRight, style.paddingTop,
+        style.borderTopLeftRadius, style.borderTopWidth, style.color];
+    })()`);
+  const PLAIN = ["rgba(0, 0, 0, 0)", "0px", "0px", "0px", "0px", "0px"];
+
+  // linkCode adds a link holding inline code to the prose section's first paragraph, as
+  // #code-link, and resolves to its selector.
+  const linkCode = async (page) => {
+    await page.evaluate(`document.querySelector("#prose p").insertAdjacentHTML("beforeend",
+      ' <a id="code-link" href="#prose"><code>mise run check</code></a>')`);
+    return "#code-link > code";
+  };
+
+  for (const [index, scheme] of ["light", "dark"].entries()) {
+    test(`inline code is green text in the code font, with no chip, and code in a pre is plain, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      const inline = "#prose p > code";
+      expect(await chip(page, inline)).toEqual([...PLAIN, COLORS["--green"][index]]);
+      expect(await page.style(inline, "font-family")).toBe(MONO);
+      expect(await chip(page, "#prose pre > code")).toEqual([
+        ...PLAIN,
+        await page.style("#prose pre", "color"),
+      ]);
+    });
+  }
 
   test("a consumer re-colors inline code's text through --code-color, and code in a pre keeps its own", async () => {
     const page = await open(specimen, { scheme: "light" });
     await addAppStyle(page, "@layer app { #prose { --code-color: rgb(1, 2, 3); } }");
-    expect(await page.style("#prose p > code", "color")).toBe("rgb(1, 2, 3)");
-    expect(await page.style("#prose p > code", "background-color")).toBe(COLORS["--bg-2"][0]);
+    expect(await chip(page, "#prose p > code")).toEqual([...PLAIN, "rgb(1, 2, 3)"]);
     expect(await page.style("#prose pre > code", "color")).toBe(COLORS["--fg"][0]);
+  });
+
+  test("code inside a link takes the link's color and runs under its underline", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const code = await linkCode(page);
+    expect(await chip(page, code)).toEqual([...PLAIN, COLORS["--blue"][0]]);
+    // The link's underline propagates to an inline descendant: the code stays inline and sets
+    // no decoration of its own.
+    expect(await page.style("#code-link", "text-decoration-line")).toBe("underline");
+    expect(await page.style(code, "display")).toBe("inline");
+    expect(await page.style(code, "text-decoration-line")).toBe("none");
+    // The link's color wins over the code hook, and follows the interaction hook.
+    await addAppStyle(
+      page,
+      "@layer app { #prose { --code-color: rgb(1, 2, 3); --interaction-color: rgb(4, 5, 6); } }",
+    );
+    expect(await page.style(code, "color")).toBe("rgb(4, 5, 6)");
+  });
+
+  test("a dialog pads one step tighter, and its actions sit a step further below its content", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.querySelector("#specimen-dialog").showModal()`);
+    const s = `${await resolveToken(page, "--space-s", "length")}px`;
+    const m = `${await resolveToken(page, "--space-m", "length")}px`;
+    expect(await page.style("#specimen-dialog", "padding-top")).toBe(s);
+    expect(await page.style("#specimen-dialog", "padding-left")).toBe(s);
+    // The close form, after the text, sits --space-m below it, more than a block's --space-s.
+    expect(await page.style("#specimen-dialog > form", "margin-top")).toBe(m);
+    // Only actions after content: a form that is the dialog's whole content, and a last block
+    // that is text, take no such margin.
+    const margins = await page.evaluate(`(() => {
+      const dialog = document.createElement("dialog");
+      dialog.innerHTML = '<form method="dialog"><button>Close</button></form>';
+      const text = document.createElement("dialog");
+      text.innerHTML = "<p>One.</p><p>Two.</p>";
+      document.body.append(dialog, text);
+      return [getComputedStyle(dialog.firstChild).marginTop,
+        getComputedStyle(text.lastChild).marginTop];
+    })()`);
+    expect(margins).toEqual(["0px", s]);
   });
 
   for (const [index, scheme] of ["light", "dark"].entries()) {

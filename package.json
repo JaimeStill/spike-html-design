@@ -6,8 +6,9 @@
   "exports": {
     ".": "./baseline.css",
     "./profiles/flexoki": "./layers/tokens/color/flexoki.css",
-    "./profiles/kanagawa": "./layers/tokens/color/kanagawa.css",
     "./profiles/tokyo-night": "./layers/tokens/color/tokyo-night.css",
-    "./profiles/catppuccin": "./layers/tokens/color/catppuccin.css"
+    "./profiles/catppuccin": "./layers/tokens/color/catppuccin.css",
+    "./profiles/everforest": "./layers/tokens/color/everforest.css",
+    "./profiles/primer": "./layers/tokens/color/primer.css"
   }
 }
