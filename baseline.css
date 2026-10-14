@@ -12,9 +12,10 @@
  * directly into its layer: one hop, never an import that imports. The color facet's profiles sit
  * in the directory its file's name spells, layers/tokens/color/, and this entry imports the
  * default, Flexoki, into the color sub-layer after the facet's own file; the others are exported
- * for a page to import there itself. There is no build: the browser resolves the imports. The
- * URLs are relative, so a pinned jsDelivr tag serves the layer files from the same tag, and the
- * root works from file:// and under a Pages subpath alike.
+ * for a page to import there itself, and the full entry, full.css, imports them all. There is no
+ * build: the browser resolves the imports. The URLs are relative, so a pinned jsDelivr tag serves
+ * the layer files from the same tag, and the root works from file:// and under a Pages subpath
+ * alike.
  *
  * Each tag freezes its token and class names: a page pinned to a tag keeps the names that tag
  * shipped. Tint tokens (--*-bg) and shadow tokens are left out on purpose: the aesthetic is flat

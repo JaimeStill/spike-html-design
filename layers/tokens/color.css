@@ -28,9 +28,10 @@
  * so a forced container resolves every token to its scheme wherever the tokens were declared.
  * With no attribute, the page follows the system scheme and changes when it does.
  *
- * baseline.css imports this file into spike-html-design.tokens.color, then Flexoki's file,
- * layers/tokens/color/flexoki.css, into the same sub-layer. Pages link baseline.css, never this
- * file: linked on its own, its rules would be unlayered.
+ * Both entries import this file into spike-html-design.tokens.color, then the profiles into the
+ * same sub-layer: baseline.css, the lean entry, imports Flexoki's file,
+ * layers/tokens/color/flexoki.css; full.css, the full entry, imports Flexoki's and then every other
+ * profile's. Pages link an entry, never this file: linked on its own, its rules would be unlayered.
  */
 
 /* The page follows the system scheme until something sets color-scheme otherwise; every color

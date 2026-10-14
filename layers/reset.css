@@ -15,8 +15,8 @@
  * context, and an app's root element is the app's); interpolate-size (it only serves motion,
  * which the baseline leaves out); text-wrap (a type property, so the elements layer sets it).
  *
- * baseline.css imports this file into spike-html-design.reset. Pages link baseline.css, never
- * this file: linked on its own, its rules would be unlayered.
+ * Both entries, baseline.css and full.css, import this file into spike-html-design.reset. Pages
+ * link an entry, never this file: linked on its own, its rules would be unlayered.
  */
 
 /* Every box sized by its border, so padding and borders never grow a set size. */

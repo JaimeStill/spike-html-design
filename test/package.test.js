@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { dirname, join } from "node:path";
+import { dirname, join, normalize } from "node:path";
 import { CURRENT } from "./layers.js";
 import { COLOR_PROFILES, profilePath } from "./profiles.js";
+import { git } from "./tags.js";
 
 const root = dirname(import.meta.dir);
 const pkg = await Bun.file(join(root, "package.json")).json();
@@ -29,10 +30,15 @@ describe("package", () => {
     expect(pkg.style).toBe("./baseline.css");
   });
 
-  test("exports each color profile's file as ./profiles/<name>, and nothing else beside the root", () => {
+  test("exports the full entry as ./full", () => {
+    expect(pkg.exports["./full"]).toBe("./full.css");
+  });
+
+  test("exports each color profile's file as ./profiles/<name>, and nothing else beside the entries", () => {
     const profiles = Object.keys(COLOR_PROFILES);
     expect(Object.keys(pkg.exports)).toEqual([
       ".",
+      "./full",
       ...profiles.map((name) => `./profiles/${name}`),
     ]);
     for (const name of profiles) {
@@ -40,11 +46,15 @@ describe("package", () => {
     }
   });
 
-  test("every export resolves to an existing file", async () => {
+  test("every export resolves to an existing file, one the package publishes", async () => {
     const paths = [...targets(pkg.exports), pkg.style];
     expect(paths.length).toBeGreaterThan(0);
     for (const path of paths) {
       expect([path, await Bun.file(join(root, path)).exists()]).toEqual([path, true]);
+      // A tag publishes the repository's files, as jsDelivr serves them, but what git ignores and
+      // the test fixtures, which no consumer resolves.
+      const published = !git("check-ignore", "-q", path).ok && !normalize(path).startsWith("test/");
+      expect([path, published]).toEqual([path, true]);
     }
   });
 });

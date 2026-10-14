@@ -2,6 +2,8 @@
 // stylesheet's layer files: the layer names, and per tag a probe that tells a page whose layer
 // files all loaded from one whose root loaded but an import did not.
 
+import { ADDED, profilePath } from "./profiles.js";
+
 // PACKAGE is the working tree's one top-level layer, named for the package.
 export const PACKAGE = "spike-html-design";
 
@@ -25,6 +27,17 @@ export const IMPORTS = LAYERS.flatMap((layer) => [
   [layer, layerPath(layer)],
   ...(layer === "tokens.color" ? [[layer, DEFAULT_PROFILE]] : []),
 ]);
+
+// FULL_IMPORTS are the working tree's full entry's imports, in order, each [nested layer, file]:
+// the lean entry's, with every profile past the default right after the default's.
+export const FULL_IMPORTS = IMPORTS.flatMap((entry) => [
+  entry,
+  ...(entry[1] === DEFAULT_PROFILE ? ADDED.map((name) => [entry[0], profilePath(name)]) : []),
+]);
+
+// ENTRIES are the package's CSS entries, each repository path to its imports: the lean entry,
+// which the package exports as its root, and the full entry, exported as ./full.
+export const ENTRIES = { "baseline.css": IMPORTS, "full.css": FULL_IMPORTS };
 
 // PROBES holds, per tag, one computed style per layer file, on that tag's specimen markup, that
 // only that file sets and that no color scheme changes, as [selector, property, value when every

@@ -22,8 +22,8 @@
  * file's values in this sub-layer changes the space tokens and nothing else. A profile restates
  * --space-base with its own endpoints, or --radius-base.
  *
- * baseline.css imports this file into spike-html-design.tokens.space. Pages link baseline.css,
- * never this file: linked on its own, its rules would be unlayered.
+ * Both entries, baseline.css and full.css, import this file into spike-html-design.tokens.space.
+ * Pages link an entry, never this file: linked on its own, its rules would be unlayered.
  */
 
 :root {

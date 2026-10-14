@@ -1,0 +1,35 @@
+/*
+ * full.css: the package's full entry, every color profile in one link.
+ *
+ * The lean entry, baseline.css, holds the foundation and the default color profile, Flexoki; this
+ * entry holds everything the lean entry holds plus the other four profiles, Tokyo Night,
+ * Catppuccin, Everforest, and Primer, so a page links it to select any profile with data-palette
+ * and links the lean entry to fetch less.
+ *
+ * It is self-contained, not an add-on to the lean entry: it declares the same package layer
+ * statement and imports every file the lean entry imports, in the same order, each directly into
+ * its layer, one hop deep. The profiles follow Flexoki in the color sub-layer, so a data-palette
+ * on the root overrides the default's block of equal, zero specificity by order alone. A page
+ * links one entry, never both. Like the lean entry, it has no build: the URLs are relative, so a
+ * pinned jsDelivr tag serves every file from the same tag, and it works from file:// and under a
+ * Pages subpath alike.
+ */
+
+@layer spike-html-design.tokens.color,
+  spike-html-design.tokens.space,
+  spike-html-design.tokens.type,
+  spike-html-design.reset,
+  spike-html-design.elements,
+  spike-html-design.tools;
+
+@import url(./layers/tokens/color.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/color/flexoki.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/color/tokyo-night.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/space.css) layer(spike-html-design.tokens.space);
+@import url(./layers/tokens/type.css) layer(spike-html-design.tokens.type);
+@import url(./layers/reset.css) layer(spike-html-design.reset);
+@import url(./layers/elements.css) layer(spike-html-design.elements);
+@import url(./layers/tools.css) layer(spike-html-design.tools);

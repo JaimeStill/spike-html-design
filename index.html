@@ -6,7 +6,7 @@
     <title>spike-html-design specimen</title>
     <!-- Relative, never root-absolute: Pages serves this page under a project subpath, and the
          page must also render from file://. -->
-    <link rel="stylesheet" href="./baseline.css" />
+    <link rel="stylesheet" href="./full.css" />
     <style>
       /* The specimen's own composition, a console: a compact header, each section under a
          full-width banner, and its samples in panels, a gapless grid of cells sharing their
@@ -18,15 +18,9 @@
          are this page's, and none of it is the baseline. What sits inside each cell, under its
          label, is the baseline alone. Samples read the token they show from --sample.
 
-         The page links the lean entry, which holds Flexoki, and imports the four profiles past
-         the default into the color sub-layer, as a consumer of the profile exports would, so its
-         comparison grid and contrast records can name each profile. */
+         The page links the full entry, which holds every color profile, so its comparison grid
+         and contrast records can name each one. */
       @layer spike-html-design, specimen;
-
-      @import url(./layers/tokens/color/tokyo-night.css) layer(spike-html-design.tokens.color);
-      @import url(./layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
-      @import url(./layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
-      @import url(./layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
 
       @layer specimen {
         /* The page: one centered column, capped, inside gutters. */
@@ -190,12 +184,6 @@
             font-size: var(--text-s);
             color: var(--fg-2);
           }
-        }
-
-        /* A table's scroll wrapper reserves no gutter, so the table reaches its panel's edge:
-           .scroll-x's stable gutter also reserves a vertical scrollbar's width at the end. */
-        .cell > .scroll-x:has(> table) {
-          scrollbar-gutter: auto;
         }
 
         /* The tables example: each head and body cell on one line, so a narrow display scrolls
@@ -565,8 +553,8 @@
     <header>
       <h1>spike-html-design</h1>
       <p>
-        Every token, element and tool class in the baseline, rendered by
-        <code>baseline.css</code> alone. The page follows the system color scheme; set
+        Every token, element and tool class in the baseline, rendered by the full entry,
+        <code>full.css</code>, alone. The page follows the system color scheme; set
         <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
         apply a color profile to its subtree.
       </p>
@@ -1595,8 +1583,8 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label"><code>.scroll-x</code></div>
               <div class="scroll-sample scroll-x">
-                .scroll-x scrolls overflow horizontally, with a stable gutter, so a line that
-                cannot wrap stays readable to its end.
+                .scroll-x scrolls overflow horizontally, so a line that cannot wrap stays readable
+                to its end.
               </div>
             </div>
           </div>

@@ -25,8 +25,8 @@
  * The facet reads only its own tokens, never the space facet's, so a profile that restates this
  * file's values in this sub-layer changes the type tokens and nothing else.
  *
- * baseline.css imports this file into spike-html-design.tokens.type. Pages link baseline.css,
- * never this file: linked on its own, its rules would be unlayered.
+ * Both entries, baseline.css and full.css, import this file into spike-html-design.tokens.type.
+ * Pages link an entry, never this file: linked on its own, its rules would be unlayered.
  */
 
 :root {

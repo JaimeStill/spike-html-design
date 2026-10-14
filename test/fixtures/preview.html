@@ -4,12 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>preview card fixture</title>
-    <link rel="stylesheet" href="../../baseline.css" />
+    <link rel="stylesheet" href="../../full.css" />
     <style>
       /* The preview cards: one per color profile and scheme, each a preview container, an
          element with data-palette and data-scheme, holding the same markup. The page links the
-         lean entry and imports the four profiles past the default into its color sub-layer, as
-         a consumer of the profile exports would. Its arrangement, the grid of cards and the
+         full entry, which holds every profile. Its arrangement, the grid of cards and the
          swatch strip, is the page's own, in its fixture layer after the package layer; none of
          it is the baseline.
 
@@ -20,11 +19,6 @@
          and a .preview-swatches strip of every color token, each swatch reading its token from
          --sample. Only its label, its attributes and its ids change from card to card. */
       @layer spike-html-design, fixture;
-
-      @import url(../../layers/tokens/color/tokyo-night.css) layer(spike-html-design.tokens.color);
-      @import url(../../layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
-      @import url(../../layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
-      @import url(../../layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
 
       @layer fixture {
         body {

@@ -22,7 +22,8 @@
  *   </style>
  *   <html data-palette="primer">
  *
- * Linked on its own, its rules would be unlayered.
+ * The full entry, full.css, imports it already, after Flexoki. Linked on its own, its rules would
+ * be unlayered.
  */
 
 :where([data-palette="primer"]) {

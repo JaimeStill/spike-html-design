@@ -48,8 +48,8 @@
  * so it resolves in that element's own palette and scheme, inside a data-palette or data-scheme
  * scope as at the root.
  *
- * baseline.css imports this file into spike-html-design.elements. Pages link baseline.css,
- * never this file: linked on its own, its rules would be unlayered.
+ * Both entries, baseline.css and full.css, import this file into spike-html-design.elements.
+ * Pages link an entry, never this file: linked on its own, its rules would be unlayered.
  */
 
 /* Sections and the page. */

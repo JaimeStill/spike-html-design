@@ -1,7 +1,7 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
-import { IMPORTS, LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
+import { ENTRIES, LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
 import { ADDED, COLOR_PROFILES, profileColors, profilePath, SCHEMES } from "./profiles.js";
 
 const root = dirname(import.meta.dir);
@@ -221,7 +221,7 @@ const PINNED_V030 = "pinned/v0.3.0.html";
 // SOURCES are the working tree's CSS: the stylesheet, its layer files, the profile files, the
 // specimen and its pinned page, whose style elements read the tokens too, and the test fixtures.
 const SOURCES = [
-  "baseline.css",
+  ...Object.keys(ENTRIES),
   ...LAYERS.map(layerPath),
   ...Object.keys(COLOR_PROFILES).map(profilePath),
   "index.html",
@@ -371,20 +371,31 @@ function mark(ratio) {
   return Object.keys(MARKS).find((name) => ratio >= MARKS[name]);
 }
 
+// ENTRY_PAGES are a page per entry, served over http, that links it: the baseline fixture links
+// the lean entry, and the specimen the full entry.
+const ENTRY_PAGES = {
+  "baseline.css": `${server.url}test/fixtures/baseline.html`,
+  "full.css": server.url,
+};
+
+// linkedEntry is a page-side expression for the entry the page links, whichever one it is.
+const linkedEntry = `[...document.styleSheets]
+  .find((s) => ${JSON.stringify(Object.keys(ENTRIES))}.some((e) => s.href?.endsWith("/" + e)))`;
+
 // layerSheets resolves to a page-side expression for the sheets a nested layer's imports load,
-// in order, from the baseline linked by a page served over http, since chromium hides a file://
+// in order, from the entry linked by a page served over http, since chromium hides a file://
 // stylesheet's rules from the page. Most layers import one file; the color sub-layer imports the
-// facet's own file, then the default profile's.
+// facet's own file, then the profiles' the entry holds.
 function layerSheets(layer) {
-  return `[...[...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css")).cssRules]
+  return `[...${linkedEntry}.cssRules]
     .filter((r) => r.layerName === ${JSON.stringify(`${PACKAGE}.${layer}`)})
     .map((r) => r.styleSheet)`;
 }
 
 // layerRules resolves to every style rule in the files of the nested layers named, rules nested
 // in at-rules included, each as { selector, declarations }: its selector text, absent for a rule
-// without one, and its declarations as [name, value] pairs. It reads the baseline linked by a
-// page served over http, as layerSheets does.
+// without one, and its declarations as [name, value] pairs. It reads the entry linked by a page
+// served over http, as layerSheets does: on the specimen, the full entry, so every profile.
 function layerRules(page, ...layers) {
   return page.evaluate(`(() => {
     const rules = [];
@@ -436,41 +447,45 @@ async function tabTo(page, selector) {
 }
 
 describe("layers", () => {
-  test("the stylesheet declares the package layer's nested layers, then imports each one's file, and the default profile", async () => {
-    // Over http, since chromium hides a file:// stylesheet's rules from the page.
-    const page = await open(server.url, { scheme: "light" });
-    const rules = await page.evaluate(`(() => {
-      const sheet = [...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css"));
-      return [...sheet.cssRules].map((rule) => ({
-        type: rule.constructor.name,
-        names: rule.nameList && [...rule.nameList],
-        layer: rule.layerName,
-        href: rule.href,
-        // An import whose file failed to load has a sheet with no rules.
-        loaded: rule.styleSheet ? rule.styleSheet.cssRules.length > 0 : undefined,
-      }));
-    })()`);
-    // An exact match: the root holds the statement and one import per nested layer, each
-    // straight into its layer, with Flexoki's after the color facet's, and no rule of its own.
-    expect(rules).toEqual([
-      { type: "CSSLayerStatementRule", names: LAYERS.map((layer) => `${PACKAGE}.${layer}`) },
-      ...IMPORTS.map(([layer, path]) => ({
-        type: "CSSImportRule",
-        layer: `${PACKAGE}.${layer}`,
-        href: `./${path}`,
-        loaded: true,
-      })),
-    ]);
-  });
+  for (const [entry, imported] of Object.entries(ENTRIES)) {
+    test(`${entry} declares the package layer's nested layers, then imports each one's file and its profiles`, async () => {
+      // Over http, since chromium hides a file:// stylesheet's rules from the page.
+      const page = await open(ENTRY_PAGES[entry], { scheme: "light" });
+      const rules = await page.evaluate(`(() => {
+        const sheet = ${linkedEntry};
+        return [...sheet.cssRules].map((rule) => ({
+          type: rule.constructor.name,
+          names: rule.nameList && [...rule.nameList],
+          layer: rule.layerName,
+          href: rule.href,
+          // An import whose file failed to load has a sheet with no rules.
+          loaded: rule.styleSheet ? rule.styleSheet.cssRules.length > 0 : undefined,
+        }));
+      })()`);
+      expect(await page.evaluate(`${linkedEntry}.href.split("/").at(-1)`)).toBe(entry);
+      // An exact match: the entry holds the statement and one import per file, each straight
+      // into its layer, its profiles after the color facet's own file, and no rule of its own.
+      // The lean entry's profile is Flexoki; the full entry's are every profile, Flexoki first.
+      expect(rules).toEqual([
+        { type: "CSSLayerStatementRule", names: LAYERS.map((layer) => `${PACKAGE}.${layer}`) },
+        ...imported.map(([layer, path]) => ({
+          type: "CSSImportRule",
+          layer: `${PACKAGE}.${layer}`,
+          href: `./${path}`,
+          loaded: true,
+        })),
+      ]);
+    });
 
-  test("every layer file is imported one hop deep: no layer file imports another", async () => {
-    const page = await open(server.url, { scheme: "light" });
-    const imports = await page.evaluate(
-      `[${LAYERS.map(layerSheets)}].flat()
-        .map((sheet) => [...sheet.cssRules].filter((r) => r.href !== undefined).length)`,
-    );
-    expect(imports).toEqual(IMPORTS.map(() => 0));
-  });
+    test(`${entry} imports every file one hop deep: no file it imports imports another`, async () => {
+      const page = await open(ENTRY_PAGES[entry], { scheme: "light" });
+      const imports = await page.evaluate(
+        `[${LAYERS.map(layerSheets)}].flat()
+          .map((sheet) => [...sheet.cssRules].filter((r) => r.href !== undefined).length)`,
+      );
+      expect(imports).toEqual(imported.map(() => 0));
+    });
+  }
 
   test("the page's layers cascade as the package layer, its nested layers in order, then app", async () => {
     // A rule in each layer sets the same custom property to the layer's name, in reverse cascade
@@ -840,9 +855,10 @@ const profileRgb = (name, index) =>
     Object.entries(profileColors(name, index)).map(([token, hex]) => [token, rgb(hex)]),
   );
 
-// profileRules resolves to every rule of a profile's file, as the preview fixture, served over
-// http, imports it, or the baseline it links does, for the default: each as { type, selector, declarations, nested }, its rule type, its selector
-// text, its declarations as [name, value] pairs, and the count of rules nested in it.
+// profileRules resolves to every rule of a profile's file, as the full entry the preview fixture
+// links, served over http, imports it: each as { type, selector, declarations, nested }, its rule
+// type, its selector text, its declarations as [name, value] pairs, and the count of rules nested
+// in it.
 function profileRules(page, name) {
   return page.evaluate(`(() => {
     const rules = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules]);
@@ -2404,13 +2420,13 @@ describe("tools", () => {
   test("scroll-y and scroll-x scroll their overflow on one axis", async () => {
     // Below the range, so --space-2xs is its smallest value, 8px.
     const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
-    for (const [axis, overflow, size, padding] of [
-      ["y", "overflow-y", "Height", "padding-right"],
-      ["x", "overflow-x", "Width", "padding-bottom"],
+    for (const [axis, overflow, size, padding, gutter] of [
+      ["y", "overflow-y", "Height", "padding-right", "stable"],
+      ["x", "overflow-x", "Width", "padding-bottom", "auto"],
     ]) {
       const selector = `#tools .scroll-${axis}`;
       expect(await page.style(selector, overflow)).toBe("auto");
-      expect(await page.style(selector, "scrollbar-gutter")).toBe("stable");
+      expect([axis, await page.style(selector, "scrollbar-gutter")]).toEqual([axis, gutter]);
       expect(await page.style(selector, padding)).toBe("8px");
       const scrolled = await page.evaluate(`(() => {
         const el = document.querySelector(${JSON.stringify(selector)});
@@ -2419,6 +2435,32 @@ describe("tools", () => {
       })()`);
       expect([axis, scrolled]).toEqual([axis, 10]);
     }
+  });
+
+  test("a table in scroll-x fills its wrapper, with no gutter, while scroll-y reserves one", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    // Each wrapper unbordered and too roomy to overflow, so only a reserved gutter narrows it.
+    const widths = await page.evaluate(`(() => {
+      document.querySelector("#scroll .cell").insertAdjacentHTML("beforeend",
+        '<div class="scroll-x" id="gutter-x"><table class="table-full"><tr><td>Cell</td></tr></table></div>' +
+        '<div class="scroll-y" id="gutter-y"><table class="table-full"><tr><td>Cell</td></tr></table></div>');
+      return Object.fromEntries(["x", "y"].map((axis) => {
+        const wrapper = document.querySelector("#gutter-" + axis);
+        const style = getComputedStyle(wrapper);
+        const content = wrapper.offsetWidth - Number.parseFloat(style.paddingLeft)
+          - Number.parseFloat(style.paddingRight);
+        return [axis, {
+          short: Math.round(content - wrapper.querySelector("table").offsetWidth),
+          reserved: wrapper.offsetWidth - wrapper.clientWidth > 0,
+        }];
+      }));
+    })()`);
+    expect(widths).toEqual({
+      x: { short: 0, reserved: false },
+      y: { short: widths.y.short, reserved: true },
+    });
+    // The gutter scroll-y reserves is what its table falls short by.
+    expect(widths.y.short).toBeGreaterThan(0);
   });
 
   test(".button computes as the native button, rule for rule: at rest, hovered and disabled", async () => {
@@ -2796,17 +2838,16 @@ describe("specimen", () => {
     expect(TAGS.filter((tag) => !["body", "main"].includes(tag) && !named.has(tag))).toEqual([]);
   });
 
-  test("keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
+  test("links the full entry alone, and keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
     const page = await open(specimen, { scheme: "light" });
+    // The full entry holds every profile, so the page imports none itself.
+    const links = await page.evaluate(`[...document.querySelectorAll("link")]
+      .map((l) => [l.rel, l.getAttribute("href")])`);
+    expect(links).toEqual([["stylesheet", "./full.css"]]);
     const rules = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
       .map((rule) => rule.href ? [rule.layerName, rule.href]
         : rule.nameList ? [...rule.nameList] : rule.name)`);
-    // Its only other rules import the profiles past the default into the color sub-layer.
-    expect(rules).toEqual([
-      [PACKAGE, "specimen"],
-      ...ADDED.map((name) => [`${PACKAGE}.tokens.color`, `./${profilePath(name)}`]),
-      "specimen",
-    ]);
+    expect(rules).toEqual([[PACKAGE, "specimen"], "specimen"]);
     // The layer's own comment says so; the page carries no note about it.
     const comment = await page.evaluate(`document.querySelector("style").textContent`);
     expect(squash(comment)).toContain("The arrangement is composition");
@@ -2978,6 +3019,38 @@ describe("specimen", () => {
     })()`);
     expect(table.columns).toBeGreaterThanOrEqual(5);
     expect(table).toEqual({ columns: table.columns, short: 0, caption: 0 });
+  });
+
+  test("its token and contrast tables' scroll wrappers span their panels with no gutter, and the token tables fill them", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const wrappers = await page.evaluate(`[...document.querySelectorAll(
+      "#color .cell > .scroll-x:has(> table), #contrast .cell > .scroll-x:has(> table)")]
+      .map((wrapper) => {
+        const cell = wrapper.closest(".cell");
+        const style = getComputedStyle(cell);
+        const content = cell.clientWidth - Number.parseFloat(style.paddingLeft)
+          - Number.parseFloat(style.paddingRight);
+        const table = wrapper.querySelector(":scope > table");
+        return {
+          name: table.id || cell.querySelector("h4").textContent,
+          wrapperShort: Math.round(content - wrapper.offsetWidth),
+          gutter: wrapper.offsetWidth - wrapper.clientWidth,
+          tableShort: table.matches(".tokens") ? Math.round(content - table.offsetWidth) : 0,
+        };
+      })`);
+    // Tiers and Hues, then one contrast record per profile and scheme. A contrast record is as
+    // wide as its content, so only the token tables, set to their wrapper's full size, are held
+    // to it.
+    expect(wrappers.map(({ name }) => name)).toEqual([
+      "Tiers",
+      "Hues",
+      ...Object.keys(COLOR_PROFILES).flatMap((name) =>
+        SCHEMES.map((scheme) => `contrast-${name}-${scheme}`),
+      ),
+    ]);
+    expect(wrappers).toEqual(
+      wrappers.map(({ name }) => ({ name, wrapperShort: 0, gutter: 0, tableShort: 0 })),
+    );
   });
 
   test("tiles its embedded samples evenly: equal tiles, samples on one bottom edge, names on one line", async () => {
@@ -3336,6 +3409,18 @@ describe("specimen", () => {
     // Equal fingerprints prove nothing if the stylesheet, or one of its layer files, failed to
     // load in both.
     for (const page of [local, served]) expect(await layersLoaded(page)).toEqual(LOADED);
+    // Nor if the full entry's profiles past the default failed to load in both: a scope added
+    // after the fingerprints resolves its own profile's tokens.
+    const scoped = `${JSON.stringify(ADDED)}.map((name) => {
+      const el = document.body.appendChild(document.createElement("div"));
+      el.dataset.palette = name;
+      return getComputedStyle(el).getPropertyValue("--bg").trim();
+    })`;
+    const backgrounds = ADDED.map((name) => {
+      const [[, light], [, dark]] = COLOR_PROFILES[name].tokens["--bg"];
+      return `light-dark(${light}, ${dark})`;
+    });
     expect(await served.fingerprint()).toEqual(await local.fingerprint());
+    for (const page of [local, served]) expect(await page.evaluate(scoped)).toEqual(backgrounds);
   });
 });

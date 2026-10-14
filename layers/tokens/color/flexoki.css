@@ -9,9 +9,9 @@
  * in layers/tokens/color.css. Each value's comment names its upstream swatch, light / dark, or the
  * one name both share.
  *
- * Exported as ./profiles/flexoki. baseline.css imports it into spike-html-design.tokens.color after
- * the facet's own file. Pages link baseline.css, never this file: linked on its own, its rules
- * would be unlayered.
+ * Exported as ./profiles/flexoki. Both entries, baseline.css and full.css, import it into
+ * spike-html-design.tokens.color after the facet's own file. Pages link an entry, never this file:
+ * linked on its own, its rules would be unlayered.
  */
 
 :where(:root, [data-palette="flexoki"]) {
