@@ -3021,7 +3021,7 @@ describe("specimen", () => {
     expect(table).toEqual({ columns: table.columns, short: 0, caption: 0 });
   });
 
-  test("its token and contrast tables' scroll wrappers span their panels with no gutter, and the token tables fill them", async () => {
+  test("its token and contrast tables' scroll wrappers span their panels with no gutter, and the tables fill them", async () => {
     const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
     const wrappers = await page.evaluate(`[...document.querySelectorAll(
       "#color .cell > .scroll-x:has(> table), #contrast .cell > .scroll-x:has(> table)")]
@@ -3035,12 +3035,11 @@ describe("specimen", () => {
           name: table.id || cell.querySelector("h4").textContent,
           wrapperShort: Math.round(content - wrapper.offsetWidth),
           gutter: wrapper.offsetWidth - wrapper.clientWidth,
-          tableShort: table.matches(".tokens") ? Math.round(content - table.offsetWidth) : 0,
+          tableShort: Math.round(content - table.offsetWidth),
         };
       })`);
-    // Tiers and Hues, then one contrast record per profile and scheme. A contrast record is as
-    // wide as its content, so only the token tables, set to their wrapper's full size, are held
-    // to it.
+    // Tiers and Hues, then one contrast record per profile and scheme, each table as wide as its
+    // panel's content.
     expect(wrappers.map(({ name }) => name)).toEqual([
       "Tiers",
       "Hues",

@@ -2,8 +2,10 @@
 // and its brotli bytes at quality 11, and per entry the totals of both. An entry's files are the
 // entry itself and the files its @import rules name, one hop deep, as the browser fetches them;
 // each is fetched and compressed on its own, so the brotli total is the sum of each file's size,
-// not the size of the files compressed together. It enforces no number: the budget is enforced
-// from profiles on. It reads the working tree and writes nothing but its report.
+// not the size of the files compressed together. Each entry has a budget for that brotli total,
+// in BUDGETS below, and the report gives each entry's budget and headroom; the script exits 1
+// when an entry is over its budget or has none, so the check fails. Raw sizes are reported, not
+// budgeted. It reads the working tree and writes nothing but its report.
 //
 // Usage: bun scripts/size.js   (mise run size; mise run check runs it after the tests)
 //
@@ -14,6 +16,10 @@ import { dirname, join, normalize } from "node:path";
 import { brotliCompressSync, constants } from "node:zlib";
 
 const root = dirname(import.meta.dir);
+
+// BUDGETS are the package's CSS entries, each repository path to the most bytes its brotli total
+// may reach: the one place the budgets live, read by the report, the check, and the tests.
+export const BUDGETS = { "baseline.css": 14_000, "full.css": 18_000 };
 
 // entries returns the package's CSS entries, as repository paths: every target its exports map
 // names that ends in .css, whatever the map's nesting of conditions, once each, but the profiles.
@@ -59,12 +65,19 @@ export async function measure(entry, dir = root) {
   return { entry, files, raw: sum("raw"), brotli: sum("brotli") };
 }
 
-// table renders a report as aligned plain text: a header, one row per file, and the total.
-export function table({ entry, files, raw, brotli }) {
+// table renders a report as aligned plain text: a header, one row per file, and the total, then,
+// when the report carries a budget, the budget and the headroom left under it, both of brotli.
+export function table({ entry, files, raw, brotli, budget, headroom }) {
   const rows = [
     ["file", "raw", "brotli"],
     ...files.map((file) => [file.path, file.raw, file.brotli]),
     ["total", raw, brotli],
+    ...(budget === undefined
+      ? []
+      : [
+          ["budget", "", budget],
+          ["headroom", "", headroom],
+        ]),
   ].map((row) => row.map(String));
   const widths = [0, 1, 2].map((i) => Math.max(...rows.map((row) => row[i].length)));
   const line = ([path, ...sizes]) =>
@@ -74,6 +87,33 @@ export function table({ entry, files, raw, brotli }) {
   );
 }
 
+// audit measures every CSS entry the package in dir exports against its budget in budgets, and
+// returns each entry's report, with its budget and headroom (the budget less the brotli total,
+// negative when over), and the failures: an entry over its budget, or one with no budget. The
+// check fails on any failure; an entry exactly at its budget passes.
+export async function audit(budgets = BUDGETS, dir = root) {
+  const reports = [];
+  const failures = [];
+  for (const entry of await entries(dir)) {
+    const report = await measure(entry, dir);
+    const budget = budgets[entry];
+    if (budget === undefined) {
+      failures.push(`${entry} has no budget`);
+      reports.push(report);
+      continue;
+    }
+    const headroom = budget - report.brotli;
+    if (headroom < 0) {
+      failures.push(`${entry} is ${-headroom} bytes over its budget: ${report.brotli} > ${budget}`);
+    }
+    reports.push({ ...report, budget, headroom });
+  }
+  return { reports, failures };
+}
+
 if (import.meta.main) {
-  for (const entry of await entries()) console.log(table(await measure(entry)));
+  const { reports, failures } = await audit();
+  for (const report of reports) console.log(table(report));
+  for (const failure of failures) console.error(`size: ${failure}`);
+  if (failures.length > 0) process.exit(1);
 }

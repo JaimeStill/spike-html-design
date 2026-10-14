@@ -1,0 +1,9 @@
+/* The size fixture's entry: one rule of its own and one import, so its brotli total is the sum
+   of two files. */
+
+@import url(./part.css) layer(part);
+
+:root {
+  color: canvastext;
+  background: canvas;
+}

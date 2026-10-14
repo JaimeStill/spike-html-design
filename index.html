@@ -514,9 +514,10 @@
           }
         }
 
-        /* The contrast records: compact, each cell on one line, scrolling in its wrapper when
-           its column is narrower than the record. */
+        /* The contrast records: compact, each cell on one line, filling their wrapper, and
+           scrolling in it when its column is narrower than the record. */
         #contrast table {
+          inline-size: 100%;
           font-size: var(--text-s);
 
           & caption {
