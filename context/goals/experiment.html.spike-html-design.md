@@ -174,7 +174,7 @@ Release       v0.5.0
 
 ## Progress
 
-slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · slice 4b committed (480f573) · review stop 2 pending · standards — · spec — · editor —
+slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · slice 4b committed (480f573) · review stop 2 accepted · standards — · spec — · editor —
 
 ## Decisions
 
@@ -749,6 +749,8 @@ slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · slice 4b committed 
 - preferences review stop (architect): the specimen's Color, Space, and Type sections follow the
   current selection, in this task (slice 4b): Light and Dark swatches as scheme-scoped cells,
   hex values filled by a specimen-only script, captions per profile.
+- preferences review stop 2 (architect): accepted slice 4b, with the whole Light and Dark cell
+  scoped to its scheme (the Dark column paints its own dark surface on a light page).
 
 ## Pending edits
 
