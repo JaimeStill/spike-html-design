@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
 import { ENTRIES, layersLoaded, loaded } from "./layers.js";
-import { git, show, stylesheets, tagExists } from "./tags.js";
+import { applyFromMenu } from "./menu.js";
+import { git, modules, show, stylesheets, tagExists } from "./tags.js";
 
 const root = dirname(import.meta.dir);
 const CDN = "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design";
@@ -30,13 +31,15 @@ afterAll(() => {
   rmSync(scratch, { recursive: true, force: true });
 });
 
-// markup is a page's source without its comments, title text, and link elements: what the
-// pinned page must share with the specimen it stands in for.
+// markup is a page's source without its comments, title text, link elements, and the attributes
+// of its external scripts: what the pinned page must share with the specimen it stands in for.
+// An inline script keeps its attributes and its text, so the specimen's own scripts stay held.
 async function markup(path) {
   return (await Bun.file(path).text())
     .replace(/\n[ \t]*<!--[\s\S]*?-->/g, "")
     .replace(/<title>[^<]*<\/title>/g, "<title>")
-    .replace(/<link\s[^>]*>/g, "<link>");
+    .replace(/<link\s[^>]*>/g, "<link>")
+    .replace(/<script\s[^>]*\ssrc="[^"]*"[^>]*>/g, "<script src>");
 }
 
 // TREE_STYLESHEETS are the stylesheet files the working tree will publish when cut as a tag, in
@@ -49,15 +52,24 @@ const TREE_STYLESHEETS = [
   ]),
 ];
 
-// reference returns the directory holding the specimen and stylesheet files a page pinned to tag
-// is compared against, and those stylesheet files. Once the tag is cut they are the tag's own,
-// read with git show, so later changes to the working tree's tokens, layers, or specimen never
-// reach a pinned page's test. Until then they are the working tree's, since the tag is cut from
-// it after merge.
+// TREE_MODULES are the JavaScript modules the working tree will publish when cut as a tag: every
+// module its package exports, which is every .js file in modules/.
+const TREE_MODULES = Object.values(
+  JSON.parse(readFileSync(join(root, "package.json"), "utf8")).exports,
+)
+  .filter((path) => path.endsWith(".js"))
+  .map((path) => path.replace(/^\.\//, ""))
+  .sort();
+
+// reference returns the directory holding the specimen, stylesheet, and module files a page
+// pinned to tag is compared against, and those stylesheet and module files. Once the tag is cut
+// they are the tag's own, read with git show, so later changes to the working tree's tokens,
+// layers, modules, or specimen never reach a pinned page's test; a tag cut before v0.5.0 has no
+// modules. Until then they are the working tree's, since the tag is cut from it after merge.
 function reference(tag) {
-  if (!tagExists(tag)) return { dir: root, files: TREE_STYLESHEETS };
+  if (!tagExists(tag)) return { dir: root, files: [...TREE_STYLESHEETS, ...TREE_MODULES] };
   const dir = join(scratch, tag);
-  const files = stylesheets(tag);
+  const files = [...stylesheets(tag), ...modules(tag)];
   for (const path of ["index.html", ...files]) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), show(tag, path));
@@ -76,6 +88,11 @@ function specimenEntry(path) {
   return href;
 }
 
+// RESOURCES lists a page's links and external scripts in document order, as [kind, href]: a
+// link's rel, or a script's type, and its URL as written.
+const RESOURCES = `[...document.querySelectorAll("link, script[src]")].map((el) =>
+  el.localName === "link" ? [el.rel, el.getAttribute("href")] : [el.type, el.getAttribute("src")])`;
+
 test("the working tree's stylesheet list is every stylesheet file it would publish", () => {
   // What a tag publishes is every tracked .css file outside test/, as stylesheets() lists a cut
   // tag's; an entry or profile file the entries never import would be missed by the list above.
@@ -90,6 +107,20 @@ test("the working tree's stylesheet list is every stylesheet file it would publi
 // Every pinned page, one per tag, as pinned/<tag>.html.
 const PINNED = [...new Bun.Glob("*.html").scanSync(join(root, "pinned"))].sort();
 
+test("the working tree's module list is every module file it would publish", () => {
+  // What a tag publishes is every tracked .js file in modules/, as modules() lists a cut tag's; a
+  // module the package never exports would be missed by the list above.
+  const tracked = git("ls-files", "modules/*.js").stdout.toString().split("\n").filter(Boolean);
+  expect(TREE_MODULES).toEqual(tracked.sort());
+});
+
+test("each cut tag before v0.5.0 publishes no modules, so its checks are the stylesheets' alone", () => {
+  // modules() reads a cut tag's list, as stylesheets() does; the pinned test and the live pin
+  // check add a module's request and the menu's test only for a tag that holds modules/.
+  const cut = ["v0.1.0", "v0.2.0", "v0.3.0", "v0.4.0"].filter(tagExists);
+  expect(cut.map((tag) => [tag, modules(tag)])).toEqual(cut.map((tag) => [tag, []]));
+});
+
 test("there is at least one pinned page", () => {
   expect(PINNED.length).toBeGreaterThan(0);
 });
@@ -102,9 +133,13 @@ for (const name of PINNED) {
   const entry = specimenEntry(specimenPath);
   const pinned = `${CDN}@${tag}/${entry}`;
   const against = dir === root ? "the working tree" : `tag ${tag}`;
+  // From v0.5.0 the specimen carries the theming menu, and its pinned page loads the menu's
+  // modules from jsDelivr beside the entry.
+  const menu = readFileSync(specimenPath, "utf8").includes("<theme-menu");
 
-  // hermetic answers every stylesheet file the tag publishes at its URL under the same tag, the
-  // pinned entry and the files its imports resolve to among them, from the reference files, and
+  // hermetic answers every stylesheet and module file the tag publishes at its URL under the same
+  // tag, the pinned entry, the files its imports resolve to, and the modules the page loads among
+  // them, from the reference files, with Access-Control-Allow-Origin as jsDelivr sends it, and
   // answers every other https:// request 404 from a file that does not exist, so no test of the
   // pinned page reaches the network. The harness takes the first matching prefix.
   const hermetic = {
@@ -113,15 +148,21 @@ for (const name of PINNED) {
   };
 
   describe(`pinned ${tag}, against ${against}`, () => {
-    test("has the specimen's markup apart from its title and stylesheet link", async () => {
+    test("has the specimen's markup apart from its title, links, and module scripts' URLs", async () => {
       expect(await markup(pinnedPath)).toBe(await markup(specimenPath));
     });
 
-    test(`links exactly one stylesheet, ${entry} at its pinned jsDelivr URL`, async () => {
+    test(`links what the specimen links, ${entry} first, each at its pinned jsDelivr URL`, async () => {
+      // The specimen links each file by relative URL; the pinned page links the same files, in
+      // the same order and of the same kinds, under the tag's jsDelivr URL.
+      const specimen = await open(fileUrl(specimenPath), { scheme: "light" });
+      const expected = (await specimen.evaluate(RESOURCES)).map(([kind, href]) => [
+        kind,
+        new URL(href, `${CDN}@${tag}/`).href,
+      ]);
+      expect(expected[0]).toEqual(["stylesheet", pinned]);
       const page = await open(fileUrl(pinnedPath), { scheme: "light", intercept: hermetic });
-      const links = await page.evaluate(`[...document.querySelectorAll("link")]
-        .map((l) => [l.rel, l.getAttribute("href")])`);
-      expect(links).toEqual([["stylesheet", pinned]]);
+      expect(await page.evaluate(RESOURCES)).toEqual(expected);
       // document.styleSheets lists linked and inline sheets but not the baseline's imported layer
       // files; inline sheets have no href, so a second linked stylesheet is the only way to add
       // one.
@@ -145,6 +186,26 @@ for (const name of PINNED) {
         const print = await specimen.fingerprint();
         expect(await fromFile.fingerprint()).toEqual(print);
         expect(await fromServer.fingerprint()).toEqual(print);
+      });
+    }
+
+    if (menu) {
+      // The working-tree specimen has no menu from file://, since chromium runs no relative
+      // module script there; the pinned page's modules come from jsDelivr, whose CORS header lets
+      // a file:// page, whose origin is opaque, run them.
+      test("its menu opens and applies a profile from file:// and a local server", async () => {
+        for (const url of [fileUrl(pinnedPath), `${server.url}pinned/${name}`]) {
+          const page = await open(url, { scheme: "light", intercept: hermetic });
+          const result = await applyFromMenu(page);
+          expect(result).toEqual({
+            opened: true,
+            chosen: result.chosen,
+            applied: result.chosen,
+            stored: result.chosen,
+            repainted: true,
+          });
+          expect(result.chosen).not.toBe("flexoki");
+        }
       });
     }
   });

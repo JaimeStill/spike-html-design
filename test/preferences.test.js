@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
-import { openPage, serve } from "./harness.js";
+import { fileUrl, openPage, serve } from "./harness.js";
 
 const root = dirname(import.meta.dir);
 // The repository served at the root, so a fixture imports the modules by relative URL; chromium
@@ -780,5 +780,21 @@ describe("preferences: the specimen", () => {
     await page.evaluate(`document.querySelector("body > header > button").click()`);
     await waitFor(page, `document.querySelector("theme-menu dialog")?.open`);
     expect(await page.evaluate(`document.querySelectorAll("theme-menu fieldset").length`)).toBe(4);
+  });
+
+  test("from file://, it has no menu: the recorded gap", async () => {
+    // Chromium runs no relative module script from file://, so the working-tree specimen opened
+    // as a file defines no <theme-menu> and its Theme button opens nothing. Its CSS still
+    // renders as it does served (baseline.test.js, "renders the same from file://"); the pinned
+    // page, whose modules come from jsDelivr, has the menu from file:// (pinned.test.js).
+    const page = await open(fileUrl(join(root, "index.html")), { scheme: "light" });
+    await page.evaluate(`document.querySelector("body > header > button").click()`);
+    await page.evaluate("new Promise((resolve) => setTimeout(resolve, 200))");
+    expect(
+      await page.evaluate(`({
+        defined: customElements.get("theme-menu") !== undefined,
+        dialog: document.querySelector("theme-menu dialog") !== null,
+      })`),
+    ).toEqual({ defined: false, dialog: false });
   });
 });

@@ -1,7 +1,9 @@
 // pin checks a published tag live: jsDelivr serves every stylesheet file the tag publishes (its
 // entries, baseline.css and from v0.4.0 full.css, each layer file, and each profile file) as an
-// immutable, byte-equal stylesheet, and the tag's pinned page renders the same from file://, a
-// local server, and GitHub Pages, in light and in dark. It reads the network and writes nothing.
+// immutable, byte-equal stylesheet, and from v0.5.0 every module in its modules/ as an
+// immutable, byte-equal JavaScript file; and the tag's pinned page renders the same from
+// file://, a local server, and GitHub Pages, in light and in dark, and from v0.5.0 its menu opens
+// and applies a profile from each of them. It reads the network and writes nothing.
 //
 // Usage: bun scripts/pin.js <tag>   (mise run pin <tag>)
 //
@@ -12,7 +14,8 @@
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "../test/harness.js";
 import { layersLoaded, loaded } from "../test/layers.js";
-import { git, stylesheets, tagExists } from "../test/tags.js";
+import { applyFromMenu } from "../test/menu.js";
+import { git, modules, stylesheets, tagExists } from "../test/tags.js";
 
 const REPO = "JaimeStill/spike-html-design";
 const PAGES = "https://jaimestill.github.io/spike-html-design/";
@@ -42,20 +45,18 @@ function check(ok, label, detail = "") {
   console.log(`${ok ? "✓" : "✗"} ${label}${!ok && detail ? ` (${detail})` : ""}`);
 }
 
-// Every published stylesheet file at its pinned jsDelivr URL: the entries and every file they
-// import, which the browser fetches from the same tag, and any other .css file the tag holds
-// outside test/. The list is the tag's, not the working tree's.
-const FILES = stylesheets(tag);
-for (const path of FILES) {
+// served checks that jsDelivr serves path at the tag with 200, a content-type that matches type
+// (named by label), immutable caching, and the tag's own bytes.
+async function served(path, type, label) {
   const cdn = `https://cdn.jsdelivr.net/gh/${REPO}@${tag}/${path}`;
   try {
     const response = await fetch(cdn);
-    const type = response.headers.get("content-type") ?? "";
+    const content = response.headers.get("content-type") ?? "";
     const cache = response.headers.get("cache-control") ?? "";
     const body = Buffer.from(await response.arrayBuffer());
     const tagged = git("show", `${tag}:${path}`);
     check(response.status === 200, `jsDelivr serves ${cdn} with 200`, `got ${response.status}`);
-    check(type.startsWith("text/css"), "its content-type is text/css", `got "${type}"`);
+    check(type.test(content), `its content-type is ${label}`, `got "${content}"`);
     check(cache.includes("immutable"), "its cache-control is immutable", `got "${cache}"`);
     check(
       tagged.ok && body.equals(tagged.stdout),
@@ -65,6 +66,20 @@ for (const path of FILES) {
   } catch (error) {
     check(false, `jsDelivr serves ${cdn}`, error.message);
   }
+}
+
+// Every published stylesheet file at its pinned jsDelivr URL: the entries and every file they
+// import, which the browser fetches from the same tag, and any other .css file the tag holds
+// outside test/. The list is the tag's, not the working tree's.
+const FILES = stylesheets(tag);
+for (const path of FILES) await served(path, /^text\/css/, "text/css");
+
+// Every published module at its pinned jsDelivr URL: the pinned page's module scripts, the
+// registry they import, and the menu module they fetch on first open among them. A tag cut before
+// v0.5.0 holds none, and its check is the stylesheets' alone.
+const MODULES = modules(tag);
+for (const path of MODULES) {
+  await served(path, /^(text|application)\/javascript/, "JavaScript");
 }
 
 // The pinned page from three origins, on the real network: no interception. The file:// and
@@ -104,6 +119,26 @@ try {
     for (const name of rest) {
       const equal = prints[first] !== undefined && prints[first] === prints[name];
       check(equal, `${page} renders the same from ${first} and ${name}, in ${scheme}`);
+    }
+  }
+  // The menu, from each origin, when the tag publishes modules: from file:// it runs only through
+  // jsDelivr's CORS header, since the page's origin is opaque.
+  if (MODULES.length) {
+    for (const [name, url] of Object.entries(origins)) {
+      let opened;
+      try {
+        opened = await openPage(url, { scheme: "light" });
+        const result = await applyFromMenu(opened);
+        check(
+          result.applied === result.chosen && result.stored === result.chosen && result.repainted,
+          `${page} from ${name}: its menu opens and applies ${result.chosen}`,
+          JSON.stringify(result),
+        );
+      } catch (error) {
+        check(false, `${page} from ${name}: its menu opens and applies a profile`, error.message);
+      } finally {
+        opened?.close();
+      }
     }
   }
 } finally {
