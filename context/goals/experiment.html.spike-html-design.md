@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
+- **State:** building
 - **Task:** profiles
 - **Branch:** profiles
 
@@ -36,9 +36,9 @@ Behaviors
      paper, surface base-100, borders base-150 and base-200; dark pane black, page
      base-950, surface base-900, borders base-850 and base-800. Text and hues keep their
      v0.3.0 Flexoki steps.
-  2. Five color profiles, each its own file: Flexoki (default), Tokyo Night (day /
-     night), Catppuccin (latte / mocha), Everforest (hard light / hard dark), and Primer
-     (GitHub Light Default / Dark Dimmed). Each maps upstream swatches onto the 16 tokens
+  2. Four color profiles, each its own file, in this order: Flexoki (default), Primer
+     (GitHub Light Default / Dark Dimmed), Catppuccin (latte / mocha), and Everforest (hard
+     light / hard dark). Each maps upstream swatches onto the 16 tokens
      by role, as starting values the review stops confirm. Each is credited by a heading
      comment naming source, license, and upstream version: Flexoki MIT; Tokyo Night
      Apache-2.0 at v4.14.1; Catppuccin MIT at palette v1.8.0; Everforest
@@ -46,7 +46,7 @@ Behaviors
      upstream version. (Review redirect: Kanagawa dropped.)
 
   Selection
-  3. data-palette="flexoki" | "tokyo-night" | "catppuccin" | "everforest" | "primer" on any element
+  3. data-palette="flexoki" | "primer" | "catppuccin" | "everforest" on any element
      applies that profile to its subtree at zero specificity; the nearest scope wins.
      With no attribute anywhere Flexoki applies; data-palette on the root overrides it.
      A scope sets only color tokens and re-sets color and background on its own element,
@@ -88,8 +88,8 @@ Behaviors
 
   Package
   13. The lean entry holds the foundation and Flexoki. The full entry is self-contained:
-      everything the lean entry holds plus Tokyo Night, Catppuccin, Everforest, and
-      Primer, each imported one hop deep into the color sub-layer.
+      everything the lean entry holds plus Primer, Catppuccin, and Everforest, each
+      imported one hop deep into the color sub-layer.
   14. package.json names spike-html-design at 0.4.0 and exports the lean entry as ".",
       the full entry as "./full", and each profile as its own export; no dependencies;
       every export resolves to a published file.
@@ -103,7 +103,7 @@ Behaviors
       workbench note. It loads every profile; forms are rearranged within the specimen's
       own composition; embedded cells are denser, with realistic data: URL content and a
       scheme-aware iframe; a comparison grid holds a compact preview card for every
-      profile and scheme (ten); the contrast section gives each profile one row, light
+      profile and scheme (eight); the contrast section gives each profile one row, light
       and dark records side by side. All arrangement stays in the specimen layer.
   17a. (Review redirect.) The specimen's copy reads as clear, grammatical technical
       documentation for a human reader. No paragraph carries its own measure: text spans
@@ -176,7 +176,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor done
+slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor done · brief redirect → fixes
 
 ## Decisions
 
@@ -642,6 +642,12 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
 - profiles standards review: the color-facet test reads every token the color sub-layer declares,
   so an extra token fails; the budget tests hold BUDGETS' keys to the exported entries and the
   audit to no failures, replacing tests that restated BUDGETS and audit's arithmetic.
+- profiles session brief redirect (architect): drop Tokyo Night; it is too close to Catppuccin
+  and translates less well to a web UI. Profiles are ordered Flexoki, Primer, Catppuccin,
+  Everforest everywhere. Upstream values stay as upstream ships them, contrast fails included;
+  the Flexoki green rotation is the one exception. The fluid-expansion rows sit at the foot of
+  their scales; section h2s take the standard h2 style with no banner block; the line samples
+  must show --line-s and --line-m distinctly.
 
 ## Pending edits
 
