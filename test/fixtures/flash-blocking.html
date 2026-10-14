@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>flash fixture</title>
+    <script>
+      // flash records, in ms since navigation, the first paint and the moment the stored choice
+      // reaches the root, as data-palette.
+      window.flash = { paint: null, applied: null };
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.name === "first-paint") flash.paint ??= entry.startTime;
+        }
+      }).observe({ type: "paint", buffered: true });
+      new MutationObserver(() => {
+        if (document.documentElement.hasAttribute("data-palette")) {
+          flash.applied ??= performance.now();
+        }
+      }).observe(document.documentElement, { attributes: true });
+    </script>
+    <link rel="stylesheet" href="../../full.css" />
+    <script type="module" blocking="render" src="https://cdn.example/spike-html-design/modules/register-full.js"></script>
+    <script type="module" blocking="render" src="https://cdn.example/spike-html-design/modules/preferences.js"></script>
+  </head>
+  <body>
+    <h1>flash fixture</h1>
+    <p>The modules load render-blocking from a CDN the test delays: the stored choice applies before first paint, and first paint waits on the fetch.</p>
+  </body>
+</html>

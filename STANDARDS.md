@@ -37,7 +37,8 @@ The architecture pages that apply, in the architecture repository:
   swatch whose color matches its name, with the ANSI slot as tie-breaker. The profile's file
   credits its source, license, and upstream version in a heading comment.
 - A profile's contrast is recorded, never corrected: its values stay its upstream's.
-- A profile sets color tokens only. Space and type profiles are separate facets.
+- A profile sets its own facet's tokens only: a color profile color tokens, a space profile
+  space tokens, a type profile type tokens.
 
 ## Hooks
 
@@ -66,6 +67,9 @@ restating it.
 - The specimen's arrangement lives in its own layer: composition, not baseline.
 - `kbd` styling, including every key hint, belongs to the elements layer. The keys module binds
   keys and styles nothing.
+- The modules add nothing to the baseline's layers. A component's CSS, such as the theming
+  menu's, is one constructed sheet the component adopts, in the layer
+  `spike-html-design.<component>`, under every consumer layer; it reads only tokens.
 
 ## Whitespace
 

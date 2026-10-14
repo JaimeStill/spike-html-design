@@ -1,18 +1,21 @@
 <!doctype html>
-<html lang="en" data-palette="catppuccin">
+<html lang="en" data-palette="catppuccin" data-space="compact" data-type="sans">
   <head>
     <meta charset="utf-8" />
     <title>profile consumer fixture</title>
     <link rel="stylesheet" href="../../baseline.css" />
     <style>
-      /* A consumer of the lean entry adding one profile: it imports the file the package's
-         ./profiles/catppuccin export names into the color sub-layer, after the entry, and
-         selects it on the root with data-palette. */
+      /* A consumer of the lean entry adding one profile of each facet: it imports the files the
+         package's ./profiles/color/catppuccin, ./profiles/space/compact, and
+         ./profiles/type/sans exports name, each into its facet's sub-layer, after the entry, and
+         selects them on the root with data-palette, data-space, and data-type. */
       @import url(../../layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
+      @import url(../../layers/tokens/space/compact.css) layer(spike-html-design.tokens.space);
+      @import url(../../layers/tokens/type/sans.css) layer(spike-html-design.tokens.type);
     </style>
   </head>
   <body>
-    <p>Catppuccin on the root.</p>
+    <p>Catppuccin, compact, and sans on the root.</p>
     <div id="everforest" data-palette="everforest"><p>Everforest, not imported.</p></div>
   </body>
 </html>

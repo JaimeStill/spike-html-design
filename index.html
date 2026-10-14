@@ -7,6 +7,14 @@
     <!-- Relative, never root-absolute: Pages serves this page under a project subpath, and the
          page must also render from file://. -->
     <link rel="stylesheet" href="./full.css" />
+    <!-- The full registration module, then the stored preferences, render-blocking, so the stored
+         choice applies before first paint. Both import the registry, which the modulepreload
+         fetches beside them rather than after them, so first paint waits one round trip, not
+         two. Relative module scripts run served and on Pages; from file://, chromium blocks
+         them, and the page renders its defaults with no menu. -->
+    <link rel="modulepreload" href="./modules/registry.js" />
+    <script type="module" blocking="render" src="./modules/register-full.js"></script>
+    <script type="module" blocking="render" src="./modules/preferences.js"></script>
     <style>
       /* The specimen layer arranges this page as a console: a compact header, each section
          under its heading, a full-width banner over each subsection, and the samples in panels,
@@ -18,8 +26,9 @@
          the baseline. What sits inside each cell, under its label, is the baseline alone, and so
          is each section's heading, a plain h2. Samples read the token they show from --sample.
 
-         The page links the full entry, which holds every color profile, so its comparison grid
-         and contrast records can name each one. */
+         The page links the full entry, which holds every profile of every facet, so its
+         comparison grid and contrast records can name each color profile, and its space and type
+         cells each space and type profile. */
       @layer spike-html-design, specimen;
 
       @layer specimen {
@@ -34,13 +43,18 @@
           padding-block-end: var(--space-2xl);
         }
 
-        /* The header: the title, then the intro, close above the first section. Text spans
+        /* The header: the title, then the Theme button on a line of its own beneath it, then
+           the intro, close above the first section. Nothing sits beside the title. Text spans
            the column: a reading measure belongs to a prose layout, and this page is a console. */
         body > header {
           padding-block-start: var(--space-l);
 
           & > * {
             margin: 0;
+          }
+
+          & > button {
+            margin-block: var(--space-xs) var(--space-3xs);
           }
 
           & > p {
@@ -336,6 +350,48 @@
           border-radius: var(--sample);
         }
 
+        /* A caption that differs between profiles is in the markup once per profile, marked
+           data-caption with the profile's name, and shows only under the nearest scope naming
+           that profile, or its facet's default under none. Each scope sets which of its facet's
+           captions show, and they inherit, so the nearest scope wins as a profile does; with no
+           scope, each caption's fallback shows the default's. The root declares none of them, so
+           its custom properties stay the baseline's tokens. */
+        :where([data-space="regular"]) {
+          --caption-regular: inline;
+          --caption-compact: none;
+        }
+
+        :where([data-space="compact"]) {
+          --caption-regular: none;
+          --caption-compact: inline;
+        }
+
+        :where([data-type="mono"]) {
+          --caption-mono: inline;
+          --caption-sans: none;
+        }
+
+        :where([data-type="sans"]) {
+          --caption-mono: none;
+          --caption-sans: inline;
+        }
+
+        [data-caption="regular"] {
+          display: var(--caption-regular, inline);
+        }
+
+        [data-caption="compact"] {
+          display: var(--caption-compact, none);
+        }
+
+        [data-caption="mono"] {
+          display: var(--caption-mono, inline);
+        }
+
+        [data-caption="sans"] {
+          display: var(--caption-sans, none);
+        }
+
         /* A scope sample: a container forcing a scheme, framed and padded apart from its cell. */
         .scope-sample {
           margin-block-start: var(--space-xs);
@@ -550,11 +606,16 @@
   <body>
     <header>
       <h1>spike-html-design</h1>
+      <button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">
+        Theme <kbd>T</kbd>
+      </button>
       <p>
         This page renders every token, element and tool class in the baseline with the full
         entry, <code>full.css</code>, alone. It follows the system color scheme; set
         <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
-        apply a color profile to its subtree.
+        apply a color profile to its subtree, and <code>data-space</code> or
+        <code>data-type</code> to apply a space or type profile. Served, the Theme button or
+        <kbd>T</kbd> opens a menu to choose them for every page on this site.
       </p>
     </header>
 
@@ -573,7 +634,7 @@
             <h3>Color</h3>
             <p>
               The Now column shows each token in the current scheme and profile. The Light and
-              Dark columns give Flexoki's values.
+              Dark columns show the current profile's values in each scheme.
             </p>
           </header>
           <div class="cells">
@@ -594,50 +655,50 @@
                     <tr>
                       <th scope="row"><code>--bg-0</code></th>
                       <td><div class="swatch" style="--sample: var(--bg-0)"></div></td>
-                      <td><span class="dot" style="--sample: #f2f0e5"></span>#f2f0e5</td>
-                      <td><span class="dot" style="--sample: #100f0f"></span>#100f0f</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg-0)"></span><span class="hex">#f2f0e5</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg-0)"></span><span class="hex">#100f0f</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--bg</code></th>
                       <td><div class="swatch" style="--sample: var(--bg)"></div></td>
-                      <td><span class="dot" style="--sample: #fffcf0"></span>#fffcf0</td>
-                      <td><span class="dot" style="--sample: #1c1b1a"></span>#1c1b1a</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#fffcf0</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#1c1b1a</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--bg-2</code></th>
                       <td><div class="swatch" style="--sample: var(--bg-2)"></div></td>
-                      <td><span class="dot" style="--sample: #e6e4d9"></span>#e6e4d9</td>
-                      <td><span class="dot" style="--sample: #282726"></span>#282726</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg-2)"></span><span class="hex">#e6e4d9</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg-2)"></span><span class="hex">#282726</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--border</code></th>
                       <td><div class="swatch" style="--sample: var(--border)"></div></td>
-                      <td><span class="dot" style="--sample: #dad8ce"></span>#dad8ce</td>
-                      <td><span class="dot" style="--sample: #343331"></span>#343331</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--border)"></span><span class="hex">#dad8ce</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--border)"></span><span class="hex">#343331</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--border-2</code></th>
                       <td><div class="swatch" style="--sample: var(--border-2)"></div></td>
-                      <td><span class="dot" style="--sample: #cecdc3"></span>#cecdc3</td>
-                      <td><span class="dot" style="--sample: #403e3c"></span>#403e3c</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--border-2)"></span><span class="hex">#cecdc3</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--border-2)"></span><span class="hex">#403e3c</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--fg</code></th>
                       <td><div class="swatch" style="--sample: var(--fg)"></div></td>
-                      <td><span class="dot" style="--sample: #100f0f"></span>#100f0f</td>
-                      <td><span class="dot" style="--sample: #e6e4d9"></span>#e6e4d9</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--fg)"></span><span class="hex">#100f0f</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--fg)"></span><span class="hex">#e6e4d9</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--fg-2</code></th>
                       <td><div class="swatch" style="--sample: var(--fg-2)"></div></td>
-                      <td><span class="dot" style="--sample: #575653"></span>#575653</td>
-                      <td><span class="dot" style="--sample: #b7b5ac"></span>#b7b5ac</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--fg-2)"></span><span class="hex">#575653</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--fg-2)"></span><span class="hex">#b7b5ac</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--fg-3</code></th>
                       <td><div class="swatch" style="--sample: var(--fg-3)"></div></td>
-                      <td><span class="dot" style="--sample: #878580"></span>#878580</td>
-                      <td><span class="dot" style="--sample: #6f6e69"></span>#6f6e69</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--fg-3)"></span><span class="hex">#878580</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--fg-3)"></span><span class="hex">#6f6e69</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -660,50 +721,50 @@
                     <tr>
                       <th scope="row"><code>--red</code></th>
                       <td><div class="swatch" style="--sample: var(--red)"></div></td>
-                      <td><span class="dot" style="--sample: #af3029"></span>#af3029</td>
-                      <td><span class="dot" style="--sample: #d14d41"></span>#d14d41</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--red)"></span><span class="hex">#af3029</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--red)"></span><span class="hex">#d14d41</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--orange</code></th>
                       <td><div class="swatch" style="--sample: var(--orange)"></div></td>
-                      <td><span class="dot" style="--sample: #bc5215"></span>#bc5215</td>
-                      <td><span class="dot" style="--sample: #da702c"></span>#da702c</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--orange)"></span><span class="hex">#bc5215</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--orange)"></span><span class="hex">#da702c</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--yellow</code></th>
                       <td><div class="swatch" style="--sample: var(--yellow)"></div></td>
-                      <td><span class="dot" style="--sample: #ad8301"></span>#ad8301</td>
-                      <td><span class="dot" style="--sample: #d0a215"></span>#d0a215</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--yellow)"></span><span class="hex">#ad8301</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--yellow)"></span><span class="hex">#d0a215</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--green</code></th>
                       <td><div class="swatch" style="--sample: var(--green)"></div></td>
-                      <td><span class="dot" style="--sample: #408739"></span>#408739</td>
-                      <td><span class="dot" style="--sample: #61a25a"></span>#61a25a</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--green)"></span><span class="hex">#408739</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--green)"></span><span class="hex">#61a25a</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--cyan</code></th>
                       <td><div class="swatch" style="--sample: var(--cyan)"></div></td>
-                      <td><span class="dot" style="--sample: #24837b"></span>#24837b</td>
-                      <td><span class="dot" style="--sample: #3aa99f"></span>#3aa99f</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--cyan)"></span><span class="hex">#24837b</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--cyan)"></span><span class="hex">#3aa99f</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--blue</code></th>
                       <td><div class="swatch" style="--sample: var(--blue)"></div></td>
-                      <td><span class="dot" style="--sample: #205ea6"></span>#205ea6</td>
-                      <td><span class="dot" style="--sample: #4385be"></span>#4385be</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--blue)"></span><span class="hex">#205ea6</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--blue)"></span><span class="hex">#4385be</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--purple</code></th>
                       <td><div class="swatch" style="--sample: var(--purple)"></div></td>
-                      <td><span class="dot" style="--sample: #5e409d"></span>#5e409d</td>
-                      <td><span class="dot" style="--sample: #8b7ec8"></span>#8b7ec8</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--purple)"></span><span class="hex">#5e409d</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--purple)"></span><span class="hex">#8b7ec8</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--magenta</code></th>
                       <td><div class="swatch" style="--sample: var(--magenta)"></div></td>
-                      <td><span class="dot" style="--sample: #a02f6f"></span>#a02f6f</td>
-                      <td><span class="dot" style="--sample: #ce5d97"></span>#ce5d97</td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--magenta)"></span><span class="hex">#a02f6f</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--magenta)"></span><span class="hex">#ce5d97</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -750,7 +811,8 @@
                 <code>--space-base</code>
                 <div class="scale-row" style="--sample: var(--space-base)">
                   <div class="space-sample"></div>
-                  <small>1 → 1.125rem, the unit every step multiplies</small>
+                  <small data-caption="regular">1 → 1.125rem, the unit every step multiplies</small>
+                  <small data-caption="compact">0.75 → 0.875rem, the unit every step multiplies</small>
                 </div>
                 <code>--space-3xs</code>
                 <div class="scale-row" style="--sample: var(--space-3xs)">
@@ -821,7 +883,11 @@
               <h4>Radii</h4>
               <div class="specimen">
                 <code>--radius-base</code>
-                <div class="radius-sample" style="--sample: var(--radius-base)"></div>
+                <div class="scale-row" style="--sample: var(--radius-base)">
+                  <div class="radius-sample"></div>
+                  <small data-caption="regular">0.375rem, the radius sm, md and lg scale</small>
+                  <small data-caption="compact">0.25rem, the radius sm, md and lg scale</small>
+                </div>
                 <code>--radius-sm</code>
                 <div class="radius-sample" style="--sample: var(--radius-sm)"></div>
                 <code>--radius-md</code>
@@ -830,6 +896,22 @@
                 <div class="radius-sample" style="--sample: var(--radius-lg)"></div>
                 <code>--radius-full</code>
                 <div class="radius-sample" style="--sample: var(--radius-full)"></div>
+              </div>
+            </section>
+            <section class="cell">
+              <div class="label"><code>data-space</code></div>
+              <h4>Profiles</h4>
+              <p>
+                Each box applies a space profile to its subtree: its steps, radii and lines. Regular
+                is the default; compact is denser.
+              </p>
+              <div class="scope-sample" data-space="regular">
+                <p>Regular: text a <code>--space-s</code> apart, and a <kbd>Ctrl</kbd> key.</p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Regular field" placeholder="Field" /></p>
+              </div>
+              <div class="scope-sample" data-space="compact">
+                <p>Compact: text a <code>--space-s</code> apart, and a <kbd>Ctrl</kbd> key.</p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Compact field" placeholder="Field" /></p>
               </div>
             </section>
           </div>
@@ -902,13 +984,27 @@
               <h4>Fonts</h4>
               <div class="specimen">
                 <code>--font-body</code>
-                <span class="font-sample" style="--sample: var(--font-body)">The quick brown fox</span>
+                <div class="scale-row" style="--sample: var(--font-body)">
+                  <span class="font-sample">The quick brown fox</span>
+                  <small>system-ui, the system sans stack</small>
+                </div>
                 <code>--font-heading</code>
-                <span class="font-sample" style="--sample: var(--font-heading)">The quick brown fox</span>
+                <div class="scale-row" style="--sample: var(--font-heading)">
+                  <span class="font-sample">The quick brown fox</span>
+                  <small data-caption="mono">ui-monospace, the system mono stack</small>
+                  <small data-caption="sans">system-ui, the system sans stack</small>
+                </div>
                 <code>--font-ui</code>
-                <span class="font-sample" style="--sample: var(--font-ui)">The quick brown fox</span>
+                <div class="scale-row" style="--sample: var(--font-ui)">
+                  <span class="font-sample">The quick brown fox</span>
+                  <small data-caption="mono">ui-monospace, the system mono stack</small>
+                  <small data-caption="sans">system-ui, the system sans stack</small>
+                </div>
                 <code>--font-code</code>
-                <span class="font-sample" style="--sample: var(--font-code)">The quick brown fox</span>
+                <div class="scale-row" style="--sample: var(--font-code)">
+                  <span class="font-sample">The quick brown fox</span>
+                  <small>ui-monospace, the system mono stack</small>
+                </div>
               </div>
             </section>
             <section class="cell">
@@ -923,6 +1019,24 @@
                 <span class="leading-sample" style="--sample: var(--leading-ui)">Text that wraps onto a second line.</span>
                 <code>--leading-code</code>
                 <span class="leading-sample" style="--sample: var(--leading-code)">Text that wraps onto a second line.</span>
+              </div>
+            </section>
+            <section class="cell">
+              <div class="label"><code>data-type</code></div>
+              <h4>Profiles</h4>
+              <p>
+                Each box applies a type profile to its subtree: its fonts and leadings. Mono, the
+                interface voice, is the default; sans sets every role but code in the sans stack.
+              </p>
+              <div class="scope-sample" data-type="mono">
+                <h5>Mono heading</h5>
+                <p>Body text, <code>inline code</code>, and a <kbd>Ctrl</kbd> key.</p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Mono field" placeholder="Field" /></p>
+              </div>
+              <div class="scope-sample" data-type="sans">
+                <h5>Sans heading</h5>
+                <p>Body text, <code>inline code</code>, and a <kbd>Ctrl</kbd> key.</p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Sans field" placeholder="Field" /></p>
               </div>
             </section>
           </div>
@@ -3078,5 +3192,32 @@ const answer = 42;</code></pre>
         </div>
       </section>
     </main>
+    <theme-menu id="theme"></theme-menu>
+    <script type="module">
+      // The color tables' Light and Dark cells force their scheme and inherit the root's palette,
+      // so their dots paint the current profile's values with no script. This specimen-only
+      // script writes each value as text: it reads the color each dot resolves to and writes it
+      // as lowercase #rrggbb, and again whenever the root's palette or scheme changes, as the
+      // theming menu changes them. Without it, the cells keep Flexoki's values, written in the
+      // markup.
+      const hex = (color) =>
+        `#${color
+          .match(/\d+/g)
+          .slice(0, 3)
+          .map((channel) => Number(channel).toString(16).padStart(2, "0"))
+          .join("")}`;
+
+      const write = () => {
+        for (const cell of document.querySelectorAll("#color td[data-scheme]")) {
+          const value = getComputedStyle(cell.querySelector(".dot")).backgroundColor;
+          cell.querySelector(".hex").textContent = hex(value);
+        }
+      };
+
+      write();
+      new MutationObserver(write).observe(document.documentElement, {
+        attributeFilter: ["data-palette", "data-scheme"],
+      });
+    </script>
   </body>
 </html>

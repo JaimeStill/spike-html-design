@@ -10,169 +10,169 @@
 2. [x] themes
 3. [x] facets
 4. [x] profiles
-5. [ ] preferences
+5. [x] preferences
 6. [ ] keys
 7. [ ] validate
 
-## Task brief · experiment.html.spike-html-design · profiles
+## Task brief · experiment.html.spike-html-design · preferences
 
-Problem       v0.3.0 has one color profile, Flexoki, fixed at the root, and an interface
-              built from Flexoki alone. Evidence 3 and 5 need four color profiles, each
-              light and dark, applied to any subtree, with contrast recorded per profile.
-              Measured against all four palettes, the interface lacked a pane surface and
-              carried a border step nothing reads. Profiles also brings the full entry
-              point, the enforced size budget, the workbench layout the architect called
-              out, and the kbd styling formerly assigned to keys. preferences and validate
-              build on it. (Evidence 3, 5; 11's budget.)
+Problem       v0.4.0 ships four color profiles but one space profile and one type profile,
+              and no way for a reader to choose among them: no registry, no menu, no
+              persistence, no script at all (the theme toggle the roadmap says this task
+              replaces was never built). Evidence 6 needs a JS profile registry that extension
+              packages add to, a theming menu on T with each facet's profile and the scheme,
+              choices that persist across reloads and pages, and the flash of the default
+              profile before a stored one applies, measured. This task also adds the second
+              space and type profiles with their data-space and data-type scopes, the first JS
+              exports and their size budgets, and the harness support a module page from
+              file:// needs. (Evidence 6; 2's swappable space and type; 8's file:// render;
+              11's budgets.)
 
 Behaviors
-  Color interface
-  1. The color facet is exactly 16 tokens, each a light and dark pair:
-     --bg-0, the pane: darker than --bg in both schemes; --bg, the page; --bg-2, the
-     element surface: one step from --bg toward the text in each scheme; --border, for
-     dividers, containers, and hover fills; --border-2, for control boundaries; --fg,
-     --fg-2, --fg-3, for text; the eight hues. --border-3 is gone, and no other v0.3.0
-     color name changes. Flexoki's ladder shifts one step: light pane base-50, page
-     paper, surface base-100, borders base-150 and base-200; dark pane black, page
-     base-950, surface base-900, borders base-850 and base-800. Text and hues keep their
-     v0.3.0 Flexoki steps.
-  2. Four color profiles, each its own file, in this order: Flexoki (default), Primer
-     (GitHub Light Default / Dark Dimmed), Catppuccin (latte / mocha), and Everforest (hard
-     light / hard dark). Each maps upstream swatches onto the 16 tokens by role, with
-     values as upstream ships them (Flexoki's green, rotated to OKLCH hue 142°, is the one
-     departure). Each is credited by a heading comment naming source, license, and
-     upstream version: Flexoki MIT; Primer (github-vscode-theme) MIT at v6.3.5;
-     Catppuccin MIT at palette v1.8.0; Everforest MIT at v0.3.0. (Redirects: Kanagawa
-     dropped at review stop 1, Tokyo Night at the session brief.)
+  Space and type profiles
+  1. Space and type split as color did: each facet's contract stands alone, and each profile
+     is its own file, applied by a zero-specificity attribute scope on any element,
+     data-space="regular" | "compact" and data-type="mono" | "sans". The nearest scope wins.
+     With no attribute anywhere, regular and mono apply; an attribute on the root overrides
+     them. A consumer's later layer beats every profile.
+  2. regular keeps v0.4.0's space values. compact sets --space-base from 0.75rem on a 22.5rem
+     display to 0.875rem on an 80rem one, and --radius-base to 0.25rem. Lines stay 1px and
+     2px. Both stay fluid by progress() between rem bounds.
+  3. mono keeps v0.4.0's type values. sans sets the heading, ui, and body fonts to the system
+     sans stack and keeps code mono and the default scale and leadings. (Review stop: sans
+     replaces serif.)
+  4. Swapping a space or type profile changes only that facet's tokens. A preview container
+     carrying data-space or data-type renders its subtree as that profile renders at the root.
+  5. The lean entry holds the defaults: Flexoki, regular, mono. The full entry adds every
+     other profile of every facet, each imported one hop deep into its facet's sub-layer.
 
-  Selection
-  3. data-palette="flexoki" | "primer" | "catppuccin" | "everforest" on any element
-     applies that profile to its subtree at zero specificity; the nearest scope wins.
-     With no attribute anywhere Flexoki applies; data-palette on the root overrides it.
-     A scope sets only color tokens and re-sets color and background on its own element,
-     so a scoped container paints as the root does. A consumer's later layer still beats
-     every profile.
-  4. data-scheme="light" | "dark" on any element forces that scheme for its subtree. With
-     no attribute the page follows the system scheme, live; data-theme does nothing.
-  5. A preview container, an element with data-palette and data-scheme, renders its
-     subtree as that profile and scheme render at the root: for every profile and scheme,
-     every element of the preview card has the same computed colors in both cases.
+  Registry
+  6. One registry per page, shared by every copy of the registry module from any URL or tag:
+     a store at a well-known global key (Symbol.for), whose shape is public API frozen per
+     tag. Registering a name under color, space, or type lists it for the menu; the page's CSS
+     ships the profile, and registering never loads CSS. Registering a name twice is harmless.
+  7. Two registration modules mirror the CSS entries. The lean one registers flexoki, regular,
+     and mono; the full one registers every built-in profile. A page imports the one matching
+     the entry it links. A page or extension importing a profile beyond its entry registers
+     that name itself, through the registry.
 
-  Interaction and elements
-  6. Interaction reads one hook, --interaction-color, falling back to --blue: link color,
-     the focus outline, the caret, accent-color, ::selection's 30% mix, and control hover
-     borders. Neither the baseline nor any profile declares it; a consumer setting it on
-     any element re-colors all interaction in that subtree.
-  7. On hover, enabled text inputs, select, textarea, the native button, button inputs,
-     the file button, and neutral .button take a border in the interaction color. Active
-     and focus keep their treatment, .button-<hue> keeps its own hook color, and disabled
-     controls don't change.
-  8. Inline code outside pre has no chip: the code font, its text read as
-     var(--code-color, var(--green)); inside a link it takes the link's color and
-     underline. (Review redirect: replaces the --bg-2 chip.)
-  9. kbd is an outlined key: a --border-2 border at --line-s with a --line-m bottom edge,
-     no fill, --radius-sm. Its border and text read --kbd-color, falling back to
-     --border-2 and --fg. All key-hint styling is kbd's.
-  10. Table header cells sit on --bg-2. .table-striped's default stripe becomes a
-      color-mix() distinct from the header surface, still replaced by --table-stripe.
-  11. The elements behavior test still holds: under reset and elements, every element lays
-      out as with no stylesheet, apart from the reset's allowances.
-  11a. A blockquote's start edge is a neutral --border-2 rule, not the interaction color.
-  11b. A dialog's padding is a step tighter, with more space before its actions.
+  Preferences
+  8. The preferences module, loaded render-blocking after the registration module, applies the
+     stored choice to the root before first paint: data-palette, data-space, data-type, and
+     data-scheme, where system means no data-scheme. A stored name nothing registered on this
+     page falls back to that facet's default on this page and stays in storage.
+  9. Choices persist under one namespaced localStorage key per origin. Every page using the
+     baseline on an origin shares it: a choice saved on one page applies on another, including
+     one in another directory and after a reload.
+  10. Another tab's save applies live on every open page through the storage event, except
+      while that page's menu is open: the menu ignores it, Save overwrites it, and Cancel
+      restores the stored value, the other tab's included.
+  11. The flash is measured: the time from first paint to the stored choice applying, in
+      headless chromium, with a module fetch delayed as a CDN's would be. With the
+      render-blocking module the choice applies before first paint (0 ms), and the cost,
+      first paint waiting on the module fetch, is recorded. Firefox's flash is recorded from
+      feature support, not measured. A failed module load doesn't stall paint.
+  12. The preferences module defines <theme-menu>, a thin element that loads the menu module
+      the first time it opens, never before: first paint precedes any fetch of it. It opens
+      on the invoker command --open (a page button with commandfor="<id>" command="--open")
+      and on T, pressed outside fields with no modifier. keys.js takes over T in v0.6.0.
 
-  Contrast
-  12. Each profile records its contrast in each scheme: every text token and hue over
-      every surface (--bg-0, --bg, --bg-2, --border, --border-2), WCAG 2, short marks and
-      a legend. Recorded, not corrected; the check recomputes every cell in chromium at 2
-      decimals.
+  Theming menu
+  13. The menu is a modal native <dialog> in light DOM, so the elements layer styles it. One
+      row per section, in order: color profile, scheme, space, type. Each row is a native
+      radio group drawn as ◀ current value ▶; the other radios are hidden visually but stay
+      in the group. The scheme row cycles system, light, dark, system the default.
+  14. Keys: Up/Down and k/j move between rows; Left/Right and h/l cycle within a row; Tab is
+      one stop per row. Every key the menu handles stops at the dialog.
+  15. Every change applies at once to the preview and the page. T and Save accept and write
+      storage once. Escape and Cancel restore the page and preview to what applied when the
+      menu opened, and write nothing. Save shows <kbd>T</kbd> and Cancel <kbd>Esc</kbd>, each
+      with aria-keyshortcuts. A backdrop click does nothing.
+  16. The preview is a container carrying data-palette, data-scheme, data-space, data-type
+      for the current selection, holding the preview card's contents without its frame or
+      token strip: a heading; a paragraph with a link, inline code, and kbd; a neutral and a
+      hue button; a labeled text input; a three-row striped table. For every selection its
+      tokens match what the root resolves for it.
+  17. The menu's arrangement CSS is its own, never the baseline's layers: one constructed sheet
+      the element adopts onto the document, in layer spike-html-design.theme-menu, after tools
+      and under every consumer layer and unlayered CSS; the spike's namespace is the
+      custom-component layer.
 
   Package
-  13. The lean entry holds the foundation and Flexoki. The full entry is self-contained:
-      everything the lean entry holds plus Primer, Catppuccin, and Everforest, each
-      imported one hop deep into the color sub-layer.
-  14. package.json names spike-html-design at 0.4.0 and exports the lean entry as ".",
-      the full entry as "./full", and each profile as its own export; no dependencies;
-      every export resolves to a published file.
-  15. A consumer linking the lean entry and importing one profile's export into the color
-      sub-layer can select that profile with data-palette.
-  16. The check fails when an entry's per-file brotli-11 sum exceeds its budget: 14,000
-      bytes lean, 18,000 full. (Review redirects: lean raised from 12,000, full from 16,000.) Raw sizes stay reported, not enforced.
+  18. package.json names spike-html-design at 0.5.0. Profile exports nest,
+      ./profiles/<facet>/<name>, for every facet; color's keys move from v0.4.0's flat keys,
+      which v0.4.0 keeps. JS exports: ./registry, ./preferences, ./theme-menu, ./register,
+      ./register/full. No dependencies; every export resolves to a published file.
+  19. The check budgets each JS export's brotli-11 size beside the CSS entries; JS budgets are
+      approved at the session brief. The lean entry stays within 14,000 B and full within
+      18,000 B.
 
-  Specimen
-  17. The specimen is a workbench in reference variant A's console layout, with no
-      workbench note. It loads every profile; forms are rearranged within the specimen's
-      own composition; embedded cells are denser, with realistic data: URL content and a
-      scheme-aware iframe; a comparison grid holds a compact preview card for every
-      profile and scheme (eight); the contrast section gives each profile one row, light
-      and dark records side by side. All arrangement stays in the specimen layer.
-  17a. (Review redirect.) The specimen's copy reads as clear, grammatical technical
-      documentation for a human reader. No paragraph carries its own measure: text spans
-      its panel, and the page column caps at 80rem. The header has no rule or meta line
-      and sits close to Tokens; section labels and layer names are larger; color panels
-      drop their intros and top-align their tables, with room between text and table;
-      --space-base heads the space scale and --space-fluid foots it, and --type-fluid
-      foots the type scale, shown as fluid expansion across the display range, with no separate
-      progress panel (the progress tokens are documented as internal); the tables
-      example is wider, with more columns and room for its caption; the embedded cells
-      are evenly arranged.
-  18. The preview card shows a heading; a paragraph with a link, inline code, and kbd; a
-      neutral button and two hue buttons; a labeled text input; a three-row table with a
-      header and a striped row; a strip of every color token; and a label naming the
-      profile and scheme. A fixture page renders the same card per profile, for reuse by
-      validate's extension fixture.
-  19. The specimen renders the same from file:// and from a local server under the Pages
-      subpath.
-  20. A v0.4.0 pinned page is the specimen linking the @v0.4.0 jsDelivr full entry. Its
-      hermetic test and the live pin check cover every stylesheet the tag publishes; the
-      v0.1.0, v0.2.0, and v0.3.0 pinned pages still pass against their own tags.
-  21. README, STANDARDS.md, and the goal record describe v0.4.0: the interface and its
-      roles, profile selection and nesting, the three hooks in elements and their
-      fallbacks, kbd's ownership, the entries and exports, and the enforced budgets.
+  Specimen and pins
+  20. The specimen loads every profile and the modules by relative URL. Its header ends in a
+      native "Theme" button with <kbd>T</kbd>, aria-keyshortcuts="T", and
+      commandfor/command="--open"; it shows the space and type profiles beside color's.
+      Served and on Pages, the menu works. From file://, the working-tree specimen has no
+      menu (chromium blocks relative module scripts); the gap is recorded. Its CSS still
+      renders the same from file:// and a local server under the Pages subpath.
+  20a. The specimen's Color, Space, and Type sections follow the current selection: the Color
+      section's Light and Dark columns show the selected profile's swatches and hex values in
+      each scheme, and the Space and Type captions describe the selected profile. Specimen-only
+      code; no package or budget change. (Review stop.)
+  21. The harness answers intercepted requests with Access-Control-Allow-Origin, so a module
+      page from file:// can be tested hermetically.
+  22. A v0.5.0 pinned page is the specimen linking the @v0.5.0 jsDelivr full entry and modules.
+      From file:// its menu works through jsDelivr's CORS header. Its hermetic test and the
+      live pin check cover every stylesheet and module the tag publishes. v0.1.0–v0.4.0
+      pinned pages still pass against their own tags.
+  23. README, STANDARDS.md, and the goal record describe v0.5.0: space and type profiles and
+      scopes, the registry and registration, preferences, storage, and the flash figure; the
+      menu and its keys; exports and budgets; the file:// exception for modules; and that
+      preferences styles nothing in the baseline's layers (the menu's CSS is the component's).
 
-Test seams    the harness page: a page in headless chromium, read for computed styles under
-              emulated scheme and viewport; the check's size report over the exported entries.
+Test seams    the harness page: a page in headless chromium, read for computed styles,
+              attributes, storage, paint timing, and keyboard results under emulated scheme,
+              viewport, and intercepted or delayed requests; the check's size report over the
+              exported entries.
 
 Slices
-  1. The interface: the 16-token color facet with Flexoki's shifted ladder, --border-3
-     renamed, data-palette and data-scheme scopes on any element. Demo: the specimen in
-     both schemes, a container forced dark inside a light page.
-  2. Interaction and elements: --interaction-color and hover borders, the code chip and
-     --code-color, the kbd keycap and --kbd-color, the header surface, the stripe mix,
-     each with an extension test. Demo: the specimen's elements and tools sections.
-  3. Three profiles: Kanagawa, Tokyo Night, Catppuccin, credited, with per-profile
-     exports, the preview-container equivalence test, per-profile contrast records, and
-     the preview-card fixture page. Demo: the fixture, one card per profile and scheme.
-  4. The workbench: console layout, note removed, forms rearranged, embedded cells, the
-     eight-card comparison grid, the contrast rows. Demo: the served workbench.
-  ── REVIEW STOP 1 (held after slice 4): Flexoki's shifted ladder, the stripe, Tokyo
-     Night and Catppuccin accepted; redirect recorded in Decisions ──
-  4b. Review fixes: drop Kanagawa; add Everforest (hard) and Primer (Light Default /
-     Dark Dimmed) with exports, contrast records, and cards; inline code as green text;
-     the blockquote edge; the dialog spacing; the specimen copy and layout fixes. Demo:
-     the served workbench.
-  ── REVIEW STOP 2: the architect views the new profiles and the fixes in both schemes
-     before the full entry and budget are built ──
-  4c. (Review stop 2.) The tools layer's .scroll-x reserves no vertical scrollbar gutter, so
-     a wrapped table fills its container; .scroll-y keeps its stable gutter. Lands with
-     slice 5.
-  5. The full entry and package: self-contained full entry, package.json at 0.4.0 with
-     ".", "./full", and per-profile exports, a lean-plus-one-profile consumer test, the
-     specimen on the full entry. Demo: the check passes; the size report lists both.
-  6. The budget: per-entry brotli budgets enforced by the check. Demo: the check passes;
-     a fixture entry over its budget fails.
-  7. Docs and pin: README, STANDARDS.md, the goal record, and the v0.4.0 pinned page
-     synced with the final specimen. Demo: the check passes; serve shows the final
-     workbench.
+  1. Space and type profiles: split facets, compact and sans (amended: built as serif, which
+     sans replaced at the review stop), data-space/data-type scopes, independence and
+     preview-equivalence tests, both entries' imports, v0.5.0's probes, package.json at 0.5.0.
+     Demo: a compact, sans container inside a regular, mono page.
+  2. Registry and registration: the shared global store, ./register and ./register/full, a
+     two-copies-one-store test; the harness gains the CORS header. Demo: a fixture page lists
+     the lean and full registrations.
+  3. Preferences: pre-paint apply, the storage key and fallback, the storage event, the thin
+     <theme-menu> with --open and T, the flash measurement. Demo: a choice stored on one page
+     applies before first paint on another; the flash figures.
+  4. The menu: menu module loaded on first open, radio rows, keys, live preview, Save/Cancel
+     with snapshot, adopted sheet in spike-html-design.theme-menu, the specimen's Theme button.
+     Demo: the served workbench with the menu in use.
+  ── REVIEW STOP (after slice 4): the architect uses the menu and views compact and the second
+     type profile (amended: serif then, replaced there by sans) on the served workbench
+     (`mise run serve`), before any tag; redirects go to Decisions ──
+  4b. Review-stop fixes: sans replaces serif; the Theme button sits beneath the title and
+      above the intro; the specimen's Color, Space, and Type sections follow the selection
+      (behavior 20a). Demo: the served workbench, switching profiles in the menu.
+  5. Package and budgets: nested profile keys, JS exports, JS budgets in the size report and
+     check, lean and full consumer tests on the new keys. Demo: check passes; size report
+     lists every CSS and JS entry.
+  6. Docs and pin: README, STANDARDS.md, goal record, the v0.5.0 pinned page with modules from
+     jsDelivr, the pin check over stylesheets and modules. Demo: check passes; the pinned
+     page's menu works from file:// under interception.
 
-Out of scope  second space and type profiles and data-space/data-type (preferences); the
-              registry, theming menu, persistence (preferences); the shortcuts API and ?
-              dialog (keys); Kanagawa; dragon, storm, moon, frappe, macchiato; Everforest medium and soft; role tokens, a
-              selection token, surface hooks for code or kbd; correcting any contrast; a
-              shipped card or any component; layouts; bundling; the git-tag install and
-              exported conformance test (validate); @function, @mixin, if().
-Door          one-way for tag v0.4.0, which jsDelivr caches as immutable; two-way otherwise.
-              v0.3.0 keeps --border-3 and its Flexoki values on its own pin.
-Release       v0.4.0
+Out of scope  keys.js, the ? dialog, page-wide j/k/g, a leader key (keys); promoting
+              <theme-menu> to a shadow-DOM web component (spike-html-components); the git-tag
+              install, extension fixture, exported conformance test, CDN import-chain cost,
+              bundling (validate); measuring Firefox's flash; backdrop-click close and
+              closedby; space or type profiles beyond compact and sans (amended from serif at the
+              review stop); role tokens and new hooks; color profile values.
+Door          one-way for tag v0.5.0, which jsDelivr caches as immutable: the nested profile
+              keys, JS export keys, the <theme-menu> name, the --open command, the registry's
+              global store shape, and the storage key freeze with it (v0.4.0 keeps its flat
+              keys). The storage key becomes shared state for readers on an origin, so renaming
+              it later drops saved choices. Two-way otherwise.
+Release       v0.5.0
 
 ## Decisions
 
@@ -650,6 +650,145 @@ Release       v0.4.0
   --space-m below their scales.
 - profiles SHIP (architect): accepted the session brief; v0.4.0 releases four color profiles
   (Flexoki, Primer, Catppuccin, Everforest) over the 16-token interface.
+- plan preferences: currency was current on main before round 1 (`mise run currency` reported
+  nothing), so the brief has no upgrade slice.
+- plan preferences: registering a profile lists its name only; the page's or extension's CSS
+  ships the profile, and registering never loads CSS. Rejected loading CSS on register: it adds a
+  fetch-time flash for stored profiles under the lean entry.
+- plan preferences: one registry per page, a store at a well-known global key (Symbol.for), with
+  the module's exports as the API over it; the store's shape is public API frozen per tag.
+  Rejected import maps: an extension pinned to another tag would get a second registry, and every
+  page would need an import map.
+- plan preferences: the registry is its own module with no UI, separate from preferences.
+  (Architect, for keys: keys.js is purely the shortcut API, not the shortcuts themselves; binding
+  specific shortcuts is a higher-level concern.)
+- plan preferences: stored preferences apply before first paint through a render-blocking module
+  (`blocking="render"`), inside the preferences module, as progressive enhancement; chromium
+  measured no flash, and Firefox's flash is recorded. Rejected a classic blocking script (departs
+  from ES modules), an inline snippet per page (unversioned), and a third pre-paint module.
+- plan preferences: one namespaced localStorage key per origin, shared by every page using the
+  baseline (every file:// page in chromium and every jaimestill.github.io project site
+  included). A stored name a page hasn't registered falls back to that facet's default and stays
+  in storage.
+- plan preferences: the menu is a custom element the page places once, in light DOM, so the
+  elements layer styles it; a shadow root would shut the baseline out (verified). Promoting it to
+  an official web component waits for spike-html-components (architect).
+- plan preferences: the element binds T itself until keys.js takes the binding in v0.6.0.
+- plan preferences: another tab's save applies live through the storage event, except while the
+  menu is open: it is ignored then, Save overwrites it, and Cancel restores the stored value,
+  the other tab's included.
+- plan preferences: the second space profile is denser: compact, --space-base 0.75rem to
+  0.875rem and --radius-base 0.25rem, lines unchanged. The default space profile is regular.
+- plan preferences: the type profiles are mono (default) and serif, framed as interface versus
+  editorial (engineer versus writer); "keep it simple for now" (architect).
+- plan preferences: serif sets heading and ui to the transitional system stack ui-serif,
+  Charter, "Bitstream Charter", "Sitka Text", Cambria, serif; body stays sans, code mono, and the
+  scale and leadings stay the default's. The serif ui font is dialed in at the review stop and at
+  validate (architect). Rejected the old-style stack (Iowan, Palatino). Superseded at the review
+  stop: sans replaces serif.
+- plan preferences: space and type profiles are files under their facet directories, as color's
+  are (profiles BUILD).
+- plan preferences: profile export keys nest by facet, ./profiles/<facet>/<name>, and color's
+  keys move from flat; v0.4.0 keeps its keys, and no outside consumer links them.
+- plan preferences: the working-tree specimen loads its modules by relative URL, and its missing
+  menu from file:// is recorded. The review stop runs on `mise run serve`, where relative modules
+  load. The v0.5.0 pinned page proves file:// through jsDelivr's CORS header, hermetically and
+  with `mise run pin`. Rejected classic scripts with no import or export. Verified that an import
+  map, fetch, and XHR can't load working-tree modules from file://.
+- plan preferences: the harness adds Access-Control-Allow-Origin to intercepted answers.
+- plan preferences: each JS export is held to a brotli budget in BUDGETS from v0.5.0, its figure
+  set from the built size and approved at the session brief.
+- plan preferences: a visual review stop on the served workbench follows the menu and the new
+  profiles, before the package, budget, and pin slices.
+- plan preferences: one registration module per CSS entry: ./register (flexoki, regular, mono)
+  and ./register/full (every built-in profile); no module can detect the linked entry.
+- plan preferences: the page's own button opens the menu with the invoker command
+  commandfor="<id>" command="--open" (Baseline newly available, 2025-12-12). Rejected a trigger
+  the element renders.
+- plan preferences: the menu is a modal dialog holding a live preview, since the 80% backdrop
+  veils the page. Rejected a non-modal popover with the page as the preview.
+- plan preferences: each change applies at once to the preview and the page. T and Save accept
+  and write storage once; Escape and Cancel restore the snapshot taken when the menu opened and
+  write nothing (architect). A backdrop click does nothing.
+- plan preferences: each section is a native radio group drawn as ◀ value ▶, the unchecked
+  radios hidden visually but kept in the group. Up/Down and k/j move between sections;
+  Left/Right and h/l cycle within one, a deliberate deviation from the APG radio pattern
+  (architect's settings-menu model). The scheme row cycles system, light, dark. Rejected a
+  role="slider" row.
+- plan preferences: the preview holds the preview card's contents without its frame or token
+  strip.
+- plan preferences: the menu's CSS is never in the baseline's layers: one constructed sheet the
+  element adopts onto the document, so it moves with the component when promoted (architect).
+  Rejected the tools layer.
+- plan preferences: the adopted sheet's layer is spike-html-design.theme-menu, after tools and
+  under every consumer layer; "treat the spike namespace as the custom component layer for the
+  spike" (architect). Rejected a top-level layer, which beats the page's app layer (verified).
+- plan preferences: the menu's code is a separate module, loaded on first open and exported as
+  ./theme-menu; the render-blocking preferences module holds only pre-paint apply, persistence,
+  the T binding, and the thin element. This encapsulates the menu for promotion (architect).
+- plan preferences: keys the open menu handles stop at the dialog; T closes the open menu.
+- plan preferences: the menu carries Save (as T) and Cancel (as Escape), since closing has two
+  actions (architect); Save shows <kbd>T</kbd> and Cancel <kbd>Esc</kbd>, each with
+  aria-keyshortcuts.
+- plan preferences: the element is <theme-menu>; the JS export keys are ./registry,
+  ./preferences, ./theme-menu, ./register, and ./register/full.
+- plan preferences: the specimen's trigger is a native "Theme" button with <kbd>T</kbd> and
+  aria-keyshortcuts="T" at the end of the header's title row.
+- plan preferences: chromium 152 blocks relative module scripts from file://, which confirms
+  context/file-modules.md.
+- preferences review stop (architect): the Theme button sits beneath the title and above the
+  intro. Accepted: Up/Down stop at the first and last rows, h/l wrap; values show registry
+  names; the preview is inert; the menu is rebuilt each open and any other close counts as
+  Cancel; the registry is preloaded with modulepreload (first paint ~244 ms versus ~456 ms with
+  fetches held 200 ms).
+- preferences review stop (architect): the second type profile is sans, not serif: heading, ui,
+  and body in the system sans stack, code mono, the default scale and leadings. The pair is mono
+  (interface) and sans.
+- preferences review stop (architect): the specimen's Color, Space, and Type sections follow the
+  current selection, in this task (slice 4b): Light and Dark swatches as scheme-scoped cells,
+  hex values filled by a specimen-only script, captions per profile.
+- preferences review stop 2 (architect): accepted slice 4b, with the whole Light and Dark cell
+  scoped to its scheme (the Dark column paints its own dark surface on a light page).
+- preferences BUILD: the modules live in a top-level `modules/` directory, beside `layers/`.
+- preferences BUILD: DEFAULTS are constants (flexoki, regular, mono), the profiles both CSS
+  entries apply with no attribute, not whichever name registered first.
+- preferences BUILD: register throws a TypeError on an unknown facet or an empty name.
+- preferences BUILD: the preferences module exports the hooks the menu builds on: KEY,
+  ATTRIBUTES, SCHEMES, read, apply, save, setOpen, isOpen.
+- preferences BUILD: with nothing stored, the preferences module leaves the root untouched, so a
+  page's own profile attributes stand.
+- preferences BUILD: T counts with Shift (caps lock), and not with Ctrl, Alt, or Meta, or in a
+  field (input, textarea, select, contenteditable).
+- preferences BUILD: <theme-menu> loads theme-menu.js by `new URL("./theme-menu.js",
+  import.meta.url)`, so the menu comes from the same URL and tag as the preferences module.
+- preferences BUILD: a space profile sets only --space-base, the two lines, and --radius-base;
+  space.css declares the steps and derived radii again on `:where(:root, [data-space])`, since a
+  custom property inherits with its var() already substituted.
+- preferences BUILD: a type profile sets the four role fonts and four leadings; `:where([data-type])`
+  re-sets font-family and line-height on its scope, since both inherit as resolved values.
+- preferences BUILD: data-space gets no paint rule: a space scope changes no paint and no text.
+- preferences BUILD: a JS entry's size is the module plus every module its static imports reach,
+  each counted once; a dynamic import() counts toward the module it loads, so theme-menu.js is
+  its own entry.
+- preferences BUILD: Cancel compares the stored string at open and at close, so another tab's
+  save during the open menu is what Cancel restores.
+- preferences BUILD: the menu is rebuilt on each open, so its rows list the registry as it is.
+- preferences BUILD: the specimen's hex-value script is inline, so it runs from file://, where
+  relative module scripts don't; the Space and Type captions follow the selection through
+  inherited custom properties, with no script.
+- preferences BUILD: `test/menu.js` drives a pinned page's menu as a reader would, shared by
+  the pinned tests and the live pin check.
+- preferences BUILD: the pin check accepts a module served as text/javascript or
+  application/javascript.
+- preferences standards review: two tests that passed without proving their behavior were fixed
+  (03cda5e), and STANDARDS.md's "a profile sets color tokens only" became "a profile sets its own
+  facet's tokens only" (d68c240).
+- preferences editor: context/file-modules.md is integrated: README "Modules from `file://`"
+  states the exception, and the coordinator edit to html-artifacts.md "Build" is in Pending
+  edits.
+- preferences SHIP (architect): accepted the session brief and the JS budgets (registry 1,200,
+  preferences 3,800, theme-menu 8,500, register 1,450, register-full 1,550 B brotli), "fine for
+  the spike"; size is to be revisited with the holistic client strategy. v0.5.0 releases.
 
 ## Pending edits
 
@@ -666,3 +805,12 @@ Release       v0.4.0
   shortcuts API alone (plan profiles).
 - coordinator · html-artifacts.md, "Keyboard": key-hint styling ships with the baseline's
   elements layer (profiles), not keys.js; joins the "Style baseline" rewrite (plan profiles).
+- coordinator · roadmap.toml, preferences summary: drop "Replaces the theme toggle" (it was
+  never built); add the second space and type profiles (compact, sans) and the data-space and
+  data-type scopes (plan preferences; supersedes the plan profiles edit above).
+- coordinator · roadmap.toml, keys summary: keys.js is purely the shortcut API, binding specific
+  shortcuts a higher-level concern; capture the question of an optional leader key, with a
+  global mode (no leader) and an encapsulated mode (leader chords) (plan preferences).
+- coordinator · html-artifacts.md, "Build": a page's CSS works the same from file://, but
+  chromium blocks relative ES module scripts there, so a file:// page loads the modules from
+  jsDelivr (CORS); an untagged working-tree page has no modules from file:// (preferences).

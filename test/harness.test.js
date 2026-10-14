@@ -121,6 +121,31 @@ describe("harness", () => {
     expect(await page.style("p", "color")).toBe("rgb(102, 128, 11)");
   });
 
+  test("answers an intercepted request with CORS, so a file:// page runs a cross-origin module", async () => {
+    const page = await open(fileUrl(join(fixtures, "module.html")), {
+      intercept: {
+        "https://cdn.jsdelivr.net/gh/example/fixture@v0.0.0/": join(fixtures, "module.js"),
+      },
+    });
+    expect(await page.evaluate("document.querySelector('p').textContent")).toBe("module ran");
+  });
+
+  test("holds an intercepted answer for its delay", async () => {
+    const page = await open(fileUrl(join(fixtures, "module.html")), {
+      intercept: {
+        "https://cdn.jsdelivr.net/gh/example/fixture@v0.0.0/": {
+          path: join(fixtures, "module.js"),
+          delay: 300,
+        },
+      },
+    });
+    expect(await page.evaluate("document.querySelector('p').textContent")).toBe("module ran");
+    const [entry] = await page.evaluate(
+      `performance.getEntriesByType("resource").map(({ duration }) => duration)`,
+    );
+    expect(entry).toBeGreaterThanOrEqual(300);
+  });
+
   test("style throws when no element matches", async () => {
     const page = await open(fileUrl(join(fixtures, "index.html")));
     await expect(page.style("#absent", "color")).rejects.toThrow("no element matches #absent");

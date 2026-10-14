@@ -1,5 +1,5 @@
 /*
- * layers/tokens/type.css, the type facet of the tokens layer.
+ * layers/tokens/type.css, the type facet of the tokens layer: its contract, and the text scale.
  *
  * Three kinds of token: a text scale, role fonts, and role leadings. Line length is not among
  * them: the measure is layout, a page's or a layout sheet's, never the baseline's.
@@ -14,22 +14,27 @@
  * The display size is min(100vi, 100svb * 16 / 9), the inline size capped by the width a 16:9
  * window of the same height would have, so a short, wide window counts as smaller than its
  * width. The bounds are rem, never px, so the scale follows the user's font size and browser
- * zoom.
+ * zoom. The scale is the same under every profile, so this file declares it.
  *
  * --type-fluid is internal: the fluid expansion, 0 to 1, of the display through that range. It
  * drives the fluid steps, and pages never read it.
  *
  * Fonts and leadings are named for the role they serve: body text, headings, interface controls,
- * and code. The fonts are system stacks: sans for the body, mono for the rest.
+ * and code. A profile is one voice's values for those eight tokens, in its own file under
+ * layers/tokens/type/, applied by data-type on any element to its subtree as a color profile is
+ * by data-palette (see layers/tokens/color.css). Mono, the interface voice, is the default;
+ * sans sets every role but code in the sans stack. The body's font and leading inherit as
+ * resolved values, so a scope re-sets them on itself from the tokens it now holds, as the body
+ * does.
  *
- * The facet reads only its own tokens, never the space facet's, so a profile that restates this
- * file's values in this sub-layer changes the type tokens and nothing else.
+ * The facet reads only its own tokens, never the space facet's, so swapping a type profile
+ * changes the type tokens and nothing else.
  *
- * Both entries, baseline.css and full.css, import this file into spike-html-design.tokens.type.
- * Pages link an entry, never this file: linked on its own, its rules would be unlayered.
+ * Both entries import this file into spike-html-design.tokens.type, then the profiles: the lean
+ * entry mono's, the full entry every profile's. Pages link an entry, never this file.
  */
 
-:root {
+:where(:root) {
   /* Internal. The fluid expansion: 0 on a 22.5rem display or narrower, 1 on an 80rem display or
      wider. The space facet keeps its own copy, so the facets stay independent. */
   /* biome-ignore lint/correctness/noUnknownFunction: biome does not know progress(), which chromium ships. */
@@ -47,19 +52,10 @@
   --text-2xl: calc(1.4238rem + (1.728rem - 1.4238rem) * var(--type-fluid)); /* step 3 */
   --text-3xl: calc(1.6018rem + (2.0736rem - 1.6018rem) * var(--type-fluid)); /* step 4 */
   --text-4xl: calc(1.802rem + (2.4883rem - 1.802rem) * var(--type-fluid)); /* step 5 */
+}
 
-  --font-body:
-    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-    sans-serif;
-  --font-heading:
-    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-  --font-ui:
-    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-  --font-code:
-    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-
-  --leading-body: 1.5;
-  --leading-heading: 1.2;
-  --leading-ui: 1.25;
-  --leading-code: 1.5;
+/* A scope sets its text as the body does, from the profile it names. */
+:where([data-type]) {
+  font-family: var(--font-body);
+  line-height: var(--leading-body);
 }

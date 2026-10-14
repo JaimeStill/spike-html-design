@@ -1,8 +1,19 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
-import { fileUrl, openPage, serve } from "./harness.js";
+import { FINGERPRINT_PROPERTIES, fileUrl, openPage, serve } from "./harness.js";
 import { ENTRIES, LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
-import { ADDED, COLOR_PROFILES, profileColors, profilePath, SCHEMES } from "./profiles.js";
+import {
+  ADDED,
+  COLOR_PROFILES,
+  FACET_PROFILES,
+  MONO,
+  profileColors,
+  profilePath,
+  SANS,
+  SCHEMES,
+  SPACE_PROFILES,
+  TYPE_PROFILES,
+} from "./profiles.js";
 
 const root = dirname(import.meta.dir);
 const specimen = fileUrl(join(root, "index.html"));
@@ -29,11 +40,6 @@ afterAll(() => server.stop());
 // squash collapses runs of whitespace, since a custom property's computed value keeps the
 // line breaks of its declaration.
 const squash = (value) => value.replace(/\s+/g, " ");
-
-const SANS =
-  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
-const MONO =
-  'ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace';
 
 // SPACE_STEPS are the space scale's steps, name to its multiple of the fluid space base.
 const SPACE_STEPS = {
@@ -224,7 +230,9 @@ const PINNED_V030 = "pinned/v0.3.0.html";
 const SOURCES = [
   ...Object.keys(ENTRIES),
   ...LAYERS.map(layerPath),
-  ...Object.keys(COLOR_PROFILES).map(profilePath),
+  ...Object.entries(FACET_PROFILES).flatMap(([facet, { names }]) =>
+    names.map((name) => profilePath(facet, name)),
+  ),
   "index.html",
   "pinned/v0.3.0.html",
   "pinned/v0.4.0.html",
@@ -862,14 +870,14 @@ const profileRgb = (name, index) =>
     Object.entries(profileColors(name, index)).map(([token, hex]) => [token, rgb(hex)]),
   );
 
-// profileRules resolves to every rule of a profile's file, as the full entry the preview fixture
-// links, served over http, imports it: each as { type, selector, declarations, nested }, its rule
+// profileRules resolves to every rule of a facet's profile's file, as the full entry the preview
+// fixture links, served over http, imports it: each as { type, selector, declarations, nested }, its rule
 // type, its selector text, its declarations as [name, value] pairs, and the count of rules nested
 // in it.
-function profileRules(page, name) {
+function profileRules(page, facet, name) {
   return page.evaluate(`(() => {
     const rules = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules]);
-    const sheet = rules.find((rule) => rule.href?.endsWith(${JSON.stringify(`/${profilePath(name)}`)}))
+    const sheet = rules.find((rule) => rule.href?.endsWith(${JSON.stringify(`/${profilePath(facet, name)}`)}))
       .styleSheet;
     return [...sheet.cssRules].map((rule) => ({
       type: rule.constructor.name,
@@ -930,7 +938,7 @@ describe("color profiles", () => {
         : `:where([data-palette="${name}"])`;
 
     test(`${name}'s file opens with its credit: source, license and upstream version`, async () => {
-      const text = await Bun.file(join(root, profilePath(name))).text();
+      const text = await Bun.file(join(root, profilePath("color", name))).text();
       expect(text.startsWith(`/*\n * Colors from ${title} (${license}, `)).toBe(true);
       const credit = squash(text.slice(0, text.indexOf("*/")).replace(/\n \*/g, " "));
       // Flexoki, the default, names no upstream version, and its variants are its light and dark.
@@ -946,7 +954,7 @@ describe("color profiles", () => {
       // Over http, since chromium hides a file:// stylesheet's rules from the page.
       const page = await open(`${server.url}test/fixtures/preview.html`, { scheme: "light" });
       const tokens = COLOR_PROFILES[name].tokens;
-      expect(await profileRules(page, name)).toEqual([
+      expect(await profileRules(page, "color", name)).toEqual([
         {
           type: "CSSStyleRule",
           selector,
@@ -960,7 +968,7 @@ describe("color profiles", () => {
     });
 
     test(`${name}'s file names the upstream swatch of each value`, async () => {
-      const text = await Bun.file(join(root, profilePath(name))).text();
+      const text = await Bun.file(join(root, profilePath("color", name))).text();
       const cited = Object.fromEntries(
         [...text.matchAll(/^ {2}(--[\w-]+): light-dark\(#\w+, #\w+\); \/\* (.+) \*\/$/gm)].map(
           ([, token, swatches]) => [token, swatches],
@@ -1080,20 +1088,32 @@ describe("color profiles", () => {
     }
   }
 
-  test("a consumer linking the lean entry and importing one profile's export selects it with data-palette", async () => {
+  test("a consumer linking the lean entry and importing one profile export per facet selects each on the root", async () => {
     const pkg = await Bun.file(join(root, "package.json")).json();
+    const keys = [
+      ["color", "./profiles/color/catppuccin"],
+      ["space", "./profiles/space/compact"],
+      ["type", "./profiles/type/sans"],
+    ];
     for (const [index, scheme] of SCHEMES.entries()) {
-      const page = await open(consumerFixture, { scheme });
-      // The page imports the file the export names, relative to the entry, into the color
-      // sub-layer.
+      const page = await open(consumerFixture, { scheme, viewport: MEDIUM });
+      // The page imports the file each nested export names, relative to the entry, into its
+      // facet's sub-layer.
       const imported = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
         .map((rule) => [rule.layerName, rule.href])`);
-      expect(imported).toEqual([
-        [`${PACKAGE}.tokens.color`, `../../${pkg.exports["./profiles/catppuccin"].slice(2)}`],
-      ]);
+      expect(imported).toEqual(
+        keys.map(([facet, key]) => [
+          `${PACKAGE}.tokens.${facet}`,
+          `../../${pkg.exports[key].slice(2)}`,
+        ]),
+      );
       const catppuccin = profileRgb("catppuccin", index);
       expect(await resolveColors(page, "body")).toEqual(catppuccin);
       expect(await paint(page, "body")).toEqual([catppuccin["--fg"], catppuccin["--bg"]]);
+      expect(pick(await resolveIn(page, "body", SPACE), compactValues(MEDIUM))).toEqual(
+        compactValues(MEDIUM),
+      );
+      expect(pick(await resolveIn(page, "body", TYPE), SANS_FONTS)).toEqual(SANS_FONTS);
       // A profile the page didn't import names nothing: its scope keeps the root's tokens.
       expect(await resolveColors(page, "#everforest p")).toEqual(catppuccin);
     }
@@ -1371,6 +1391,277 @@ describe("facet independence", () => {
       expect(changed.filter((name) => !(name in FACETS[facet]))).toEqual([]);
     });
   }
+});
+
+// resolveIn resolves every token of tokens, name to kind, as a new child of the element matching
+// within computes it, name to value: a length to px and a number to a number through a
+// registered custom property, and any other token to its computed value with whitespace squashed.
+function resolveIn(page, within, tokens) {
+  return page.evaluate(`(() => {
+    for (const [kind, syntax] of [["length", "<length>"], ["number", "<number>"]]) {
+      try {
+        CSS.registerProperty({ name: "--resolved-" + kind, syntax, inherits: false,
+          initialValue: "0" });
+      } catch {}
+    }
+    const probe = document.querySelector(${JSON.stringify(within)})
+      .appendChild(document.createElement("i"));
+    const values = {};
+    for (const [name, kind] of Object.entries(${JSON.stringify(tokens)})) {
+      if (kind === "length" || kind === "number") {
+        probe.style.setProperty("--resolved-" + kind, "var(" + name + ")");
+        values[name] = Number.parseFloat(getComputedStyle(probe).getPropertyValue("--resolved-" + kind));
+      } else {
+        values[name] = getComputedStyle(probe).getPropertyValue(name).trim().replace(/\\s+/g, " ");
+      }
+    }
+    probe.remove();
+    return values;
+  })()`);
+}
+
+// MEDIUM is a display inside the fluid range, where a fluid token sits between its bounds, so a
+// profile that changed only one bound would still read apart.
+const MEDIUM = display("4:3", "medium");
+
+// SWAPS are, per facet, the profile past the default and the tokens swapping
+// to it on the root changes: the base, every step and every radius but full for compact, whose
+// lines are regular's; the heading and interface fonts for sans, whose body and code fonts and
+// leadings are mono's.
+const SWAPS = {
+  space: {
+    name: "compact",
+    tokens: SPACE,
+    changes: [
+      "--space-base",
+      ...Object.keys(SPACE_STEPS),
+      "--radius-base",
+      "--radius-sm",
+      "--radius-md",
+      "--radius-lg",
+    ],
+  },
+  type: { name: "sans", tokens: TYPE, changes: ["--font-heading", "--font-ui"] },
+};
+
+// compactValues is what compact resolves the space tokens it changes to in a viewport, name to
+// px: a base from 0.75rem to 0.875rem over the fluid range, each step its multiple, and radii
+// from a 0.25rem base.
+function compactValues(viewport) {
+  const base = fluid([0.75, 0.875], viewport);
+  return {
+    "--space-base": expect.closeTo(base, 2),
+    ...Object.fromEntries(
+      Object.entries(SPACE_STEPS).map(([name, k]) => [name, expect.closeTo(base * k, 2)]),
+    ),
+    "--line-s": 1,
+    "--line-m": 2,
+    "--radius-base": 4,
+    "--radius-sm": expect.closeTo(8 / 3, 2),
+    "--radius-md": 4,
+    "--radius-lg": expect.closeTo(16 / 3, 2),
+  };
+}
+
+// SANS_FONTS are sans's fonts, name to its stack.
+const SANS_FONTS = {
+  "--font-body": SANS,
+  "--font-heading": SANS,
+  "--font-ui": SANS,
+  "--font-code": MONO,
+};
+
+// pick returns values' entries for the names of keys alone.
+const pick = (values, keys) =>
+  Object.fromEntries(Object.keys(keys).map((name) => [name, values[name]]));
+
+// SCOPED_PROPERTIES are the computed properties the space and type equivalence test compares:
+// every property the harness fingerprints, the box and text properties a space or type token
+// reaches, plus the gaps and outline the elements and tools layers draw from the space tokens.
+// Width and height are left out: a container's size is its surroundings', and a compact root
+// tightens the page around the card too.
+const SCOPED_PROPERTIES = [
+  ...FINGERPRINT_PROPERTIES.filter((name) => name !== "width" && name !== "height"),
+  "row-gap",
+  "column-gap",
+  "outline-width",
+  "outline-offset",
+];
+
+// scopedStyles resolves to every element inside the element matching selector, in document
+// order: its SCOPED_PROPERTIES, and every space and type token it holds, as computed.
+function scopedStyles(page, selector) {
+  const names = [...SCOPED_PROPERTIES, ...Object.keys(SPACE), ...Object.keys(TYPE)];
+  return page.evaluate(`[...document.querySelector(${JSON.stringify(selector)})
+    .querySelectorAll("*")].map((el) => {
+      const style = getComputedStyle(el);
+      return [el.localName, ...${JSON.stringify(names)}.map((n) => style.getPropertyValue(n).trim())];
+    })`);
+}
+
+describe("space and type profiles", () => {
+  for (const [facet, profiles] of Object.entries({ space: SPACE_PROFILES, type: TYPE_PROFILES })) {
+    const { attribute, names } = FACET_PROFILES[facet];
+
+    for (const name of names) {
+      // The default's block also matches the root, so it applies with no attribute anywhere.
+      const selector =
+        name === names[0]
+          ? `:where(:root, [${attribute}="${name}"])`
+          : `:where([${attribute}="${name}"])`;
+
+      test(`${facet}'s ${name} file declares one zero-specificity block of its values, and nothing else`, async () => {
+        // Over http, since chromium hides a file:// stylesheet's rules from the page.
+        const page = await open(`${server.url}test/fixtures/preview.html`, { scheme: "light" });
+        const rules = await profileRules(page, facet, name);
+        expect(
+          rules.map((rule) => ({
+            ...rule,
+            declarations: rule.declarations.map(([token, value]) => [token, squash(value)]),
+          })),
+        ).toEqual([
+          {
+            type: "CSSStyleRule",
+            selector,
+            declarations: Object.entries(profiles[name]),
+            nested: 0,
+          },
+        ]);
+      });
+    }
+
+    test(`the ${facet} facet's own file declares no token a ${facet} profile sets`, async () => {
+      const page = await open(server.url, { scheme: "light" });
+      // The sub-layer's first sheet is the facet's own file; the profiles' follow it.
+      const own = (
+        await page.evaluate(`[...${layerSheets(`tokens.${facet}`)}[0].cssRules]
+          .flatMap((rule) => [...rule.style])`)
+      ).filter((n) => n.startsWith("--"));
+      const set = Object.keys(profiles[names[0]]);
+      expect(own.length).toBeGreaterThan(0);
+      expect(own.filter((n) => set.includes(n))).toEqual([]);
+    });
+
+    const { name, tokens, changes } = SWAPS[facet];
+
+    test(`with no ${attribute} anywhere ${names[0]} applies, and ${name} named on the root overrides it, changing only ${facet} tokens`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: MEDIUM });
+      expect(
+        await page.evaluate(`document.querySelector(':root[${attribute}], body[${attribute}]')`),
+      ).toBe(null);
+      const before = await resolveAll(page);
+      await page.evaluate(`document.documentElement.setAttribute("${attribute}", "${name}")`);
+      const after = await resolveAll(page);
+      const changed = Object.keys(TOKENS).filter((token) => after[token] !== before[token]);
+      // Exactly the tokens the profile sets apart from the default, and what reads them: no
+      // token of another facet moved.
+      expect(changed.sort()).toEqual([...changes].sort());
+      expect(pick(after, tokens)).toEqual(
+        facet === "space"
+          ? { ...pick(before, tokens), ...compactValues(MEDIUM) }
+          : { ...pick(before, tokens), ...SANS_FONTS },
+      );
+      // Naming the default on the root restores it.
+      await page.evaluate(`document.documentElement.setAttribute("${attribute}", "${names[0]}")`);
+      expect(await resolveAll(page)).toEqual(before);
+    });
+
+    test(`nested ${attribute} scopes apply their profile to their subtree: the nearest wins`, async () => {
+      const page = await open(specimen, { scheme: "light", viewport: MEDIUM });
+      const defaults = await resolveIn(page, "body", tokens);
+      await page.evaluate(`document.documentElement.setAttribute("${attribute}", "${name}")`);
+      await addScopes(
+        page,
+        `<div id="outer" ${attribute}="${names[0]}"><p id="in-outer">Default</p>
+          <div id="inner" ${attribute}="${name}"><p id="in-inner">Added</p></div></div>`,
+      );
+      const added = await resolveIn(page, "body", tokens);
+      expect(added).not.toEqual(defaults);
+      expect(await resolveIn(page, "#in-outer", tokens)).toEqual(defaults);
+      expect(await resolveIn(page, "#in-inner", tokens)).toEqual(added);
+    });
+
+    test(`a consumer's later layer beats every ${facet} profile, on the root and on a scope`, async () => {
+      const page = await open(specimen, { scheme: "light" });
+      const [token, value, read] =
+        facet === "space" ? ["--space-base", "3rem", 48] : ["--font-heading", "fantasy", "fantasy"];
+      await page.evaluate(`document.documentElement.setAttribute("${attribute}", "${names[0]}")`);
+      await addScopes(page, `<div id="scope" ${attribute}="${name}"><p id="inside">Text</p></div>`);
+      // Zero specificity too: the later layer wins by order alone.
+      await addAppStyle(page, `@layer app { :where([${attribute}]) { ${token}: ${value}; } }`);
+      const only = { [token]: tokens[token] };
+      expect(await resolveIn(page, "body", only)).toEqual({ [token]: read });
+      expect(await resolveIn(page, "#inside", only)).toEqual({ [token]: read });
+    });
+  }
+
+  for (const size of ["small", "large"]) {
+    test(`compact stays fluid between its rem bounds, at 16:9, ${size}`, async () => {
+      const viewport = display("16:9", size);
+      const page = await open(specimen, { scheme: "light", viewport });
+      const values = await resolveIn(page, '[data-space="compact"]', SPACE);
+      expect(values["--space-base"]).toBeCloseTo(size === "small" ? 12 : 14, 2);
+      expect(pick(values, compactValues(viewport))).toEqual(compactValues(viewport));
+    });
+  }
+
+  test("a data-type scope sets its text in its profile's body font and leading, as the body does", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    // A test profile whose body font and leading differ from mono's, in the type sub-layer.
+    await addAppStyle(
+      page,
+      `@layer ${PACKAGE}.tokens.type { :where([data-type="probe"]) { --font-body: fantasy; --leading-body: 2; } }`,
+    );
+    await addScopes(page, '<div id="scope" data-type="probe"><p id="inside">Text</p></div>');
+    const text = (selector) =>
+      page.evaluate(`(() => {
+        const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+        return [style.fontFamily, style.lineHeight];
+      })()`);
+    const size = await page.evaluate(
+      `Number.parseFloat(getComputedStyle(document.querySelector("#inside")).fontSize)`,
+    );
+    expect(await text("#scope")).toEqual(["fantasy", `${size * 2}px`]);
+    expect(await text("#inside")).toEqual(["fantasy", `${size * 2}px`]);
+    // A data-space scope sets nothing but its tokens: its text is the page's.
+    await addScopes(page, '<div id="space" data-space="compact"><p id="dense">Text</p></div>');
+    expect(await text("#dense")).toEqual(await text("main > section > header > p"));
+  });
+
+  test("every rule in the space and type sub-layers has zero specificity", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const selectors = selectorsOf(await layerRules(page, "tokens.space", "tokens.type"));
+    expect(selectors.length).toBeGreaterThan(0);
+    expect(selectors.filter((selector) => !whereOnly(selector))).toEqual([]);
+  });
+
+  // Behavior 4: a preview container carrying data-space and data-type renders its subtree as
+  // those profiles render at the root. A compact, sans card is read in its container, then
+  // stripped of the attributes, with the root naming them instead.
+  test("a compact, sans preview container renders its card as the root gives it", async () => {
+    const page = await open(previewFixture, { scheme: "light", viewport: MEDIUM });
+    const selector = card("flexoki", "light");
+    const plain = await scopedStyles(page, selector);
+    await page.evaluate(`(() => {
+      const card = document.querySelector(${JSON.stringify(selector)});
+      card.dataset.space = "compact";
+      card.dataset.type = "sans";
+    })()`);
+    const contained = await scopedStyles(page, selector);
+    // The profiles reached the card: its steps and heading font moved.
+    expect(contained).not.toEqual(plain);
+    await page.evaluate(`(() => {
+      const card = document.querySelector(${JSON.stringify(selector)});
+      card.removeAttribute("data-space");
+      card.removeAttribute("data-type");
+      document.documentElement.dataset.space = "compact";
+      document.documentElement.dataset.type = "sans";
+    })()`);
+    const atRoot = await scopedStyles(page, selector);
+    expect(atRoot.length).toBeGreaterThan(30);
+    expect(atRoot).toEqual(contained);
+  });
 });
 
 describe("reset", () => {
@@ -2758,6 +3049,45 @@ describe("extension", () => {
 const DESKTOP = { width: 1280, height: 800 };
 const PHONE = { width: 390, height: 844 };
 
+// COLOR_CELLS reads the specimen's color tables, token to its Light and Dark cells: each cell's
+// forced scheme, its dot's sample, the value its text gives, and the color its dot paints, as
+// #rrggbb.
+const COLOR_CELLS = `Object.fromEntries([...document.querySelectorAll("#color .tokens tbody tr")]
+  .map((row) => [row.cells[0].textContent, [...row.cells].slice(2).map((cell) => {
+    const dot = cell.querySelector(".dot");
+    const channels = getComputedStyle(dot).backgroundColor.match(/\\d+/g).slice(0, 3);
+    return {
+      scheme: cell.dataset.scheme,
+      sample: dot.style.getPropertyValue("--sample"),
+      text: cell.textContent.trim(),
+      painted: "#" + channels.map((c) => Number(c).toString(16).padStart(2, "0")).join(""),
+    };
+  })]))`;
+
+// CAPTIONS reads the space and type sections' captions that differ between profiles, token to
+// the text of the one shown.
+const CAPTIONS = `Object.fromEntries([...document.querySelectorAll(".scale-row:has(> [data-caption])")]
+  .map((row) => [row.style.getPropertyValue("--sample"), [...row.querySelectorAll("[data-caption]")]
+    .filter((caption) => getComputedStyle(caption).display !== "none")
+    .map((caption) => caption.textContent)]))`;
+
+// SHOWN_CAPTIONS are the captions CAPTIONS reads under each facet's default profile and under
+// compact and sans.
+const SHOWN_CAPTIONS = {
+  default: {
+    "var(--space-base)": ["1 → 1.125rem, the unit every step multiplies"],
+    "var(--radius-base)": ["0.375rem, the radius sm, md and lg scale"],
+    "var(--font-heading)": ["ui-monospace, the system mono stack"],
+    "var(--font-ui)": ["ui-monospace, the system mono stack"],
+  },
+  named: {
+    "var(--space-base)": ["0.75 → 0.875rem, the unit every step multiplies"],
+    "var(--radius-base)": ["0.25rem, the radius sm, md and lg scale"],
+    "var(--font-heading)": ["system-ui, the system sans stack"],
+    "var(--font-ui)": ["system-ui, the system sans stack"],
+  },
+};
+
 describe("specimen", () => {
   test("shows every token with a sample that resolves it", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -2773,23 +3103,71 @@ describe("specimen", () => {
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 
-  test("shows every tier and hue with its light and dark values", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    // Each row's light and dark cells give the value as text and paint it in a dot.
-    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .tokens tbody tr")]
-      .map((row) => [row.cells[0].textContent, [...row.cells].slice(2).map((cell) =>
-        [cell.textContent.trim(), cell.querySelector(".dot").style.getPropertyValue("--sample")])])`);
-    expect(Object.fromEntries(shown)).toEqual(
-      Object.fromEntries(
-        Object.entries({ ...TIERS, ...HUES }).map(([name, [light, dark]]) => [
-          name,
-          [
-            [light, light],
-            [dark, dark],
-          ],
+  // Behavior 20a: the color tables' Light and Dark cells follow the selected color profile. Each
+  // cell forces its scheme and paints its dot from the token, and a specimen-only script writes
+  // the value the dot resolves to as its text. The markup gives Flexoki's values, the text a page
+  // without the script keeps.
+  test("writes Flexoki's light and dark values into the color tables' markup", async () => {
+    const page = await open(`${server.url}index.html`, { scheme: "light" });
+    const shown = await page.evaluate(`fetch(location.href).then((r) => r.text()).then((html) => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return Object.fromEntries([...doc.querySelectorAll("#color .tokens tbody tr")]
+        .map((row) => [row.cells[0].textContent, [...row.cells].slice(2)
+          .map((cell) => cell.textContent.trim())]));
+    })`);
+    expect(shown).toEqual({ ...TIERS, ...HUES });
+  });
+
+  for (const name of Object.keys(COLOR_PROFILES)) {
+    test(`shows ${name}'s light and dark values when the root names it, in either scheme`, async () => {
+      const page = await open(specimen, { scheme: "light" });
+      const expected = Object.fromEntries(
+        Object.entries(COLOR_PROFILES[name].tokens).map(([token, pair]) => [
+          token,
+          SCHEMES.map((scheme, index) => ({
+            scheme,
+            sample: `var(${token})`,
+            text: pair[index][1],
+            painted: pair[index][1],
+          })),
         ]),
-      ),
+      );
+      await page.evaluate(`document.documentElement.dataset.palette = "${name}"`);
+      expect(await page.evaluate(COLOR_CELLS)).toEqual(expected);
+      // Forcing the root's scheme leaves each column in its own.
+      await page.evaluate(`document.documentElement.dataset.scheme = "dark"`);
+      expect(await page.evaluate(COLOR_CELLS)).toEqual(expected);
+    });
+  }
+
+  test("returns the color tables to Flexoki's values when the root drops its palette", async () => {
+    const page = await open(specimen, { scheme: "dark" });
+    await page.evaluate(`document.documentElement.dataset.palette = "primer"`);
+    await page.evaluate(`document.documentElement.removeAttribute("data-palette")`);
+    const texts = Object.fromEntries(
+      Object.entries(await page.evaluate(COLOR_CELLS)).map(([token, cells]) => [
+        token,
+        cells.map(({ text }) => text),
+      ]),
     );
+    expect(texts).toEqual({ ...TIERS, ...HUES });
+  });
+
+  // Behavior 20a: the space and type captions describe the profile the nearest scope names, the
+  // facet's default under none.
+  test("shows the space and type captions of the profile the nearest scope names", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const captions = () => page.evaluate(CAPTIONS);
+    expect(await captions()).toEqual(SHOWN_CAPTIONS.default);
+    await page.evaluate(`Object.assign(document.documentElement.dataset, {
+      space: "compact", type: "sans" })`);
+    expect(await captions()).toEqual(SHOWN_CAPTIONS.named);
+    // A nearer scope naming the defaults wins over the root's.
+    await page.evaluate(`(() => {
+      document.querySelector("#space").dataset.space = "regular";
+      document.querySelector("#type").dataset.type = "mono";
+    })()`);
+    expect(await captions()).toEqual(SHOWN_CAPTIONS.default);
   });
 
   for (const [index, scheme] of SCHEMES.entries()) {
@@ -2847,10 +3225,14 @@ describe("specimen", () => {
 
   test("links the full entry alone, and keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
     const page = await open(specimen, { scheme: "light" });
-    // The full entry holds every profile, so the page imports none itself.
+    // The full entry holds every profile, so the page imports none itself. Its one other link
+    // preloads the registry its modules import.
     const links = await page.evaluate(`[...document.querySelectorAll("link")]
       .map((l) => [l.rel, l.getAttribute("href")])`);
-    expect(links).toEqual([["stylesheet", "./full.css"]]);
+    expect(links).toEqual([
+      ["stylesheet", "./full.css"],
+      ["modulepreload", "./modules/registry.js"],
+    ]);
     const rules = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
       .map((rule) => rule.href ? [rule.layerName, rule.href]
         : rule.nameList ? [...rule.nameList] : rule.name)`);
@@ -2875,13 +3257,22 @@ describe("specimen", () => {
       const box = header.getBoundingClientRect();
       return {
         rule: getComputedStyle(header).borderBottomWidth,
-        // Each of the header's blocks spans it: nothing sits beside the title.
-        spans: [...header.children].map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
+        // Each of the header's blocks spans it, but the Theme button, which sits on a line of
+        // its own beneath the title and above the intro: nothing sits beside the title.
+        spans: [...header.children].filter((el) => el.localName !== "button")
+          .map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
+        order: [...header.children].map((el) => el.localName),
+        button: (() => {
+          const [title, button, intro] = [...header.children].map((el) => el.getBoundingClientRect());
+          return button.top >= title.bottom && intro.top >= button.bottom;
+        })(),
         gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
       };
     })()`);
     expect(header.rule).toBe("0px");
     expect(new Set(header.spans)).toEqual(new Set([0]));
+    expect(header.order).toEqual(["h1", "button", "p"]);
+    expect(header.button).toBe(true);
     expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
   });
 
@@ -3488,6 +3879,9 @@ describe("specimen", () => {
     });
   }
 
+  // ADDED_PROBES are the token each facet's profiles past the default set apart from it.
+  const ADDED_PROBES = { color: "--bg", space: "--radius-base", type: "--font-heading" };
+
   test("renders the same from file:// and from a server under a project subpath", async () => {
     const local = await open(specimen, { scheme: "light" });
     const served = await open(server.url, { scheme: "light" });
@@ -3497,14 +3891,18 @@ describe("specimen", () => {
     // Equal fingerprints prove nothing if the stylesheet, or one of its layer files, failed to
     // load in both.
     for (const page of [local, served]) expect(await layersLoaded(page)).toEqual(LOADED);
-    // Nor if the full entry's profiles past the default failed to load in both: a scope added
-    // after the fingerprints resolves its own profile's tokens.
-    const scoped = `${JSON.stringify(ADDED)}.map((name) => {
+    // Nor if the full entry's profiles past each facet's default failed to load in both: a scope
+    // added after the fingerprints resolves a token its own profile sets.
+    const added = Object.entries(ADDED).flatMap(([facet, names]) =>
+      names.map((name) => [FACET_PROFILES[facet].attribute, name, ADDED_PROBES[facet]]),
+    );
+    const scoped = `${JSON.stringify(added)}.map(([attribute, name, token]) => {
       const el = document.body.appendChild(document.createElement("div"));
-      el.dataset.palette = name;
-      return getComputedStyle(el).getPropertyValue("--bg").trim();
+      el.setAttribute(attribute, name);
+      return getComputedStyle(el).getPropertyValue(token).trim().replace(/\\s+/g, " ");
     })`;
-    const backgrounds = ADDED.map((name) => {
+    const backgrounds = added.map(([, name, token]) => {
+      if (token !== "--bg") return (SPACE_PROFILES[name] ?? TYPE_PROFILES[name])[token];
       const [[, light], [, dark]] = COLOR_PROFILES[name].tokens["--bg"];
       return `light-dark(${light}, ${dark})`;
     });

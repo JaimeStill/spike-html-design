@@ -38,3 +38,15 @@ export function stylesheets(tag) {
     );
   return ["baseline.css", ...others];
 }
+
+// modules returns the JavaScript modules tag publishes, as repository paths: every .js file
+// directly in the tag's modules/ directory, sorted as git lists them. A tag cut before v0.5.0
+// holds no modules/ and returns none.
+export function modules(tag) {
+  const listed = git("ls-tree", "-r", "--name-only", `${tag}`);
+  if (!listed.ok) throw new Error(`tags: cannot list the files at ${tag}`);
+  return listed.stdout
+    .toString()
+    .split("\n")
+    .filter((path) => /^modules\/[^/]+\.js$/.test(path));
+}

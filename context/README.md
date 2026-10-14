@@ -77,7 +77,7 @@ Its packaging, a git-tag package that other packages extend, is also an input to
   its CSS entry points, and from preferences on its JS modules, with no dependencies. A
   consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which
   validate proves. The lean entry point holds the foundation and the default profiles, and the
-  full one every profile; "Entries and exports", below, lists v0.4.0's exports. Each entry's
+  full one every profile; "Entries and exports", below, lists v0.5.0's exports. Each entry's
   size, raw and brotli, is reported from facets on, and its brotli size is held to a budget from
   profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
@@ -93,8 +93,8 @@ Its packaging, a git-tag package that other packages extend, is also an input to
 
 Each entry names the task that builds it. Each tag keeps its own names on its own pinned page:
 v0.1.0 and v0.2.0 have flat layers, Primer-derived themes with the `data-theme` hook, role
-tokens, and component classes, and v0.3.0 has `--border-3`. "Using v0.4.0", below, describes
-the interface a page uses now.
+tokens, and component classes; v0.3.0 has `--border-3`; and v0.4.0 has flat profile export
+keys, `./profiles/<name>`. "Using v0.5.0", below, describes the interface a page uses now.
 
 - **Layers** (facets): one top-level layer named for the package holds tokens, with color,
   space, and type sub-layers, then reset, elements, and tools.
@@ -108,12 +108,13 @@ the interface a page uses now.
   older than Firefox 155 and Safari 26, lose fluid sizing: the space tokens and the fluid text
   steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
   their unset values.
-- **Profiles** (profiles): the color interface is sixteen tokens, with a pane surface,
+- **Profiles** (profiles, preferences): the color interface is sixteen tokens, with a pane surface,
   `--bg-0`, and two border steps. Four profiles fill it, Flexoki, Primer, Catppuccin, and
   Everforest, each light and dark in its own file, with a contrast record per profile and
   scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any element's
-  subtree, so a preview container renders as its profile renders at the root. The elements layer
-  reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd`
+  subtree, so a preview container renders as its profile renders at the root. Space has two
+  profiles, regular and compact, and type two, mono and sans, which `data-space` and `data-type`
+  apply the same way (preferences). The elements layer reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd`
   as an outlined key, the baseline's only key-hint styling.
 - **Elements** (facets): class-free, zero-specificity styling of every rendered native element,
   limited to paint, type, border (with a table's `border-collapse` and `border-spacing`), radius,
@@ -125,20 +126,51 @@ the interface a page uses now.
   has a hook where it has a treatment to extend: a consumer's variant sets `--button-color` or
   `--table-stripe` in its own layer. Scroll and forms have no hook; a consumer extends them in
   its own later layer.
-- **JS modules** (preferences, keys): planned. The package and each extension package register
-  profiles into one registry. In preferences, T opens a theming menu with a section per facet
-  and the scheme, and a second space and a second type profile apply by `data-space` and
-  `data-type`. `keys.js` binds keys and opens the ? help dialog.
-- **Package** (facets, profiles, validate): `package.json` and the lean entry point, with each
-  entry's size reported by `mise run size` and the check (facets); the full entry point and the
-  enforced size budget (profiles); the git-tag install and an extension fixture that passes the
+- **JS modules** (preferences, keys): one registry per page lists each facet's profiles, and the
+  package and each extension package register into it. The preferences module applies the
+  reader's stored choice before first paint, and T or the page's own button opens a theming menu
+  with a row per facet and the scheme (preferences). `keys.js` binds keys and opens the ? help
+  dialog (keys, planned).
+- **Package** (facets, profiles, preferences, validate): `package.json` and the lean entry point,
+  with each entry's size reported by `mise run size` and the check (facets); the full entry point
+  and the enforced size budget (profiles); the JS exports, each with its own budget
+  (preferences); the git-tag install and an extension fixture that passes the
   exported conformance test (validate).
 - **Publishing:** the specimen page, `index.html`, on Pages, with a section per layer and facet
-  from facets on and a grid of preview containers for every profile and scheme from profiles on;
-  `mise run serve` (facets), which serves a branch on localhost; a page per tag under `pinned/`
-  that links the tag's jsDelivr URL; `mise run pin <tag>`, which checks a published tag live.
+  from facets on, a grid of preview containers for every profile and scheme from profiles on, and
+  a Theme button that opens the menu from preferences on; `mise run serve` (facets), which serves
+  a branch on localhost; a page per tag under `pinned/` that links the tag's jsDelivr URLs, for
+  its modules too from v0.5.0; `mise run pin <tag>`, which checks a published tag's stylesheets
+  and modules live.
 
-## Using v0.4.0
+## Using v0.5.0
+
+### Wiring a page
+
+A page links one CSS entry and loads two modules from the same tag, both render-blocking: the
+registration module that matches the entry, then the preferences module. It preloads the
+registry, which both import, and places one `<theme-menu>`, here opened by its own button:
+
+```html
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/full.css" />
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/registry.js" />
+    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/register-full.js"></script>
+    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/preferences.js"></script>
+  </head>
+  <body>
+    <button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">
+      Theme <kbd>T</kbd>
+    </button>
+    ...
+    <theme-menu id="theme"></theme-menu>
+  </body>
+</html>
+```
+
+A page without the modules renders the default profiles, or the profiles its own attributes
+select.
 
 ### The color interface
 
@@ -162,27 +194,30 @@ or sets its own token in its own layer.
 
 ### Selecting a profile
 
-`data-palette` on any element applies a profile to that element's subtree. The nearest
-`data-palette` wins, so scopes nest. With no attribute anywhere, Flexoki applies, and
-`data-palette` on the root replaces it for the whole page.
+Each facet has its own attribute: `data-palette` selects a color profile, `data-space` a space
+profile, and `data-type` a type profile. Each applies its profile to the element's subtree. The
+nearest attribute of each kind wins, so scopes nest. With no attribute anywhere, the defaults
+apply, Flexoki, regular, and mono, and an attribute on the root replaces its facet's default for
+the whole page.
 
 `data-scheme="light"` or `data-scheme="dark"` on any element forces that scheme on its subtree.
 With no attribute, the page follows the system scheme and changes when it does.
 
-An element with either attribute paints its own background and text from the tokens it
-resolves, so a scoped container renders as its profile and scheme render at the root. Both
-attributes have zero specificity: a consumer's later layer beats every profile.
+An element with `data-palette` or `data-scheme` paints its own background and text from the
+tokens it resolves, and an element with `data-type` sets its own font and leading, so a scoped
+container renders as its profiles and scheme render at the root. Every attribute has zero
+specificity: a consumer's later layer beats every profile.
 
 ```html
-<html data-palette="catppuccin">
+<html data-palette="catppuccin" data-type="sans">
   ...
-  <aside data-palette="primer" data-scheme="dark">...</aside>
+  <aside data-palette="primer" data-scheme="dark" data-space="compact">...</aside>
 </html>
 ```
 
-### The profiles
+### The color profiles
 
-Each profile is its own file under `layers/tokens/color/`, whose heading comment credits its
+Each color profile is its own file under `layers/tokens/color/`, whose heading comment credits its
 source. Its contrast in each scheme, every text token and hue over every surface, is recorded
 in the specimen and not corrected.
 
@@ -196,6 +231,23 @@ in the specimen and not corrected.
 Flexoki's green is the one departure from an upstream: its green-600 and green-400 keep their
 OKLCH lightness and chroma but rotate from a hue near yellow to 142°, sRGB green's, as
 `#408739` light and `#61a25a` dark.
+
+### The space and type profiles
+
+Each space profile is its own file under `layers/tokens/space/`, and each type profile under
+`layers/tokens/type/`.
+
+| Attribute | Profile | Values |
+| --- | --- | --- |
+| `data-space` | `regular` (default) | `--space-base` from 1rem on a 22.5rem display to 1.125rem on an 80rem one; `--radius-base` 0.375rem. |
+| `data-space` | `compact` | `--space-base` from 0.75rem to 0.875rem over the same range; `--radius-base` 0.25rem. |
+| `data-type` | `mono` (default) | Headings and interface controls in the system monospace stack, body text in the system sans stack, code in monospace. |
+| `data-type` | `sans` | Headings, interface controls, and body text in the system sans stack, code in monospace. |
+
+A space profile sets only `--space-base`, the two line widths, 1px and 2px in both, and
+`--radius-base`. `space.css` declares every step and radius again on each `data-space` scope, so
+they read that scope's base. A type profile sets the four role fonts and leadings; both type
+profiles share the leadings and the text scale.
 
 ### Hooks
 
@@ -228,21 +280,119 @@ The elements layer sets `caret-color` and `accent-color` on every element from
 The elements layer styles `kbd` as an outlined key with a heavier bottom edge, the baseline's
 only key-hint styling. The planned keys module binds keys and styles nothing.
 
+### The registry
+
+The registry module, `registry.js`, lists the profiles a page can apply, per facet, for the menu
+and the stored preferences to read. One store serves the whole page: a plain object at
+`globalThis[Symbol.for("spike-html-design.registry")]`, shaped
+`{ color: string[], space: string[], type: string[] }`. Every copy of the module uses that store,
+whatever URL or tag it loads from, so an extension pinned to another tag registers into the same
+lists. The store's shape is public API, frozen with each tag.
+
+| Export | What it is |
+| --- | --- |
+| `register(facet, name)` | Lists `name` under `facet`; registering a name twice is harmless. Throws a `TypeError` on an unknown facet or an empty name. |
+| `profiles(facet)` | Returns a copy of the facet's names, in registration order. |
+| `FACETS` | `color`, `space`, and `type`. The scheme is not a facet. |
+| `DEFAULTS` | Each facet's default: `flexoki`, `regular`, and `mono`, the profiles both CSS entries apply with no attribute. |
+
+Registering lists a name and loads no CSS: the page's CSS ships the profile. Two registration
+modules mirror the CSS entries. `./register` registers the lean entry's defaults, and
+`./register/full` every built-in profile; a page imports the one that matches the entry it
+links. A page or extension that imports a profile beyond its entry registers that name itself,
+in a module loaded before the preferences module:
+
+```js
+import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/registry.js";
+
+register("color", "catppuccin");
+```
+
+### Preferences
+
+The preferences module, `preferences.js`, applies the reader's stored choice to the root before
+first paint, saves it, and follows other tabs. A choice is a profile name per facet and a scheme,
+stored as JSON under the localStorage key `spike-html-design.preferences`. The key is one per
+origin, so every page using the baseline on an origin shares the choice, in any directory. In
+chromium every `file://` page shares one such origin, as does every project site under
+`jaimestill.github.io`.
+
+The module sets `data-palette`, `data-space`, `data-type`, and `data-scheme` on the root; the
+system scheme sets no `data-scheme`. A stored name the page hasn't registered falls back to its
+facet's default and stays in storage for the pages that register it. With nothing stored, the
+module leaves the root as the page wrote it. Another tab's save applies at once through the
+`storage` event, except while the menu is open. The module's exports, `KEY`, `ATTRIBUTES`,
+`SCHEMES`, `read`, `apply`, `save`, `setOpen`, and `isOpen`, are the hooks the menu builds on;
+its heading comment documents each.
+
+The flash is the time from first paint to the stored choice applying. The check measures it in
+headless chromium with each module fetch held 200 ms, as a CDN's round trip would hold it:
+
+- Loaded with `blocking="render"`, the module applies the choice before first paint: a 0 ms
+  flash, paid for by first paint waiting on the module fetches.
+- Preloading `registry.js` with `modulepreload` fetches it beside the modules instead of after
+  them, which moves that first paint from about 452 ms to about 228 ms.
+- Loaded without `blocking="render"`, the default profiles show for about 366 ms before the
+  stored choice applies.
+- A module that fails to load doesn't stall first paint; the page renders its defaults.
+
+Firefox doesn't support `blocking="render"`, so it paints the defaults first and then flashes.
+That is recorded from its feature support, not measured.
+
+### The theming menu
+
+`<theme-menu>`, which the preferences module defines, holds the menu. A page places it once,
+with an id, and opens it with its own button, `commandfor="<id>" command="--open"`, or with T
+pressed outside a text field. T counts with or without Shift, so caps lock doesn't block it; with
+Ctrl, Alt, or Meta held, the key stays the browser's. The element fetches `theme-menu.js` the
+first time it opens, never before first paint, from the URL and tag its own module came from.
+`keys.js` is planned to take over T in v0.6.0.
+
+The menu is a modal native `<dialog>` in light DOM, so the elements layer styles it, and it is
+built again on each open. It has one row per section, in order: color profile, scheme, space,
+and type. Each row is a native radio group drawn as ◀ value ▶, over the names the registry lists
+for that facet; the scheme row cycles system, light, and dark. Beside the rows, a preview carries
+the selection's attributes and holds a heading, a paragraph with a link, inline code, and `kbd`,
+a neutral and a hue button, a text field, and a striped table.
+
+| Key | What it does |
+| --- | --- |
+| ↑ ↓, k j | Moves between rows, stopping at the first and last. |
+| ← →, h l | Cycles the row's values, wrapping. |
+| Tab | Moves one stop per row. |
+| T, Save | Stores the selection once and closes the menu. |
+| Esc, Cancel | Restores what applied when the menu opened, stores nothing, and closes the menu. |
+
+Every change applies at once to the preview and the page. Each key the menu handles stops at the
+dialog, so no page-wide listener sees it. A backdrop click does nothing, and any other close
+counts as Cancel. While the menu is open it ignores another tab's save: Save overwrites that
+choice, and Cancel restores it.
+
+The menu styles itself with one constructed stylesheet that the element adopts onto the
+document, in the layer `spike-html-design.theme-menu`. The layer falls after the baseline's tools
+and under every consumer layer and unlayered CSS, and its rules read only the baseline's tokens.
+
 ### Entries and exports
 
 | Export | File | Holds |
 | --- | --- | --- |
-| `.` | `baseline.css` | The lean entry: the foundation and Flexoki. |
-| `./full` | `full.css` | The full entry: everything the lean entry holds, plus every other profile. |
-| `./profiles/<name>` | `layers/tokens/color/<name>.css` | One profile, for `flexoki`, `primer`, `catppuccin`, and `everforest`. |
+| `.` | `baseline.css` | The lean entry: the foundation and each facet's default profile, Flexoki, regular, and mono. |
+| `./full` | `full.css` | The full entry: everything the lean entry holds, plus every other profile of every facet. |
+| `./profiles/<facet>/<name>` | `layers/tokens/<facet>/<name>.css` | One profile: color `flexoki`, `primer`, `catppuccin`, and `everforest`; space `regular` and `compact`; type `mono` and `sans`. |
+| `./registry` | `modules/registry.js` | The registry. |
+| `./register` | `modules/register.js` | The lean registration: each facet's default. |
+| `./register/full` | `modules/register-full.js` | The full registration: every built-in profile. |
+| `./preferences` | `modules/preferences.js` | The stored preferences and `<theme-menu>`. |
+| `./theme-menu` | `modules/theme-menu.js` | The menu, which `<theme-menu>` loads on first open. |
 
-A page links one entry, never both. A page that needs one profile beyond Flexoki links the lean
-entry and imports that profile into the color sub-layer, after the entry:
+A page links one entry, never both. A page that needs a profile beyond the lean entry's links
+the lean entry, imports that profile into its facet's sub-layer after the entry, and registers
+its name (see "The registry"):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.4.0/baseline.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/baseline.css" />
 <style>
-  @import url(https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.4.0/layers/tokens/color/catppuccin.css)
+  @import url(https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/layers/tokens/color/catppuccin.css)
     layer(spike-html-design.tokens.color);
 </style>
 ```
@@ -251,11 +401,35 @@ A profile file linked on its own is unlayered, and beats the consumer's layers.
 
 ### Size budgets
 
-Each entry's size is the sum of its files' brotli-11 sizes, the entry and every file it imports.
-The check fails when an entry exceeds its budget, 14,000 bytes for the lean entry and 18,000
-bytes for the full entry, or has none. The budgets live in `BUDGETS` in `scripts/size.js`, and
-raising one is the architect's decision. Raw sizes are reported, not enforced. `mise run size`
-prints each entry's files with their raw and brotli sizes, the totals, and the headroom.
+Each entry's size is the sum of its files' brotli-11 sizes: the entry and every file it
+statically imports, each counted once. A stylesheet's files are its `@import` chain; a module's
+are its `import` and `export … from` statements, followed through every module they reach. A
+dynamic `import()` counts toward the module it loads, so `theme-menu.js`, which the preferences
+module loads on first open, is its own entry and not part of `preferences.js`'s size. A profile
+export is not an entry; its size counts in the entry that imports it.
+
+| Entry | Budget (brotli bytes) |
+| --- | --- |
+| `baseline.css` | 14,000 |
+| `full.css` | 18,000 |
+| `modules/registry.js` | 1,200 |
+| `modules/preferences.js` | 3,800 |
+| `modules/theme-menu.js` | 8,500 |
+| `modules/register.js` | 1,450 |
+| `modules/register-full.js` | 1,550 |
+
+The check fails when an entry exceeds its budget or has none. The budgets live in `BUDGETS` in
+`scripts/size.js`, and raising one is the architect's decision. Raw sizes are reported, not
+enforced. `mise run size` prints each entry's files with their raw and brotli sizes, the totals,
+and the headroom.
+
+### Modules from `file://`
+
+A page's CSS renders the same from `file://`, but chromium won't run a relative module script
+there: a `file://` page's origin is opaque, so the module fetch fails the CORS check. The
+working-tree specimen therefore has no menu from `file://` and renders its defaults. A pinned
+page loads its modules from jsDelivr, which answers with `Access-Control-Allow-Origin: *`, so its
+menu works from `file://` as it does served.
 
 ### Reading measure
 
@@ -287,8 +461,9 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
    every profile and scheme with the workbench layout reworked, the full entry point, the
    enforced size budget, contrast per profile, and a visual review after the grid renders;
    v0.4.0 (evidence 3, 5).
-5. `preferences`: the profile registry, the T theming menu, persistence, and the flash
-   measurement; v0.5.0 (evidence 6).
+5. `preferences`: the compact space and sans type profiles with their scopes, the profile
+   registry, persistence, the T theming menu, the flash measurement, and the JS exports with their
+   budgets; v0.5.0 (evidence 2, 6).
 6. `keys`: `keys.js` and the ? dialog; v0.6.0 (evidence 7).
 7. `validate`: the git-tag install, the extension fixture, pin stability, sizes against the
    budget, the cost of the CDN's import chain, and the answer (evidence 8–11).

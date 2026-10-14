@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>registry copies fixture</title>
+  </head>
+  <body>
+    <h1>registry copies fixture</h1>
+    <p>Two copies of the registry module, loaded from two URLs, share one store: the lean and full modules register through a third copy, the lean module runs twice, and an extension registers its profile twice through copy a; copy b lists them all, each once.</p>
+    <h2>color</h2>
+    <ul id="color"></ul>
+    <h2>space</h2>
+    <ul id="space"></ul>
+    <h2>type</h2>
+    <ul id="type"></ul>
+    <script type="module">
+      import * as a from "../../modules/registry.js?a";
+      import * as b from "../../modules/registry.js?b";
+      import "../../modules/register.js";
+      import "../../modules/register.js?again";
+      import "../../modules/register-full.js";
+      import { list } from "./registrations.js";
+
+      a.register("color", "extension");
+      a.register("color", "extension");
+      window.copies = a.register !== b.register;
+      list(b);
+    </script>
+  </body>
+</html>
