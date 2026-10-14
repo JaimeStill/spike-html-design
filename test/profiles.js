@@ -384,7 +384,7 @@ export const COLOR_PROFILES = {
 // ADDED are the profiles past the default, each in its own file: the profiles a page imports.
 export const ADDED = Object.keys(COLOR_PROFILES).filter((name) => name !== "flexoki");
 
-// profilePath returns the file a profile past the default sits in: under the color facet's
+// profilePath returns the file a profile sits in, the default's included: under the color facet's
 // directory, layers/tokens/color/, since the facet's own file, layers/tokens/color.css, sits at
 // the path its layer's name spells and the profiles are imported into that layer.
 export function profilePath(name) {

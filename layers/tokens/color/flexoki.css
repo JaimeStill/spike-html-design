@@ -33,8 +33,8 @@
   --orange: light-dark(#bc5215, #da702c); /* orange-600 / orange-400 */
   --yellow: light-dark(#ad8301, #d0a215); /* yellow-600 / yellow-400 */
   /* Green departs from Flexoki's green-600 / green-400, #66800b / #879a39, which sit at OKLCH hues
-     ~123° and ~119°, close to yellow: each keeps its lightness and chroma (L 0.559, C 0.134 light; L 0.651,
-     C 0.124 dark), rotated to hue 142°, sRGB green's. */
+     ~123° and ~119°, close to yellow: each keeps its lightness and chroma (L 0.559, C 0.134 light;
+     L 0.651, C 0.124 dark), rotated to hue 142°, sRGB green's. */
   --green: light-dark(#408739, #61a25a); /* green-600 at hue 142° / green-400 at hue 142° */
   --cyan: light-dark(#24837b, #3aa99f); /* cyan-600 / cyan-400 */
   --blue: light-dark(#205ea6, #4385be); /* blue-600 / blue-400 */

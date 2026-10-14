@@ -1,8 +1,8 @@
 /*
  * A test-only entry: the tokens files with the default color profile, the reset and the elements
- * layer, each imported into its nested layer as baseline.css imports it, and nothing else. No tools, so the behavior test sees
- * what the reset and elements do to native elements; it answers the reset's request 404 to see
- * what the elements layer alone does.
+ * layer, each imported into its nested layer as baseline.css imports it, and nothing else. No
+ * tools, so the behavior test sees what the reset and elements do to native elements; it answers
+ * the reset's request 404 to see what the elements layer alone does.
  */
 
 @layer spike-html-design.tokens.color,

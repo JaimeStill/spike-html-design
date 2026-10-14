@@ -19,7 +19,7 @@ export function layerPath(layer) {
 
 // DEFAULT_PROFILE is the color profile the lean entry imports into tokens.color after the facet's
 // own file: Flexoki, in the directory the facet's file name spells.
-export const DEFAULT_PROFILE = "layers/tokens/color/flexoki.css";
+export const DEFAULT_PROFILE = profilePath("flexoki");
 
 // IMPORTS are the working tree's lean entry's imports, in order, each [nested layer, file]: every
 // nested layer's own file, and the default profile right after the color facet's.
