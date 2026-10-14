@@ -174,7 +174,7 @@ Release       v0.5.0
 
 ## Progress
 
-slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · review stop redirected, slice 4b next · standards — · spec — · editor —
+slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · slice 4b committed (480f573) · review stop 2 pending · standards — · spec — · editor —
 
 ## Decisions
 
