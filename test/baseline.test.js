@@ -219,13 +219,15 @@ const RENAMED = ["--border-3"];
 const PINNED_V030 = "pinned/v0.3.0.html";
 
 // SOURCES are the working tree's CSS: the stylesheet, its layer files, the profile files, the
-// specimen and its pinned page, whose style elements read the tokens too, and the test fixtures.
+// specimen and its pinned pages since v0.3.0, whose style elements read the tokens too, and the
+// test fixtures.
 const SOURCES = [
   ...Object.keys(ENTRIES),
   ...LAYERS.map(layerPath),
   ...Object.keys(COLOR_PROFILES).map(profilePath),
   "index.html",
   "pinned/v0.3.0.html",
+  "pinned/v0.4.0.html",
   "test/fixtures/baseline.html",
   "test/fixtures/consumer.html",
   "test/fixtures/extension.html",

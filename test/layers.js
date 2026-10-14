@@ -76,10 +76,16 @@ export const PROBES = {
   // The working tree, to be cut as v0.4.0: Flexoki's ladder shifted one step, and its values moved
   // to their own profile file, so the color probe reads the new --bg pair from Flexoki's file and
   // a new probe reads the facet's own file's color-scheme; the other five probes are v0.3.0's.
-  // Unstyled, the color-scheme probe reads "normal".
+  // The specimen and its pinned page link the full entry, so one probe per profile past the
+  // default reads that profile's --bg pair on the first element naming it, its first preview
+  // card. Unstyled, the color-scheme probe reads "normal" and the profile probes "".
   "v0.4.0": [
     [":root", "color-scheme", "light dark"],
     [":root", "--bg", "light-dark(#fffcf0, #1c1b1a)"],
+    ['[data-palette="tokyo-night"]', "--bg", "light-dark(#e1e2e7, #1a1b26)"],
+    ['[data-palette="catppuccin"]', "--bg", "light-dark(#eff1f5, #1e1e2e)"],
+    ['[data-palette="everforest"]', "--bg", "light-dark(#fffbef, #272e33)"],
+    ['[data-palette="primer"]', "--bg", "light-dark(#ffffff, #22272e)"],
     [":root", "--line-s", "1px"],
     [":root", "--text-m", "1rem"],
     ["body", "box-sizing", "border-box"],

@@ -34,6 +34,7 @@ test("the serve script serves the working tree under the Pages subpath and print
     expect((await fetch(`${url}baseline.css`)).status).toBe(200);
     expect((await fetch(`${url}full.css`)).status).toBe(200);
     expect((await fetch(`${url}pinned/v0.3.0.html`)).status).toBe(200);
+    expect((await fetch(`${url}pinned/v0.4.0.html`)).status).toBe(200);
   } finally {
     child.kill();
     await child.exited;
