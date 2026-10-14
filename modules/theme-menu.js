@@ -35,7 +35,9 @@ const SECTIONS = [
 ];
 
 // SHEET is the menu's arrangement, built once per module, so once per document. It reads the
-// baseline's tokens for every length, line, color, and font, and hard-codes none.
+// baseline's tokens for every space, line, radius, color, and font, and hard-codes none; its
+// fixed lengths are layout: the dialog's widest size, the breakpoint, a value's width, and the
+// 1px box that hides a radio visually.
 const SHEET = new CSSStyleSheet();
 SHEET.replaceSync(`@layer spike-html-design.theme-menu {
   .theme-menu {
@@ -329,8 +331,8 @@ export function open(element) {
   adopt();
   const snapshot = current();
   const dialog = build(element, snapshot);
-  const menu = { dialog, preview: dialog.querySelector(".theme-menu-preview"), snapshot };
-  menu.stored = stored();
+  const preview = dialog.querySelector(".theme-menu-preview");
+  const menu = { dialog, preview, snapshot, stored: stored() };
   menus.set(element, menu);
   apply(snapshot, menu.preview);
 

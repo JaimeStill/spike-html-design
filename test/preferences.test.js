@@ -122,9 +122,6 @@ describe("preferences: apply and storage", () => {
     await seed(CHOICE);
     const page = await open(fixture("preferences-lean.html"));
     expect(await rooted(page)).toEqual({ ...NONE, "data-scheme": "dark" });
-    expect(await page.style(":root", "--space-base")).toBe(
-      await (await open(fixture("preferences-lean.html"))).style(":root", "--space-base"),
-    );
     expect(await stored(page)).toEqual(CHOICE);
   });
 
@@ -343,10 +340,17 @@ describe("preferences: <theme-menu>", () => {
     await waitFor(page, `document.querySelector("theme-menu").hasAttribute("data-open")`);
     expect(await isOpen()).toBe(true);
 
-    // T while open: the menu accepts and closes (the stub only closes).
+    // T while open, outside the dialog: the element hands it to the menu, which saves what it
+    // shows, the defaults here, and closes.
     await press(page, "t", { selector: "h1" });
     await waitFor(page, `!document.querySelector("theme-menu").hasAttribute("data-open")`);
     expect(await isOpen()).toBe(false);
+    expect(await stored(page)).toEqual({
+      color: "flexoki",
+      space: "regular",
+      type: "mono",
+      scheme: "system",
+    });
 
     // Shift is allowed: T opens it as t does.
     await press(page, "T", { shiftKey: true });

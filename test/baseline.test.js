@@ -1618,8 +1618,8 @@ describe("space and type profiles", () => {
         const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
         return [style.fontFamily, style.lineHeight];
       })()`);
-    const [, size] = await page.evaluate(
-      `[0, Number.parseFloat(getComputedStyle(document.querySelector("#inside")).fontSize)]`,
+    const size = await page.evaluate(
+      `Number.parseFloat(getComputedStyle(document.querySelector("#inside")).fontSize)`,
     );
     expect(await text("#scope")).toEqual(["fantasy", `${size * 2}px`]);
     expect(await text("#inside")).toEqual(["fantasy", `${size * 2}px`]);
