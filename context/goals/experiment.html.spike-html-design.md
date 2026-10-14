@@ -38,12 +38,12 @@ Behaviors
      v0.3.0 Flexoki steps.
   2. Four color profiles, each its own file, in this order: Flexoki (default), Primer
      (GitHub Light Default / Dark Dimmed), Catppuccin (latte / mocha), and Everforest (hard
-     light / hard dark). Each maps upstream swatches onto the 16 tokens
-     by role, as starting values the review stops confirm. Each is credited by a heading
-     comment naming source, license, and upstream version: Flexoki MIT; Tokyo Night
-     Apache-2.0 at v4.14.1; Catppuccin MIT at palette v1.8.0; Everforest
-     (sainnhe/everforest) MIT and Primer (GitHub VS Code theme) MIT, each at a pinned
-     upstream version. (Review redirect: Kanagawa dropped.)
+     light / hard dark). Each maps upstream swatches onto the 16 tokens by role, with
+     values as upstream ships them (Flexoki's green, rotated to OKLCH hue 142°, is the one
+     departure). Each is credited by a heading comment naming source, license, and
+     upstream version: Flexoki MIT; Primer (github-vscode-theme) MIT at v6.3.5;
+     Catppuccin MIT at palette v1.8.0; Everforest MIT at v0.3.0. (Redirects: Kanagawa
+     dropped at review stop 1, Tokyo Night at the session brief.)
 
   Selection
   3. data-palette="flexoki" | "primer" | "catppuccin" | "everforest" on any element
@@ -110,8 +110,8 @@ Behaviors
       its panel, and the page column caps at 80rem. The header has no rule or meta line
       and sits close to Tokens; section labels and layer names are larger; color panels
       drop their intros and top-align their tables, with room between text and table;
-      --space-fluid and --space-base head the space scale and --type-fluid heads the type
-      scale, shown as fluid expansion across the display range, with no separate
+      --space-base heads the space scale and --space-fluid foots it, and --type-fluid
+      foots the type scale, shown as fluid expansion across the display range, with no separate
       progress panel (the progress tokens are documented as internal); the tables
       example is wider, with more columns and room for its caption; the embedded cells
       are evenly arranged.
