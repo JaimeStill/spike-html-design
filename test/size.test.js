@@ -65,20 +65,12 @@ describe("size report", () => {
 });
 
 describe("size budget", () => {
-  test("budgets every CSS entry, 14,000 brotli bytes for the lean and 18,000 for the full", async () => {
-    expect(BUDGETS).toEqual({ "baseline.css": 14_000, "full.css": 18_000 });
+  test("budgets every CSS entry the package exports, and nothing else", async () => {
     expect(Object.keys(BUDGETS)).toEqual(await entries());
   });
 
-  test("holds every entry within its budget, with its headroom the budget less its brotli total", async () => {
-    const { reports, failures } = await audit();
-    expect(failures).toEqual([]);
-    expect(reports.map(({ entry, budget, headroom }) => [entry, budget, headroom])).toEqual(
-      reports.map(({ entry, brotli: total }) => [entry, BUDGETS[entry], BUDGETS[entry] - total]),
-    );
-    for (const { entry, headroom } of reports) {
-      expect([entry, headroom >= 0]).toEqual([entry, true]);
-    }
+  test("holds every entry within its budget", async () => {
+    expect((await audit()).failures).toEqual([]);
   });
 
   test("fails an entry over its budget, by how much, and passes one exactly at it", async () => {

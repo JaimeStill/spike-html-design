@@ -536,7 +536,7 @@ describe("tokens", () => {
     }
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`every tier and hue resolves to its ${scheme} value`, async () => {
       const page = await open(specimen, { scheme });
       for (const [name, pair] of Object.entries(COLORS)) {
@@ -629,8 +629,8 @@ describe("tokens", () => {
     expect(await page.evaluate("window.unreloaded === true")).toBe(true);
   });
 
-  for (const [index, forced] of ["light", "dark"].entries()) {
-    for (const scheme of ["light", "dark"]) {
+  for (const [index, forced] of SCHEMES.entries()) {
+    for (const scheme of SCHEMES) {
       test(`data-scheme="${forced}" forces the ${forced} scheme under a ${scheme} system`, async () => {
         const page = await open(specimen, { scheme });
         await page.evaluate(`document.documentElement.dataset.scheme = "${forced}"`);
@@ -646,7 +646,7 @@ describe("tokens", () => {
     }
   }
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`data-theme no longer forces a scheme, under a ${scheme} system`, async () => {
       const page = await open(specimen, { scheme });
       await page.evaluate(`document.documentElement.dataset.theme = "${index ? "light" : "dark"}"`);
@@ -725,9 +725,14 @@ function whereOnly(selector) {
 
 describe("color interface", () => {
   test("the color facet is exactly sixteen tokens, the five surfaces, three text weights and eight hues, with no --border-3", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    const names = Object.keys(await rootTokens(page)).filter((name) => name in COLORS);
-    expect(names.sort()).toEqual(
+    // Over http, since chromium hides a file:// stylesheet's rules from the page. The names are
+    // read from what the color sub-layer declares, every profile's block included, and held to
+    // the brief's list, not to the profiles record the other tests derive their names from.
+    const page = await open(server.url, { scheme: "light" });
+    const names = (await layerRules(page, "tokens.color"))
+      .flatMap((rule) => rule.declarations.map(([name]) => name))
+      .filter((name) => name.startsWith("--"));
+    expect([...new Set(names)].sort()).toEqual(
       [
         ...["--bg-0", "--bg", "--bg-2", "--border", "--border-2", "--fg", "--fg-2", "--fg-3"],
         ...["--red", "--orange", "--yellow", "--green", "--cyan", "--blue", "--purple"],
@@ -807,7 +812,7 @@ describe("color interface", () => {
     expect(await paint(page, "#inner")).toEqual([PROBE_PALETTE["--fg"], PROBE_PALETTE["--bg"]]);
   });
 
-  for (const [index, forced] of ["light", "dark"].entries()) {
+  for (const [index, forced] of SCHEMES.entries()) {
     const page = index ? "light" : "dark";
     test(`data-scheme="${forced}" on a nested element forces the ${forced} scheme for its subtree in a ${page} page`, async () => {
       const view = await open(specimen, { scheme: page });
@@ -1831,7 +1836,7 @@ describe("element hooks", () => {
     expect(await page.style("#prose p", "caret-color")).toBe(COLORS["--blue"][0]);
   });
 
-  for (const [index, forced] of ["light", "dark"].entries()) {
+  for (const [index, forced] of SCHEMES.entries()) {
     const system = index ? "light" : "dark";
     test(`interaction resolves in a data-scheme="${forced}" container's own scheme, in a ${system} page`, async () => {
       const page = await open(specimen, { scheme: system });
@@ -1863,7 +1868,7 @@ describe("element hooks", () => {
     });
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`hovered, every enabled field and neutral button takes a boundary in the interaction color, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
       await addControls(
@@ -1927,7 +1932,7 @@ describe("element hooks", () => {
     return "#code-link > code";
   };
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`inline code is green text in the code font, with no chip, and code in a pre is plain, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
       const inline = "#prose p > code";
@@ -1987,7 +1992,7 @@ describe("element hooks", () => {
     expect(margins).toEqual(["0px", s]);
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`kbd is an outlined key with a heavier bottom edge over no fill, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
       const key = await page.evaluate(`(() => {
@@ -2557,7 +2562,7 @@ describe("tools", () => {
     );
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`each variant draws its border and text in its hue over no fill, on <button> and <a class="button">, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
       for (const hue of Object.keys(HUES)) {
@@ -2671,13 +2676,13 @@ describe("tools", () => {
     expect(table).toBeCloseTo(label, 1);
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`.table-striped's stripe lies between the page and the header surface, apart from both, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
       const table = "#tables-tools .table-striped";
       const rows = await page.evaluate(`[...document.querySelectorAll(
         "${table} > tbody > tr")].map((tr) => getComputedStyle(tr).backgroundColor)`);
-      const [stripe] = [rows[1]];
+      const stripe = rows[1];
       expect(rows).toEqual(["rgba(0, 0, 0, 0)", stripe, "rgba(0, 0, 0, 0)", stripe]);
       // The header cells sit on --bg-2, the page on --bg.
       const header = await page.style(`${table} th`, "background-color");
@@ -2787,10 +2792,10 @@ describe("specimen", () => {
     );
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`shows a container forced into each scheme, painting it inside a ${scheme} page`, async () => {
       const page = await open(specimen, { scheme });
-      for (const [forcedIndex, forced] of ["light", "dark"].entries()) {
+      for (const [forcedIndex, forced] of SCHEMES.entries()) {
         const selector = `#color .scope-sample[data-scheme="${forced}"]`;
         // Each container paints its forced scheme whatever the page's, so in each page the one
         // forced the other way shows the scope.
