@@ -1,15 +1,15 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
-- **Task:** profiles
-- **Branch:** profiles
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] layers
 2. [x] themes
 3. [x] facets
-4. [ ] profiles
+4. [x] profiles
 5. [ ] preferences
 6. [ ] keys
 7. [ ] validate
@@ -173,10 +173,6 @@ Out of scope  second space and type profiles and data-space/data-type (preferenc
 Door          one-way for tag v0.4.0, which jsDelivr caches as immutable; two-way otherwise.
               v0.3.0 keeps --border-3 and its Flexoki values on its own pin.
 Release       v0.4.0
-
-## Progress
-
-slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor done · brief redirect fixed (b22b6de, d1fd51a, 61e3788; standards and spec re-run: no gaps)
 
 ## Decisions
 
@@ -652,6 +648,8 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
   render correctly and now draw in --fg. Rejected 0.5px for --line-s: it renders as 1px on 1x
   displays and thins every control boundary to a hairline on HiDPI. The fluid rows sit a
   --space-m below their scales.
+- profiles SHIP (architect): accepted the session brief; v0.4.0 releases four color profiles
+  (Flexoki, Primer, Catppuccin, Everforest) over the 16-token interface.
 
 ## Pending edits
 
