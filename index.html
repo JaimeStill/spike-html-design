@@ -7,6 +7,14 @@
     <!-- Relative, never root-absolute: Pages serves this page under a project subpath, and the
          page must also render from file://. -->
     <link rel="stylesheet" href="./full.css" />
+    <!-- The full registration module, then the stored preferences, render-blocking, so the stored
+         choice applies before first paint. Both import the registry, which the modulepreload
+         fetches beside them rather than after them, so first paint waits one round trip, not
+         two. Relative module scripts run served and on Pages; from file://, chromium blocks
+         them, and the page renders its defaults with no menu. -->
+    <link rel="modulepreload" href="./modules/registry.js" />
+    <script type="module" blocking="render" src="./modules/register-full.js"></script>
+    <script type="module" blocking="render" src="./modules/preferences.js"></script>
     <style>
       /* The specimen layer arranges this page as a console: a compact header, each section
          under its heading, a full-width banner over each subsection, and the samples in panels,
@@ -35,13 +43,18 @@
           padding-block-end: var(--space-2xl);
         }
 
-        /* The header: the title, then the intro, close above the first section. Text spans
-           the column: a reading measure belongs to a prose layout, and this page is a console. */
+        /* The header: the title, then the intro, then the Theme button on a line of its own,
+           close above the first section. Nothing sits beside the title. Text spans the column:
+           a reading measure belongs to a prose layout, and this page is a console. */
         body > header {
           padding-block-start: var(--space-l);
 
           & > * {
             margin: 0;
+          }
+
+          & > button {
+            margin-block-start: var(--space-xs);
           }
 
           & > p {
@@ -556,8 +569,12 @@
         entry, <code>full.css</code>, alone. It follows the system color scheme; set
         <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
         apply a color profile to its subtree, and <code>data-space</code> or
-        <code>data-type</code> to apply a space or type profile.
+        <code>data-type</code> to apply a space or type profile. Served, the Theme button or
+        <kbd>T</kbd> opens a menu to choose them for every page on this site.
       </p>
+      <button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">
+        Theme <kbd>T</kbd>
+      </button>
     </header>
 
     <main>
@@ -3114,5 +3131,6 @@ const answer = 42;</code></pre>
         </div>
       </section>
     </main>
+    <theme-menu id="theme"></theme-menu>
   </body>
 </html>

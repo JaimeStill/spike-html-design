@@ -3127,10 +3127,14 @@ describe("specimen", () => {
 
   test("links the full entry alone, and keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
     const page = await open(specimen, { scheme: "light" });
-    // The full entry holds every profile, so the page imports none itself.
+    // The full entry holds every profile, so the page imports none itself. Its one other link
+    // preloads the registry its modules import.
     const links = await page.evaluate(`[...document.querySelectorAll("link")]
       .map((l) => [l.rel, l.getAttribute("href")])`);
-    expect(links).toEqual([["stylesheet", "./full.css"]]);
+    expect(links).toEqual([
+      ["stylesheet", "./full.css"],
+      ["modulepreload", "./modules/registry.js"],
+    ]);
     const rules = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
       .map((rule) => rule.href ? [rule.layerName, rule.href]
         : rule.nameList ? [...rule.nameList] : rule.name)`);
@@ -3155,13 +3159,19 @@ describe("specimen", () => {
       const box = header.getBoundingClientRect();
       return {
         rule: getComputedStyle(header).borderBottomWidth,
-        // Each of the header's blocks spans it: nothing sits beside the title.
-        spans: [...header.children].map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
+        // Each of the header's blocks spans it, but the Theme button that ends it on a line of
+        // its own: nothing sits beside the title.
+        spans: [...header.children].filter((el) => el.localName !== "button")
+          .map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
+        button: header.lastElementChild.localName === "button" &&
+          header.lastElementChild.getBoundingClientRect().top >=
+            header.lastElementChild.previousElementSibling.getBoundingClientRect().bottom,
         gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
       };
     })()`);
     expect(header.rule).toBe("0px");
     expect(new Set(header.spans)).toEqual(new Set([0]));
+    expect(header.button).toBe(true);
     expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
   });
 

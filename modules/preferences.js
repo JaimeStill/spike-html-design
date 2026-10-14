@@ -147,11 +147,12 @@ class ThemeMenu extends HTMLElement {
     else this.show();
   }
 
-  // show loads the menu module once, on first open, and opens the menu.
-  async show() {
+  // show loads the menu module once, on first open, and opens the menu. It returns nothing: its
+  // callers, the command and T, wait on nothing. A second call while the module loads opens the
+  // menu once, since the menu's open ignores an element whose menu is already open.
+  show() {
     if (open) return;
-    const menu = await this.#load();
-    menu.open(this);
+    this.#load().then((menu) => menu.open(this));
   }
 
   #load() {
