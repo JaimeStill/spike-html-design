@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>registry tags fixture</title>
+  </head>
+  <body>
+    <h1>registry tags fixture</h1>
+    <p>Copies of the registry module from two tags on a CDN share one store, from file://: the lean module registers through the v0.5.0 copy, an extension through the v0.6.0 copy.</p>
+    <h2>color</h2>
+    <ul id="color"></ul>
+    <h2>space</h2>
+    <ul id="space"></ul>
+    <h2>type</h2>
+    <ul id="type"></ul>
+    <script type="module">
+      import * as v5 from "https://cdn.jsdelivr.net/gh/example/fixture@v0.5.0/modules/registry.js";
+      import "https://cdn.jsdelivr.net/gh/example/fixture@v0.5.0/modules/register.js";
+      import * as v6 from "https://cdn.jsdelivr.net/gh/example/fixture@v0.6.0/modules/registry.js";
+
+      v6.register("color", "extension");
+      window.copies = v5.register !== v6.register;
+      // The listing is inline: a file:// page cannot import the relative helper.
+      for (const facet of v5.FACETS) {
+        const items = v5.profiles(facet).map((name) => Object.assign(document.createElement("li"), { textContent: name }));
+        document.getElementById(facet).replaceChildren(...items);
+      }
+    </script>
+  </body>
+</html>

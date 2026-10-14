@@ -2,7 +2,7 @@
 // styles. It wraps Bun.WebView (experimental in bun 1.4.3) with the few capabilities the tests
 // use: open a URL, evaluate in the page, read a computed style, fingerprint a page's resolved
 // styles, emulate media features such as prefers-color-scheme and the viewport's size, and answer
-// a request URL prefix from a local file. serve() is a static server for pages that must load over http://.
+// a request URL prefix from a local file, with the CORS header a CDN sends. serve() is a static server for pages that must load over http://.
 //
 // Bun.WebView spawns one chromium per bun process and opens each view as a tab in it, so the
 // first openPage() fixes the browser for the whole test run.
@@ -165,8 +165,9 @@ class Page {
     });
   }
 
-  // intercept answers every request whose URL starts with prefix with the local file at path.
-  // A missing file answers 404, so a wrong path fails a test instead of reaching the network.
+  // intercept answers every request whose URL starts with prefix with the local file at path,
+  // with its content type and Access-Control-Allow-Origin: *. A missing file answers 404, so a
+  // wrong path fails a test instead of reaching the network.
   async intercept(prefix, path) {
     if (this.#routes.size === 0) {
       this.view.addEventListener("Fetch.requestPaused", (event) => this.#answer(event.data));
@@ -185,7 +186,12 @@ class Page {
     await this.#cdp("Fetch.fulfillRequest", {
       requestId,
       responseCode: found ? 200 : 404,
-      responseHeaders: [{ name: "Content-Type", value: file.type }],
+      // Access-Control-Allow-Origin, as jsDelivr sends it, so a file:// page, whose origin is
+      // opaque, can run an intercepted cross-origin module script.
+      responseHeaders: [
+        { name: "Content-Type", value: file.type },
+        { name: "Access-Control-Allow-Origin", value: "*" },
+      ],
       body: found ? Buffer.from(await file.arrayBuffer()).toString("base64") : "",
     });
   }

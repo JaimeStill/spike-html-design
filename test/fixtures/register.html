@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>lean registration fixture</title>
+  </head>
+  <body>
+    <h1>lean registration fixture</h1>
+    <p>The profiles the lean registration module registers. The page links no stylesheet: registering lists names and loads no CSS.</p>
+    <h2>color</h2>
+    <ul id="color"></ul>
+    <h2>space</h2>
+    <ul id="space"></ul>
+    <h2>type</h2>
+    <ul id="type"></ul>
+    <script type="module">
+      import * as registry from "../../modules/registry.js";
+      import "../../modules/register.js";
+      import { list } from "./registrations.js";
+
+      list(registry);
+    </script>
+  </body>
+</html>
