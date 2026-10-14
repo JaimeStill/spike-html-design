@@ -7,4 +7,4 @@ import { register } from "./registry.js";
 
 for (const name of ["flexoki", "primer", "catppuccin", "everforest"]) register("color", name);
 for (const name of ["regular", "compact"]) register("space", name);
-for (const name of ["mono", "serif"]) register("type", name);
+for (const name of ["mono", "sans"]) register("type", name);

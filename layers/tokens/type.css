@@ -23,8 +23,9 @@
  * and code. A profile is one voice's values for those eight tokens, in its own file under
  * layers/tokens/type/, applied by data-type on any element to its subtree as a color profile is
  * by data-palette (see layers/tokens/color.css). Mono, the interface voice, is the default;
- * serif is the editorial one. The body's font and leading inherit as resolved values, so a
- * scope re-sets them on itself from the tokens it now holds, as the body does.
+ * sans sets every role but code in the sans stack. The body's font and leading inherit as
+ * resolved values, so a scope re-sets them on itself from the tokens it now holds, as the body
+ * does.
  *
  * The facet reads only its own tokens, never the space facet's, so swapping a type profile
  * changes the type tokens and nothing else.

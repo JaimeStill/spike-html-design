@@ -28,7 +28,7 @@ const LEAN = { color: ["flexoki"], space: ["regular"], type: ["mono"] };
 const FULL = {
   color: ["flexoki", "primer", "catppuccin", "everforest"],
   space: ["regular", "compact"],
-  type: ["mono", "serif"],
+  type: ["mono", "sans"],
 };
 
 // STORE reads the page's registry store at its well-known global key, as JSON.

@@ -3,7 +3,7 @@
  *
  * The lean entry, baseline.css, holds the foundation and each facet's default profile: Flexoki,
  * regular, and mono. This entry holds everything the lean entry holds plus every other profile:
- * Primer, Catppuccin, and Everforest for color, compact for space, and serif for type. A page
+ * Primer, Catppuccin, and Everforest for color, compact for space, and sans for type. A page
  * links this entry to select any profile with data-palette, data-space, or data-type, or the
  * lean entry to fetch less.
  *
@@ -33,7 +33,7 @@
 @import url(./layers/tokens/space/compact.css) layer(spike-html-design.tokens.space);
 @import url(./layers/tokens/type.css) layer(spike-html-design.tokens.type);
 @import url(./layers/tokens/type/mono.css) layer(spike-html-design.tokens.type);
-@import url(./layers/tokens/type/serif.css) layer(spike-html-design.tokens.type);
+@import url(./layers/tokens/type/sans.css) layer(spike-html-design.tokens.type);
 @import url(./layers/reset.css) layer(spike-html-design.reset);
 @import url(./layers/elements.css) layer(spike-html-design.elements);
 @import url(./layers/tools.css) layer(spike-html-design.tools);

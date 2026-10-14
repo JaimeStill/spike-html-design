@@ -25,7 +25,7 @@ afterAll(() => server.stop());
 const KEY = "spike-html-design.preferences";
 const PREFERENCES = "/modules/preferences.js";
 // CHOICE stores a profile other than the default in every facet, and the dark scheme.
-const CHOICE = { color: "primer", space: "compact", type: "serif", scheme: "dark" };
+const CHOICE = { color: "primer", space: "compact", type: "sans", scheme: "dark" };
 
 // seed opens a page of the server's origin and stores value under KEY, as JSON unless it is a
 // string, or clears it when value is null. It returns the page, which can then load a fixture
@@ -56,7 +56,7 @@ function rooted(page) {
 const APPLIED = {
   "data-palette": "primer",
   "data-space": "compact",
-  "data-type": "serif",
+  "data-type": "sans",
   "data-scheme": "dark",
 };
 const NONE = { "data-palette": null, "data-space": null, "data-type": null, "data-scheme": null };
@@ -99,7 +99,7 @@ describe("preferences: apply and storage", () => {
     await seed(CHOICE);
     const page = await open(fixture("preferences.html"));
     expect(await rooted(page)).toEqual(APPLIED);
-    expect(await page.style("h1", "font-family")).toStartWith("ui-serif");
+    expect(await page.style("h1", "font-family")).toStartWith("system-ui");
     expect(await call(page, "preferences.KEY")).toBe(KEY);
   });
 
@@ -143,12 +143,12 @@ describe("preferences: apply and storage", () => {
   test("save fills a partial choice with the defaults and the system scheme", async () => {
     await seed(null);
     const page = await open(fixture("preferences.html"));
-    await call(page, `preferences.save({ type: "serif" })`);
+    await call(page, `preferences.save({ type: "sans" })`);
     expect(await stored(page)).toEqual({
       scheme: "system",
       color: "flexoki",
       space: "regular",
-      type: "serif",
+      type: "sans",
     });
   });
 
@@ -164,7 +164,7 @@ describe("preferences: apply and storage", () => {
           return [...el.attributes].map(({ name, value }) => name + "=" + value).sort();
         }`,
       ),
-    ).toEqual(["data-palette=primer", "data-scheme=dark", "data-space=compact", "data-type=serif"]);
+    ).toEqual(["data-palette=primer", "data-scheme=dark", "data-space=compact", "data-type=sans"]);
     expect(await rooted(page)).toEqual(NONE);
     expect(await stored(page)).toBeNull();
   });
@@ -463,7 +463,7 @@ describe("preferences: the menu", () => {
       {
         section: "type",
         legend: "Type",
-        names: ["mono", "serif"],
+        names: ["mono", "sans"],
         groups: 1,
         shown: ["mono"],
         radiosHidden: true,
@@ -757,7 +757,7 @@ describe("preferences: the specimen", () => {
     await seed(null);
     const page = await open(`${server.url}index.html`);
     const button = await page.evaluate(`(() => {
-      const button = document.querySelector("body > header > :last-child");
+      const button = document.querySelector("body > header > h1 + *");
       return {
         tag: button.localName,
         text: button.textContent.replace(/\\s+/g, " ").trim(),

@@ -11,7 +11,6 @@ import {
   profilePath,
   SANS,
   SCHEMES,
-  SERIF,
   SPACE_PROFILES,
   TYPE_PROFILES,
 } from "./profiles.js";
@@ -1415,7 +1414,7 @@ const MEDIUM = display("4:3", "medium");
 
 // SWAPS are, per facet, the profile past the default and the tokens swapping
 // to it on the root changes: the base, every step and every radius but full for compact, whose
-// lines are regular's; the heading and interface fonts for serif, whose body and code fonts and
+// lines are regular's; the heading and interface fonts for sans, whose body and code fonts and
 // leadings are mono's.
 const SWAPS = {
   space: {
@@ -1430,7 +1429,7 @@ const SWAPS = {
       "--radius-lg",
     ],
   },
-  type: { name: "serif", tokens: TYPE, changes: ["--font-heading", "--font-ui"] },
+  type: { name: "sans", tokens: TYPE, changes: ["--font-heading", "--font-ui"] },
 };
 
 // compactValues is what compact resolves the space tokens it changes to in a viewport, name to
@@ -1452,11 +1451,11 @@ function compactValues(viewport) {
   };
 }
 
-// SERIF_FONTS are serif's fonts, name to its stack.
-const SERIF_FONTS = {
+// SANS_FONTS are sans's fonts, name to its stack.
+const SANS_FONTS = {
   "--font-body": SANS,
-  "--font-heading": SERIF,
-  "--font-ui": SERIF,
+  "--font-heading": SANS,
+  "--font-ui": SANS,
   "--font-code": MONO,
 };
 
@@ -1548,7 +1547,7 @@ describe("space and type profiles", () => {
       expect(pick(after, tokens)).toEqual(
         facet === "space"
           ? { ...pick(before, tokens), ...compactValues(MEDIUM) }
-          : { ...pick(before, tokens), ...SERIF_FONTS },
+          : { ...pick(before, tokens), ...SANS_FONTS },
       );
       // Naming the default on the root restores it.
       await page.evaluate(`document.documentElement.setAttribute("${attribute}", "${names[0]}")`);
@@ -1626,16 +1625,16 @@ describe("space and type profiles", () => {
   });
 
   // Behavior 4: a preview container carrying data-space and data-type renders its subtree as
-  // those profiles render at the root. A compact, serif card is read in its container, then
+  // those profiles render at the root. A compact, sans card is read in its container, then
   // stripped of the attributes, with the root naming them instead.
-  test("a compact, serif preview container renders its card as the root gives it", async () => {
+  test("a compact, sans preview container renders its card as the root gives it", async () => {
     const page = await open(previewFixture, { scheme: "light", viewport: MEDIUM });
     const selector = card("flexoki", "light");
     const plain = await scopedStyles(page, selector);
     await page.evaluate(`(() => {
       const card = document.querySelector(${JSON.stringify(selector)});
       card.dataset.space = "compact";
-      card.dataset.type = "serif";
+      card.dataset.type = "sans";
     })()`);
     const contained = await scopedStyles(page, selector);
     // The profiles reached the card: its steps and heading font moved.
@@ -1645,7 +1644,7 @@ describe("space and type profiles", () => {
       card.removeAttribute("data-space");
       card.removeAttribute("data-type");
       document.documentElement.dataset.space = "compact";
-      document.documentElement.dataset.type = "serif";
+      document.documentElement.dataset.type = "sans";
     })()`);
     const atRoot = await scopedStyles(page, selector);
     expect(atRoot.length).toBeGreaterThan(30);
@@ -3038,6 +3037,45 @@ describe("extension", () => {
 const DESKTOP = { width: 1280, height: 800 };
 const PHONE = { width: 390, height: 844 };
 
+// COLOR_CELLS reads the specimen's color tables, token to its Light and Dark cells: each cell's
+// forced scheme, its dot's sample, the value its text gives, and the color its dot paints, as
+// #rrggbb.
+const COLOR_CELLS = `Object.fromEntries([...document.querySelectorAll("#color .tokens tbody tr")]
+  .map((row) => [row.cells[0].textContent, [...row.cells].slice(2).map((cell) => {
+    const dot = cell.querySelector(".dot");
+    const channels = getComputedStyle(dot).backgroundColor.match(/\\d+/g).slice(0, 3);
+    return {
+      scheme: cell.dataset.scheme,
+      sample: dot.style.getPropertyValue("--sample"),
+      text: cell.textContent.trim(),
+      painted: "#" + channels.map((c) => Number(c).toString(16).padStart(2, "0")).join(""),
+    };
+  })]))`;
+
+// CAPTIONS reads the space and type sections' captions that differ between profiles, token to
+// the text of the one shown.
+const CAPTIONS = `Object.fromEntries([...document.querySelectorAll(".scale-row:has(> [data-caption])")]
+  .map((row) => [row.style.getPropertyValue("--sample"), [...row.querySelectorAll("[data-caption]")]
+    .filter((caption) => getComputedStyle(caption).display !== "none")
+    .map((caption) => caption.textContent)]))`;
+
+// SHOWN_CAPTIONS are the captions CAPTIONS reads under each facet's default profile and under
+// compact and sans.
+const SHOWN_CAPTIONS = {
+  default: {
+    "var(--space-base)": ["1 → 1.125rem, the unit every step multiplies"],
+    "var(--radius-base)": ["0.375rem, the radius sm, md and lg scale"],
+    "var(--font-heading)": ["ui-monospace, the system mono stack"],
+    "var(--font-ui)": ["ui-monospace, the system mono stack"],
+  },
+  named: {
+    "var(--space-base)": ["0.75 → 0.875rem, the unit every step multiplies"],
+    "var(--radius-base)": ["0.25rem, the radius sm, md and lg scale"],
+    "var(--font-heading)": ["system-ui, the system sans stack"],
+    "var(--font-ui)": ["system-ui, the system sans stack"],
+  },
+};
+
 describe("specimen", () => {
   test("shows every token with a sample that resolves it", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -3053,23 +3091,71 @@ describe("specimen", () => {
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 
-  test("shows every tier and hue with its light and dark values", async () => {
-    const page = await open(specimen, { scheme: "light" });
-    // Each row's light and dark cells give the value as text and paint it in a dot.
-    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .tokens tbody tr")]
-      .map((row) => [row.cells[0].textContent, [...row.cells].slice(2).map((cell) =>
-        [cell.textContent.trim(), cell.querySelector(".dot").style.getPropertyValue("--sample")])])`);
-    expect(Object.fromEntries(shown)).toEqual(
-      Object.fromEntries(
-        Object.entries({ ...TIERS, ...HUES }).map(([name, [light, dark]]) => [
-          name,
-          [
-            [light, light],
-            [dark, dark],
-          ],
+  // Behavior 20a: the color tables' Light and Dark cells follow the selected color profile. Each
+  // cell forces its scheme and paints its dot from the token, and a specimen-only script writes
+  // the value the dot resolves to as its text. The markup gives Flexoki's values, the text a page
+  // without the script keeps.
+  test("writes Flexoki's light and dark values into the color tables' markup", async () => {
+    const page = await open(`${server.url}index.html`, { scheme: "light" });
+    const shown = await page.evaluate(`fetch(location.href).then((r) => r.text()).then((html) => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return Object.fromEntries([...doc.querySelectorAll("#color .tokens tbody tr")]
+        .map((row) => [row.cells[0].textContent, [...row.cells].slice(2)
+          .map((cell) => cell.textContent.trim())]));
+    })`);
+    expect(shown).toEqual({ ...TIERS, ...HUES });
+  });
+
+  for (const name of Object.keys(COLOR_PROFILES)) {
+    test(`shows ${name}'s light and dark values when the root names it, in either scheme`, async () => {
+      const page = await open(specimen, { scheme: "light" });
+      const expected = Object.fromEntries(
+        Object.entries(COLOR_PROFILES[name].tokens).map(([token, pair]) => [
+          token,
+          SCHEMES.map((scheme, index) => ({
+            scheme,
+            sample: `var(${token})`,
+            text: pair[index][1],
+            painted: pair[index][1],
+          })),
         ]),
-      ),
+      );
+      await page.evaluate(`document.documentElement.dataset.palette = "${name}"`);
+      expect(await page.evaluate(COLOR_CELLS)).toEqual(expected);
+      // Forcing the root's scheme leaves each column in its own.
+      await page.evaluate(`document.documentElement.dataset.scheme = "dark"`);
+      expect(await page.evaluate(COLOR_CELLS)).toEqual(expected);
+    });
+  }
+
+  test("returns the color tables to Flexoki's values when the root drops its palette", async () => {
+    const page = await open(specimen, { scheme: "dark" });
+    await page.evaluate(`document.documentElement.dataset.palette = "primer"`);
+    await page.evaluate(`document.documentElement.removeAttribute("data-palette")`);
+    const texts = Object.fromEntries(
+      Object.entries(await page.evaluate(COLOR_CELLS)).map(([token, cells]) => [
+        token,
+        cells.map(({ text }) => text),
+      ]),
     );
+    expect(texts).toEqual({ ...TIERS, ...HUES });
+  });
+
+  // Behavior 20a: the space and type captions describe the profile the nearest scope names, the
+  // facet's default under none.
+  test("shows the space and type captions of the profile the nearest scope names", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const captions = () => page.evaluate(CAPTIONS);
+    expect(await captions()).toEqual(SHOWN_CAPTIONS.default);
+    await page.evaluate(`Object.assign(document.documentElement.dataset, {
+      space: "compact", type: "sans" })`);
+    expect(await captions()).toEqual(SHOWN_CAPTIONS.named);
+    // A nearer scope naming the defaults wins over the root's.
+    await page.evaluate(`(() => {
+      document.querySelector("#space").dataset.space = "regular";
+      document.querySelector("#type").dataset.type = "mono";
+    })()`);
+    expect(await captions()).toEqual(SHOWN_CAPTIONS.default);
   });
 
   for (const [index, scheme] of SCHEMES.entries()) {
@@ -3159,18 +3245,21 @@ describe("specimen", () => {
       const box = header.getBoundingClientRect();
       return {
         rule: getComputedStyle(header).borderBottomWidth,
-        // Each of the header's blocks spans it, but the Theme button that ends it on a line of
-        // its own: nothing sits beside the title.
+        // Each of the header's blocks spans it, but the Theme button, which sits on a line of
+        // its own beneath the title and above the intro: nothing sits beside the title.
         spans: [...header.children].filter((el) => el.localName !== "button")
           .map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
-        button: header.lastElementChild.localName === "button" &&
-          header.lastElementChild.getBoundingClientRect().top >=
-            header.lastElementChild.previousElementSibling.getBoundingClientRect().bottom,
+        order: [...header.children].map((el) => el.localName),
+        button: (() => {
+          const [title, button, intro] = [...header.children].map((el) => el.getBoundingClientRect());
+          return button.top >= title.bottom && intro.top >= button.bottom;
+        })(),
         gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
       };
     })()`);
     expect(header.rule).toBe("0px");
     expect(new Set(header.spans)).toEqual(new Set([0]));
+    expect(header.order).toEqual(["h1", "button", "p"]);
     expect(header.button).toBe(true);
     expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
   });

@@ -2,7 +2,7 @@
 // stylesheet's layer files: the layer names, and per tag a probe that tells a page whose layer
 // files all loaded from one whose root loaded but an import did not.
 
-import { ADDED, FACET_PROFILES, profilePath, SERIF } from "./profiles.js";
+import { ADDED, FACET_PROFILES, profilePath, SANS } from "./profiles.js";
 
 // PACKAGE is the working tree's one top-level layer, named for the package.
 export const PACKAGE = "spike-html-design";
@@ -107,7 +107,7 @@ export const PROBES = {
   // facet's file keeps --radius-full and the type facet's the text scale, so --text-m still
   // probes it; --line-s moved to regular's file, and a leading probes mono's. One probe per
   // profile past a default reads a token it sets on the first element naming it, the specimen's
-  // compact and serif samples. Unstyled, the new probes read "".
+  // compact and sans samples. Unstyled, the new probes read "".
   "v0.5.0": [
     [":root", "color-scheme", "light dark"],
     [":root", "--bg", "light-dark(#fffcf0, #1c1b1a)"],
@@ -119,7 +119,7 @@ export const PROBES = {
     ['[data-space="compact"]', "--radius-base", "0.25rem"],
     [":root", "--text-m", "1rem"],
     [":root", "--leading-ui", "1.25"],
-    ['[data-type="serif"]', "--font-heading", SERIF],
+    ['[data-type="sans"]', "--font-heading", SANS],
     ["body", "box-sizing", "border-box"],
     ["#prose h1", "font-weight", "600"],
     ["#tools .scroll-x", "overflow-x", "auto"],
@@ -137,11 +137,12 @@ export function probesFor(tag) {
   return probes;
 }
 
-// layersLoaded resolves to the computed value of each of tag's probes on page.
+// layersLoaded resolves to the computed value of each of tag's probes on page, its whitespace
+// squashed: a custom property keeps the line breaks its declaration wraps a font stack over.
 export async function layersLoaded(page, tag = CURRENT) {
   const values = [];
   for (const [selector, property] of probesFor(tag))
-    values.push(await page.style(selector, property));
+    values.push((await page.style(selector, property)).replace(/\s+/g, " ").trim());
   return values;
 }
 

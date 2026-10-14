@@ -310,12 +310,11 @@ export const COLOR_PROFILES = {
   },
 };
 
-// SANS, MONO and SERIF are the system font stacks the type profiles set, as declared.
+// SANS and MONO are the system font stacks the type profiles set, as declared.
 export const SANS =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
 export const MONO =
   'ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace';
-export const SERIF = 'ui-serif, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif';
 
 // LEADINGS are the role leadings, which every type profile declares at the same values.
 const LEADINGS = {
@@ -345,7 +344,7 @@ export const SPACE_PROFILES = {
 
 // TYPE_PROFILES are the type profiles, data-type name to the values its one block declares,
 // token name to its declared text with whitespace squashed, in the file's order: the default,
-// mono, the interface voice at v0.4.0's values, then serif, the editorial voice.
+// mono, the interface voice at v0.4.0's values, then sans, every role but code in the sans stack.
 export const TYPE_PROFILES = {
   mono: {
     "--font-body": SANS,
@@ -354,10 +353,10 @@ export const TYPE_PROFILES = {
     "--font-code": MONO,
     ...LEADINGS,
   },
-  serif: {
+  sans: {
     "--font-body": SANS,
-    "--font-heading": SERIF,
-    "--font-ui": SERIF,
+    "--font-heading": SANS,
+    "--font-ui": SANS,
     "--font-code": MONO,
     ...LEADINGS,
   },
