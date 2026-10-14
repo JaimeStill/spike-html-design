@@ -286,6 +286,13 @@
           content: counter(fluid) "%";
         }
 
+        /* A fluid row closes its scale as a group of its own: it and its name stand a --space-m
+           below the steps, both, so the name stays centered on the sample. */
+        .specimen > :has(+ .fluid-sample),
+        .specimen > .fluid-sample {
+          margin-block-start: var(--space-m);
+        }
+
         /* A row of a sample and its note: the step's multiple, or its size's range. */
         .scale-row {
           display: flex;

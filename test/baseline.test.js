@@ -2987,6 +2987,30 @@ describe("specimen", () => {
     expect(type.map(([name]) => name)).toEqual([...Object.keys(TEXT_STEPS), "--type-fluid"]);
   });
 
+  test("sets each fluid row apart from its scale, at least a --space-m below the last step", async () => {
+    for (const viewport of [DESKTOP, PHONE]) {
+      const page = await open(specimen, { scheme: "light", viewport });
+      // Per scale: the gaps between consecutive rows, each row spanning its name and its sample,
+      // the last gap the one above the fluid row.
+      const scales = await page.evaluate(`[...document.querySelectorAll("#tokens .fluid-sample")]
+        .map((fluid) => {
+          const rows = [...fluid.parentElement.children]
+            .filter((el) => el.localName === "code")
+            .map((code) => [code, code.nextElementSibling].map((el) => el.getBoundingClientRect()))
+            .map(([a, b]) => [Math.min(a.top, b.top), Math.max(a.bottom, b.bottom)]);
+          return [fluid.previousElementSibling.textContent,
+            rows.slice(1).map(([top], i) => top - rows[i][1])];
+        })`);
+      expect(scales.map(([name]) => name)).toEqual(["--space-fluid", "--type-fluid"]);
+      const space = await resolveToken(page, "--space-m", "length");
+      for (const [name, gaps] of scales) {
+        const fluid = gaps.at(-1);
+        const step = Math.max(...gaps.slice(0, -1));
+        expect([name, fluid >= space - 0.5, fluid > step]).toEqual([name, true, true]);
+      }
+    }
+  });
+
   test("notes each scale step's multiple, or its size's range, as the facets state them", async () => {
     const page = await open(specimen, { scheme: "light" });
     const numbers = (note) => [...note.matchAll(/\d+(\.\d+)?/g)].map((m) => Number(m[0]));
