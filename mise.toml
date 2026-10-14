@@ -6,7 +6,7 @@ jq = "1.8.2"
 shellcheck = "0.11.0"
 
 [tasks.check]
-description = "Lint and format-check the CSS, JS, scripts, and workflows, run the tests in headless chromium, and report each CSS entry's size; writes nothing"
+description = "Lint and format-check the CSS, JS, scripts, and workflows, run the tests in headless chromium, and report each CSS entry's size, failing when one is over its brotli budget; writes nothing"
 run = '''
 set -eu
 cd "$MISE_PROJECT_ROOT"
@@ -23,12 +23,12 @@ description = "Report every mise tool and workflow action pin behind its latest;
 run = "scripts/currency.sh"
 
 [tasks.pin]
-description = "Check a published tag live: jsDelivr serves its baseline.css and layer files immutable and byte-equal, and its pinned page renders the same from file://, a local server, and GitHub Pages; reads the network, writes nothing"
+description = "Check a published tag live: jsDelivr serves every stylesheet file it publishes immutable and byte-equal, and its pinned page renders the same from file://, a local server, and GitHub Pages; reads the network, writes nothing"
 usage = 'arg "<tag>" help="The published tag to check, as in v0.1.0"'
 run = 'bun "$MISE_PROJECT_ROOT/scripts/pin.js" "$usage_tag"'
 
 [tasks.size]
-description = "Report each CSS entry's files with their raw and brotli-11 sizes, and the totals; enforces no budget, writes nothing"
+description = "Report each CSS entry's files with their raw and brotli-11 sizes, the totals, and its brotli budget and headroom; fails when an entry is over budget, writes nothing"
 run = 'bun "$MISE_PROJECT_ROOT/scripts/size.js"'
 
 [tasks.serve]

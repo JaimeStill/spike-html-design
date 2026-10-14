@@ -1,12 +1,15 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
-import { LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
+import { ENTRIES, LAYERS, LOADED, layerPath, layersLoaded, PACKAGE } from "./layers.js";
+import { ADDED, COLOR_PROFILES, profileColors, profilePath, SCHEMES } from "./profiles.js";
 
 const root = dirname(import.meta.dir);
 const specimen = fileUrl(join(root, "index.html"));
 const fixture = fileUrl(join(import.meta.dir, "fixtures", "baseline.html"));
 const whitespaceFixture = fileUrl(join(import.meta.dir, "fixtures", "whitespace.html"));
+const previewFixture = fileUrl(join(import.meta.dir, "fixtures", "preview.html"));
+const consumerFixture = fileUrl(join(import.meta.dir, "fixtures", "consumer.html"));
 // The repository served under a project subpath, as GitHub Pages serves the specimen.
 const server = serve(root, { prefix: "/spike-html-design/" });
 const pages = [];
@@ -141,33 +144,24 @@ const FIXED = {
 const rgb = (hex) =>
   `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
 
-// TIERS are the surface, border and text tokens, name to Flexoki's [light, dark] values.
-const TIERS = {
-  "--bg": ["#fffcf0", "#100f0f"],
-  "--bg-2": ["#f2f0e5", "#1c1b1a"],
-  "--border": ["#e6e4d9", "#282726"],
-  "--border-2": ["#dad8ce", "#343331"],
-  "--border-3": ["#cecdc3", "#403e3c"],
-  "--fg": ["#100f0f", "#e6e4d9"],
-  "--fg-2": ["#575653", "#b7b5ac"],
-  "--fg-3": ["#878580", "#6f6e69"],
-};
+// FLEXOKI is the default profile's tokens, in the facet's order, name to its [light, dark] hex
+// values, from the profiles record.
+const FLEXOKI = Object.entries(COLOR_PROFILES.flexoki.tokens).map(([name, [light, dark]]) => [
+  name,
+  [light[1], dark[1]],
+]);
+
+// TIERS are the surface, border and text tokens, name to Flexoki's [light, dark] values: the
+// pane, the page, the element surface, the border and the control boundary, on Flexoki's ladder
+// shifted one step from v0.3.0's, then the text weights, unchanged.
+const TIERS = Object.fromEntries(FLEXOKI.slice(0, 8));
 
 // HUES are the hue tokens, each named for its color, name to Flexoki's [light, dark] values: its
 // 600 step in light, its 400 step in dark.
-const HUES = {
-  "--red": ["#af3029", "#d14d41"],
-  "--orange": ["#bc5215", "#da702c"],
-  "--yellow": ["#ad8301", "#d0a215"],
-  "--green": ["#66800b", "#879a39"],
-  "--cyan": ["#24837b", "#3aa99f"],
-  "--blue": ["#205ea6", "#4385be"],
-  "--purple": ["#5e409d", "#8b7ec8"],
-  "--magenta": ["#a02f6f", "#ce5d97"],
-};
+const HUES = Object.fromEntries(FLEXOKI.slice(8));
 
 // SURFACES are the color tokens text sits over, the contrast matrices' columns, in order.
-const SURFACES = ["--bg", "--bg-2", "--border", "--border-2", "--border-3"];
+const SURFACES = ["--bg-0", "--bg", "--bg-2", "--border", "--border-2"];
 
 // TEXT are the color tokens drawn as text, the contrast matrices' rows, in order: the text tiers,
 // then the hues.
@@ -216,16 +210,29 @@ const RETIRED = [
   "--measure",
 ];
 
-// SOURCES are the working tree's CSS: the stylesheet, its layer files, the specimen and its
-// pinned page, whose style elements read the tokens too, and the test fixtures.
+// RENAMED are the color names v0.4.0 dropped: --border-3, whose readers now read --border-2. The
+// v0.3.0 pinned page still reads it, since it renders against its own tag, so the names are held
+// out of every other source.
+const RENAMED = ["--border-3"];
+
+// PINNED_V030 is the v0.3.0 pinned page, the one source RENAMED's names may remain in.
+const PINNED_V030 = "pinned/v0.3.0.html";
+
+// SOURCES are the working tree's CSS: the stylesheet, its layer files, the profile files, the
+// specimen and its pinned pages since v0.3.0, whose style elements read the tokens too, and the
+// test fixtures.
 const SOURCES = [
-  "baseline.css",
+  ...Object.keys(ENTRIES),
   ...LAYERS.map(layerPath),
+  ...Object.keys(COLOR_PROFILES).map(profilePath),
   "index.html",
   "pinned/v0.3.0.html",
+  "pinned/v0.4.0.html",
   "test/fixtures/baseline.html",
+  "test/fixtures/consumer.html",
   "test/fixtures/extension.html",
   "test/fixtures/index.html",
+  "test/fixtures/preview.html",
 ];
 
 // TOOLS are the tools classes, by family: the button base and its eight hue variants, the scroll
@@ -257,10 +264,12 @@ function rootTokens(page) {
   })()`);
 }
 
-// resolveColor resolves to the color a color token computes to on an element in the page.
-function resolveColor(page, token) {
+// resolveColor resolves to the color a color token computes to on an element in the page: a new
+// child of the element matching within, the body by default.
+function resolveColor(page, token, within = "body") {
   return page.evaluate(`(() => {
-    const probe = document.body.appendChild(document.createElement("i"));
+    const probe = document.querySelector(${JSON.stringify(within)})
+      .appendChild(document.createElement("i"));
     probe.style.color = "var(${token})";
     const color = getComputedStyle(probe).color;
     probe.remove();
@@ -354,26 +363,41 @@ function contrast(a, b) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// mark is the mark a contrast ratio earns in the specimen's matrices: AA at 4.5 for body text,
-// AA large at 3 for large text, fail below 3.
+// MARKS are the short marks a contrast ratio earns in the specimen's records, in the legend's
+// order, each with the least ratio that earns it: AA at 4.5 for body text, AA-L at 3 for large
+// text, fail below 3.
+const MARKS = { AA: 4.5, "AA-L": 3, fail: 0 };
+
+// mark is the mark a contrast ratio earns, judged on the unrounded ratio.
 function mark(ratio) {
-  if (ratio >= 4.5) return "AA";
-  if (ratio >= 3) return "AA large";
-  return "fail";
+  return Object.keys(MARKS).find((name) => ratio >= MARKS[name]);
 }
 
-// layerSheet resolves to a page-side expression for the sheet a nested layer's import loads,
-// from the baseline linked by a page served over http, since chromium hides a file:// stylesheet's
-// rules from the page.
-function layerSheet(layer) {
-  return `[...[...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css")).cssRules]
-    .find((r) => r.layerName === ${JSON.stringify(`${PACKAGE}.${layer}`)}).styleSheet`;
+// ENTRY_PAGES are a page per entry, served over http, that links it: the baseline fixture links
+// the lean entry, and the specimen the full entry.
+const ENTRY_PAGES = {
+  "baseline.css": `${server.url}test/fixtures/baseline.html`,
+  "full.css": server.url,
+};
+
+// linkedEntry is a page-side expression for the entry the page links, whichever one it is.
+const linkedEntry = `[...document.styleSheets]
+  .find((s) => ${JSON.stringify(Object.keys(ENTRIES))}.some((e) => s.href?.endsWith("/" + e)))`;
+
+// layerSheets resolves to a page-side expression for the sheets a nested layer's imports load,
+// in order, from the entry linked by a page served over http, since chromium hides a file://
+// stylesheet's rules from the page. Most layers import one file; the color sub-layer imports the
+// facet's own file, then the profiles' the entry holds.
+function layerSheets(layer) {
+  return `[...${linkedEntry}.cssRules]
+    .filter((r) => r.layerName === ${JSON.stringify(`${PACKAGE}.${layer}`)})
+    .map((r) => r.styleSheet)`;
 }
 
 // layerRules resolves to every style rule in the files of the nested layers named, rules nested
 // in at-rules included, each as { selector, declarations }: its selector text, absent for a rule
-// without one, and its declarations as [name, value] pairs. It reads the baseline linked by a
-// page served over http, as layerSheet does.
+// without one, and its declarations as [name, value] pairs. It reads the entry linked by a page
+// served over http, as layerSheets does: on the specimen, the full entry, so every profile.
 function layerRules(page, ...layers) {
   return page.evaluate(`(() => {
     const rules = [];
@@ -388,7 +412,7 @@ function layerRules(page, ...layers) {
         if (rule.cssRules) walk(rule.cssRules);
       }
     };
-    for (const sheet of [${layers.map(layerSheet)}]) walk(sheet.cssRules);
+    for (const sheet of [${layers.map(layerSheets)}].flat()) walk(sheet.cssRules);
     return rules;
   })()`);
 }
@@ -425,43 +449,45 @@ async function tabTo(page, selector) {
 }
 
 describe("layers", () => {
-  test("the stylesheet declares the package layer's nested layers, then imports each one's file", async () => {
-    // Over http, since chromium hides a file:// stylesheet's rules from the page.
-    const page = await open(server.url, { scheme: "light" });
-    const rules = await page.evaluate(`(() => {
-      const sheet = [...document.styleSheets].find((s) => s.href?.endsWith("/baseline.css"));
-      return [...sheet.cssRules].map((rule) => ({
-        type: rule.constructor.name,
-        names: rule.nameList && [...rule.nameList],
-        layer: rule.layerName,
-        href: rule.href,
-        // An import whose file failed to load has a sheet with no rules.
-        loaded: rule.styleSheet ? rule.styleSheet.cssRules.length > 0 : undefined,
-      }));
-    })()`);
-    // An exact match: the root holds the statement and one import per nested layer, each
-    // straight into its layer, and no rule of its own.
-    const nested = LAYERS.map((layer) => `${PACKAGE}.${layer}`);
-    expect(rules).toEqual([
-      { type: "CSSLayerStatementRule", names: nested },
-      ...LAYERS.map((layer, index) => ({
-        type: "CSSImportRule",
-        layer: nested[index],
-        href: `./${layerPath(layer)}`,
-        loaded: true,
-      })),
-    ]);
-  });
+  for (const [entry, imported] of Object.entries(ENTRIES)) {
+    test(`${entry} declares the package layer's nested layers, then imports each one's file and its profiles`, async () => {
+      // Over http, since chromium hides a file:// stylesheet's rules from the page.
+      const page = await open(ENTRY_PAGES[entry], { scheme: "light" });
+      const rules = await page.evaluate(`(() => {
+        const sheet = ${linkedEntry};
+        return [...sheet.cssRules].map((rule) => ({
+          type: rule.constructor.name,
+          names: rule.nameList && [...rule.nameList],
+          layer: rule.layerName,
+          href: rule.href,
+          // An import whose file failed to load has a sheet with no rules.
+          loaded: rule.styleSheet ? rule.styleSheet.cssRules.length > 0 : undefined,
+        }));
+      })()`);
+      expect(await page.evaluate(`${linkedEntry}.href.split("/").at(-1)`)).toBe(entry);
+      // An exact match: the entry holds the statement and one import per file, each straight
+      // into its layer, its profiles after the color facet's own file, and no rule of its own.
+      // The lean entry's profile is Flexoki; the full entry's are every profile, Flexoki first.
+      expect(rules).toEqual([
+        { type: "CSSLayerStatementRule", names: LAYERS.map((layer) => `${PACKAGE}.${layer}`) },
+        ...imported.map(([layer, path]) => ({
+          type: "CSSImportRule",
+          layer: `${PACKAGE}.${layer}`,
+          href: `./${path}`,
+          loaded: true,
+        })),
+      ]);
+    });
 
-  test("every layer file is imported one hop deep: no layer file imports another", async () => {
-    const page = await open(server.url, { scheme: "light" });
-    const imports = await page.evaluate(
-      `[${LAYERS.map(
-        (layer) => `[...${layerSheet(layer)}.cssRules].filter((r) => r.href !== undefined).length`,
-      )}]`,
-    );
-    expect(imports).toEqual(LAYERS.map(() => 0));
-  });
+    test(`${entry} imports every file one hop deep: no file it imports imports another`, async () => {
+      const page = await open(ENTRY_PAGES[entry], { scheme: "light" });
+      const imports = await page.evaluate(
+        `[${LAYERS.map(layerSheets)}].flat()
+          .map((sheet) => [...sheet.cssRules].filter((r) => r.href !== undefined).length)`,
+      );
+      expect(imports).toEqual(imported.map(() => 0));
+    });
+  }
 
   test("the page's layers cascade as the package layer, its nested layers in order, then app", async () => {
     // A rule in each layer sets the same custom property to the layer's name, in reverse cascade
@@ -510,7 +536,7 @@ describe("tokens", () => {
     }
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`every tier and hue resolves to its ${scheme} value`, async () => {
       const page = await open(specimen, { scheme });
       for (const [name, pair] of Object.entries(COLORS)) {
@@ -530,7 +556,8 @@ describe("tokens", () => {
       const reads = declarations.flatMap(([, value]) =>
         [...value.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]),
       );
-      expect(names.sort()).toEqual(Object.keys(tokens).sort());
+      // Each name once: several profile blocks declare the same sixteen color tokens.
+      expect([...new Set(names)].sort()).toEqual(Object.keys(tokens).sort());
       // A facet that read another facet's token would change when that facet's profile swaps.
       expect(reads.filter((name) => !(name in tokens))).toEqual([]);
     });
@@ -566,6 +593,17 @@ describe("tokens", () => {
     }
   });
 
+  test("no name v0.4.0 renamed remains outside the v0.3.0 pinned page", async () => {
+    for (const path of SOURCES.filter((path) => path !== PINNED_V030)) {
+      const text = await Bun.file(join(root, path)).text();
+      const found = RENAMED.filter((name) => new RegExp(`${name}(?![\\w-])`).test(text));
+      expect([path, found]).toEqual([path, []]);
+    }
+    // The pin still reads them, so the filter above holds out a page that needs it.
+    const pinned = await Bun.file(join(root, PINNED_V030)).text();
+    expect(RENAMED.filter((name) => pinned.includes(`var(${name})`))).toEqual(RENAMED);
+  });
+
   test("a hue's app layer override reaches only that hue", async () => {
     const page = await open(specimen, { scheme: "light" });
     await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
@@ -591,8 +629,8 @@ describe("tokens", () => {
     expect(await page.evaluate("window.unreloaded === true")).toBe(true);
   });
 
-  for (const [index, forced] of ["light", "dark"].entries()) {
-    for (const scheme of ["light", "dark"]) {
+  for (const [index, forced] of SCHEMES.entries()) {
+    for (const scheme of SCHEMES) {
       test(`data-scheme="${forced}" forces the ${forced} scheme under a ${scheme} system`, async () => {
         const page = await open(specimen, { scheme });
         await page.evaluate(`document.documentElement.dataset.scheme = "${forced}"`);
@@ -608,7 +646,7 @@ describe("tokens", () => {
     }
   }
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`data-theme no longer forces a scheme, under a ${scheme} system`, async () => {
       const page = await open(specimen, { scheme });
       await page.evaluate(`document.documentElement.dataset.theme = "${index ? "light" : "dark"}"`);
@@ -627,6 +665,438 @@ describe("tokens", () => {
     expect(await page.style("body", "background-color")).toBe("rgb(1, 2, 3)");
     // The tokens it leaves alone keep the forced scheme.
     expect(await resolveColor(page, "--fg")).toBe(COLORS["--fg"][1]);
+  });
+});
+
+// PROBE_PALETTE is a test profile, "probe": a distinct color for each of the sixteen tokens, name
+// to rgb(). Its block goes into the color sub-layer after the baseline's, as a later profile's
+// would, at the zero specificity a profile's selector has.
+const PROBE_PALETTE = Object.fromEntries(
+  Object.keys(COLORS).map((name, index) => [name, `rgb(1, 2, ${index + 3})`]),
+);
+
+// addProbePalette adds PROBE_PALETTE to the page's color sub-layer, as a profile block.
+function addProbePalette(page) {
+  const tokens = Object.entries(PROBE_PALETTE).map(([name, value]) => `${name}: ${value};`);
+  return addAppStyle(
+    page,
+    `@layer ${PACKAGE}.tokens.color { :where([data-palette="probe"]) { ${tokens.join(" ")} } }`,
+  );
+}
+
+// addScopes appends html to the specimen's main, so its elements sit in the page's flow.
+function addScopes(page, html) {
+  return page.evaluate(
+    `document.querySelector("main").insertAdjacentHTML("beforeend", ${JSON.stringify(html)})`,
+  );
+}
+
+// resolveColors resolves every color token on a new child of the element matching within, name
+// to rgb().
+async function resolveColors(page, within) {
+  const values = {};
+  for (const name of Object.keys(COLORS)) values[name] = await resolveColor(page, name, within);
+  return values;
+}
+
+// schemeColors are COLORS' values in the scheme at index, 0 for light and 1 for dark.
+const schemeColors = (index) =>
+  Object.fromEntries(Object.entries(COLORS).map(([name, pair]) => [name, pair[index]]));
+
+// paint resolves to an element's computed [color, background-color].
+function paint(page, selector) {
+  return page.evaluate(`(() => {
+    const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+    return [style.color, style.backgroundColor];
+  })()`);
+}
+
+// whereOnly reports whether a selector is a single :where() and nothing else: its first
+// parenthesis closes at the selector's last character, so its specificity is zero.
+function whereOnly(selector) {
+  if (!selector.startsWith(":where(")) return false;
+  let depth = 0;
+  for (const [index, char] of [...selector].entries()) {
+    if (char === "(") depth++;
+    if (char === ")" && --depth === 0) return index === selector.length - 1;
+  }
+  return false;
+}
+
+describe("color interface", () => {
+  test("the color facet is exactly sixteen tokens, the five surfaces, three text weights and eight hues, with no --border-3", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page. The names are
+    // read from what the color sub-layer declares, every profile's block included, and held to
+    // the brief's list, not to the profiles record the other tests derive their names from.
+    const page = await open(server.url, { scheme: "light" });
+    const names = (await layerRules(page, "tokens.color"))
+      .flatMap((rule) => rule.declarations.map(([name]) => name))
+      .filter((name) => name.startsWith("--"));
+    expect([...new Set(names)].sort()).toEqual(
+      [
+        ...["--bg-0", "--bg", "--bg-2", "--border", "--border-2", "--fg", "--fg-2", "--fg-3"],
+        ...["--red", "--orange", "--yellow", "--green", "--cyan", "--blue", "--purple"],
+        "--magenta",
+      ].sort(),
+    );
+    expect(await page.style(":root", "--border-3")).toBe("");
+  });
+
+  for (const scheme of SCHEMES) {
+    test(`in every profile, the pane is darker than the page, and the element surface one step from the page toward the text, in ${scheme}`, async () => {
+      const page = await open(previewFixture, { scheme });
+      for (const name of Object.keys(COLOR_PROFILES)) {
+        const colors = await resolveColors(page, card(name, scheme));
+        const [pane, bg, surface, fg] = ["--bg-0", "--bg", "--bg-2", "--fg"].map((token) =>
+          luminance(colors[token]),
+        );
+        expect([name, pane < bg]).toEqual([name, true]);
+        // Toward the text: between the page and the text, so lighter in dark and darker in light.
+        expect([name, Math.sign(surface - bg)]).toEqual([name, Math.sign(fg - bg)]);
+        expect([name, Math.abs(surface - bg) < Math.abs(fg - bg)]).toEqual([name, true]);
+      }
+    });
+  }
+
+  test("every rule in the color sub-layer has zero specificity", async () => {
+    // Over http, since chromium hides a file:// stylesheet's rules from the page.
+    const page = await open(server.url, { scheme: "light" });
+    const selectors = selectorsOf(await layerRules(page, "tokens.color"));
+    expect(selectors.length).toBeGreaterThan(0);
+    expect(selectors.filter((selector) => !whereOnly(selector))).toEqual([]);
+  });
+
+  test("with no data-palette anywhere Flexoki applies, and a profile named on the root overrides it", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    expect(
+      await page.evaluate("document.querySelector(':root[data-palette], body[data-palette]')"),
+    ).toBe(null);
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+    // A later profile block of the same zero specificity: the default's :where(:root) must not
+    // outrank it on the root.
+    await addProbePalette(page);
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+    await page.evaluate(`document.documentElement.dataset.palette = "probe"`);
+    expect(await resolveColors(page, "body")).toEqual(PROBE_PALETTE);
+    // Naming Flexoki on the root restores it.
+    await page.evaluate(`document.documentElement.dataset.palette = "flexoki"`);
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+  });
+
+  test("a data-palette scope applies its profile to its subtree and paints as the root does", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addProbePalette(page);
+    await addScopes(page, '<div id="scope" data-palette="probe"><p id="inside">Text</p></div>');
+    expect(await resolveColors(page, "#inside")).toEqual(PROBE_PALETTE);
+    // The scope re-sets its own text and surface from the tokens it now holds, and its subtree
+    // inherits the text.
+    expect(await paint(page, "#scope")).toEqual([PROBE_PALETTE["--fg"], PROBE_PALETTE["--bg"]]);
+    expect((await paint(page, "#inside"))[0]).toBe(PROBE_PALETTE["--fg"]);
+    // Outside it, the page keeps Flexoki.
+    expect(await resolveColors(page, "body")).toEqual(schemeColors(0));
+  });
+
+  test("nested data-palette scopes: the nearest wins", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addProbePalette(page);
+    await page.evaluate(`document.documentElement.dataset.palette = "probe"`);
+    await addScopes(
+      page,
+      `<div id="outer" data-palette="flexoki"><p id="in-outer">Flexoki</p>
+        <div id="inner" data-palette="probe"><p id="in-inner">Probe</p></div></div>`,
+    );
+    expect(await resolveColors(page, "body")).toEqual(PROBE_PALETTE);
+    expect(await resolveColors(page, "#in-outer")).toEqual(schemeColors(0));
+    expect(await paint(page, "#outer")).toEqual([COLORS["--fg"][0], COLORS["--bg"][0]]);
+    expect(await resolveColors(page, "#in-inner")).toEqual(PROBE_PALETTE);
+    expect(await paint(page, "#inner")).toEqual([PROBE_PALETTE["--fg"], PROBE_PALETTE["--bg"]]);
+  });
+
+  for (const [index, forced] of SCHEMES.entries()) {
+    const page = index ? "light" : "dark";
+    test(`data-scheme="${forced}" on a nested element forces the ${forced} scheme for its subtree in a ${page} page`, async () => {
+      const view = await open(specimen, { scheme: page });
+      await addScopes(
+        view,
+        `<div id="forced" data-scheme="${forced}"><p id="in-forced">Forced</p>
+          <div id="back" data-scheme="${page}"><p id="in-back">Back</p></div></div>`,
+      );
+      expect(await view.style("#forced", "color-scheme")).toBe(forced);
+      expect(await view.style("#in-forced", "color-scheme")).toBe(forced);
+      // The tokens are declared on the root alone, yet every one resolves in the forced scheme:
+      // light-dark() resolves where it is read, not where the token is declared.
+      expect(await resolveColors(view, "#in-forced")).toEqual(schemeColors(index));
+      expect(await paint(view, "#forced")).toEqual([COLORS["--fg"][index], COLORS["--bg"][index]]);
+      expect((await paint(view, "#in-forced"))[0]).toBe(COLORS["--fg"][index]);
+      // The page outside keeps the system scheme, and a scope nested inside forces it back.
+      expect(await resolveColors(view, "body")).toEqual(schemeColors(1 - index));
+      expect(await resolveColors(view, "#in-back")).toEqual(schemeColors(1 - index));
+      expect(await paint(view, "#back")).toEqual([
+        COLORS["--fg"][1 - index],
+        COLORS["--bg"][1 - index],
+      ]);
+    });
+  }
+
+  test("a consumer's later layer beats the profile, on the root and on a scope", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.documentElement.dataset.palette = "flexoki"`);
+    await addScopes(page, '<div id="scope" data-palette="flexoki"><p id="inside">Text</p></div>');
+    // Zero specificity too: the later layer wins by order alone.
+    await addAppStyle(page, "@layer app { :where([data-palette]) { --bg: rgb(1, 2, 3); } }");
+    expect(await resolveColor(page, "--bg")).toBe("rgb(1, 2, 3)");
+    expect(await resolveColor(page, "--bg", "#inside")).toBe("rgb(1, 2, 3)");
+    expect(await paint(page, "#scope")).toEqual([COLORS["--fg"][0], "rgb(1, 2, 3)"]);
+    // The tokens it leaves alone keep the profile's values.
+    expect(await resolveColor(page, "--fg", "#inside")).toBe(COLORS["--fg"][0]);
+  });
+});
+
+// card returns the selector of the preview card, in the preview fixture, for a profile and scheme.
+const card = (name, scheme) => `.preview-card[data-palette="${name}"][data-scheme="${scheme}"]`;
+
+// profileRgb returns a profile's values in the scheme at index as the rgb() a computed color
+// reads as, token name to rgb().
+const profileRgb = (name, index) =>
+  Object.fromEntries(
+    Object.entries(profileColors(name, index)).map(([token, hex]) => [token, rgb(hex)]),
+  );
+
+// profileRules resolves to every rule of a profile's file, as the full entry the preview fixture
+// links, served over http, imports it: each as { type, selector, declarations, nested }, its rule
+// type, its selector text, its declarations as [name, value] pairs, and the count of rules nested
+// in it.
+function profileRules(page, name) {
+  return page.evaluate(`(() => {
+    const rules = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules]);
+    const sheet = rules.find((rule) => rule.href?.endsWith(${JSON.stringify(`/${profilePath(name)}`)}))
+      .styleSheet;
+    return [...sheet.cssRules].map((rule) => ({
+      type: rule.constructor.name,
+      selector: rule.selectorText,
+      declarations: [...(rule.style ?? [])].map((n) => [n, rule.style.getPropertyValue(n).trim()]),
+      nested: rule.cssRules?.length ?? 0,
+    }));
+  })()`);
+}
+
+// COLOR_PROPERTIES are the computed properties the equivalence test compares: every property
+// that holds a color, or paints one, and the color scheme native controls render in.
+const COLOR_PROPERTIES = [
+  "color-scheme",
+  "color",
+  "background-color",
+  "background-image",
+  "border-top-color",
+  "border-right-color",
+  "border-bottom-color",
+  "border-left-color",
+  "outline-color",
+  "caret-color",
+  "accent-color",
+  "text-decoration-color",
+  "text-emphasis-color",
+  "column-rule-color",
+  "-webkit-text-fill-color",
+  "-webkit-text-stroke-color",
+  "fill",
+  "stroke",
+  "box-shadow",
+  "text-shadow",
+];
+
+// colorsOf resolves to the computed colors of every element inside the element matching selector,
+// in document order: its own COLOR_PROPERTIES, and those of its selected text.
+function colorsOf(page, selector) {
+  return page.evaluate(`(() => {
+    const properties = ${JSON.stringify(COLOR_PROPERTIES)};
+    const read = (style) => Object.fromEntries(properties.map((n) => [n, style.getPropertyValue(n)]));
+    return [...document.querySelector(${JSON.stringify(selector)}).querySelectorAll("*")]
+      .map((el) => ({
+        element: el.localName,
+        own: read(getComputedStyle(el)),
+        selection: read(getComputedStyle(el, "::selection")),
+      }));
+  })()`);
+}
+
+describe("color profiles", () => {
+  for (const name of Object.keys(COLOR_PROFILES)) {
+    const { title, source, license, version, variants } = COLOR_PROFILES[name];
+    // The default's block also matches the root, so it applies with no attribute anywhere.
+    const selector =
+      name === "flexoki"
+        ? ':where(:root, [data-palette="flexoki"])'
+        : `:where([data-palette="${name}"])`;
+
+    test(`${name}'s file opens with its credit: source, license and upstream version`, async () => {
+      const text = await Bun.file(join(root, profilePath(name))).text();
+      expect(text.startsWith(`/*\n * Colors from ${title} (${license}, `)).toBe(true);
+      const credit = squash(text.slice(0, text.indexOf("*/")).replace(/\n \*/g, " "));
+      // Flexoki, the default, names no upstream version, and its variants are its light and dark.
+      const parts = version
+        ? [source, `at ${version}`, `${variants[0]} in light and ${variants[1]} in dark`]
+        : [source];
+      for (const part of parts) {
+        expect([part, credit.includes(part)]).toEqual([part, true]);
+      }
+    });
+
+    test(`${name}'s file declares one zero-specificity block of the sixteen tokens as light-dark() pairs, and nothing else`, async () => {
+      // Over http, since chromium hides a file:// stylesheet's rules from the page.
+      const page = await open(`${server.url}test/fixtures/preview.html`, { scheme: "light" });
+      const tokens = COLOR_PROFILES[name].tokens;
+      expect(await profileRules(page, name)).toEqual([
+        {
+          type: "CSSStyleRule",
+          selector,
+          declarations: Object.entries(tokens).map(([token, [light, dark]]) => [
+            token,
+            `light-dark(${light[1]}, ${dark[1]})`,
+          ]),
+          nested: 0,
+        },
+      ]);
+    });
+
+    test(`${name}'s file names the upstream swatch of each value`, async () => {
+      const text = await Bun.file(join(root, profilePath(name))).text();
+      const cited = Object.fromEntries(
+        [...text.matchAll(/^ {2}(--[\w-]+): light-dark\(#\w+, #\w+\); \/\* (.+) \*\/$/gm)].map(
+          ([, token, swatches]) => [token, swatches],
+        ),
+      );
+      // One name when both variants share it, else light / dark.
+      expect(cited).toEqual(
+        Object.fromEntries(
+          Object.entries(COLOR_PROFILES[name].tokens).map(([token, [[light], [dark]]]) => [
+            token,
+            light === dark ? light : `${light} / ${dark}`,
+          ]),
+        ),
+      );
+    });
+  }
+
+  test("the preview fixture shows one card per profile and scheme, each a preview container", async () => {
+    const page = await open(previewFixture, { scheme: "light" });
+    const cards = await page.evaluate(`[...document.querySelectorAll(".preview-card")]
+      .map((card) => [card.dataset.palette, card.dataset.scheme,
+        card.querySelector(":scope > .preview-label").textContent])`);
+    expect(cards.map(([name, scheme]) => [name, scheme])).toEqual(
+      Object.keys(COLOR_PROFILES).flatMap((name) => SCHEMES.map((scheme) => [name, scheme])),
+    );
+    // Each label names its profile and its scheme.
+    for (const [name, scheme, label] of cards) {
+      const named = label.includes(COLOR_PROFILES[name].title) && label.includes(scheme);
+      expect([label, named]).toEqual([label, true]);
+    }
+  });
+
+  test("every preview card holds the same markup, its label, attributes and ids apart", async () => {
+    const page = await open(previewFixture, { scheme: "light" });
+    const shapes = await page.evaluate(`[...document.querySelectorAll(".preview-card")]
+      .map((card) => {
+        const copy = card.cloneNode(true);
+        copy.querySelector(".preview-label").textContent = "";
+        for (const el of [copy, ...copy.querySelectorAll("*")]) {
+          for (const name of ["data-palette", "data-scheme", "id", "for"]) el.removeAttribute(name);
+        }
+        return copy.outerHTML;
+      })`);
+    expect(new Set(shapes).size).toBe(1);
+  });
+
+  test("a preview card shows a heading, a paragraph, three buttons, a field, a striped table and every color token", async () => {
+    const page = await open(previewFixture, { scheme: "light" });
+    const parts = await page.evaluate(`(() => {
+      const card = document.querySelector(".preview-card");
+      const paragraph = [...card.querySelectorAll(":scope > p")]
+        .find((p) => p.querySelector("a[href]") && p.querySelector("code") && p.querySelector("kbd"));
+      const field = card.querySelector(".field");
+      const input = field?.querySelector("input[type=text]");
+      const table = card.querySelector("table.table-striped");
+      return {
+        heading: !!card.querySelector(":scope > h3"),
+        paragraph: !!paragraph,
+        buttons: [...card.querySelectorAll("button")].map((b) => b.className),
+        field: !!input && field.querySelector("label").htmlFor === input.id,
+        table: table && [table.querySelectorAll("thead th").length > 0,
+          table.querySelectorAll("tbody > tr").length],
+        swatches: [...card.querySelectorAll(".preview-swatches > li")]
+          .map((li) => li.style.getPropertyValue("--sample")),
+      };
+    })()`);
+    expect(parts).toEqual({
+      heading: true,
+      paragraph: true,
+      // A neutral button and two hue variants.
+      buttons: ["", "button-blue", "button-red"],
+      field: true,
+      table: [true, 3],
+      swatches: Object.keys(COLORS).map((token) => `var(${token})`),
+    });
+  });
+
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`every profile's preview card resolves each token to its ${scheme} value, under a ${SCHEMES[1 - index]} system`, async () => {
+      const page = await open(previewFixture, { scheme: SCHEMES[1 - index] });
+      for (const name of Object.keys(COLOR_PROFILES)) {
+        expect([name, await resolveColors(page, card(name, scheme))]).toEqual([
+          name,
+          profileRgb(name, index),
+        ]);
+      }
+    });
+  }
+
+  // Behavior 5: a preview container renders as its profile and scheme do at the root. The card
+  // is read in its container, then stripped of its attributes, with the root naming them instead.
+  for (const name of Object.keys(COLOR_PROFILES)) {
+    for (const [index, scheme] of SCHEMES.entries()) {
+      test(`a ${name} ${scheme} preview container renders its card with the colors the root gives it`, async () => {
+        // The system scheme is the other one, so a container that failed to force its own would
+        // differ.
+        const page = await open(previewFixture, { scheme: SCHEMES[1 - index] });
+        const selector = card(name, scheme);
+        const contained = await colorsOf(page, selector);
+        const containerPaint = await paint(page, selector);
+        await page.evaluate(`(() => {
+          const card = document.querySelector(${JSON.stringify(selector)});
+          card.id = "at-root";
+          card.removeAttribute("data-palette");
+          card.removeAttribute("data-scheme");
+          document.documentElement.dataset.palette = ${JSON.stringify(name)};
+          document.documentElement.dataset.scheme = ${JSON.stringify(scheme)};
+        })()`);
+        const atRoot = await colorsOf(page, "#at-root");
+        expect(atRoot.length).toBeGreaterThan(30);
+        expect(atRoot).toEqual(contained);
+        // The container paints as the root does, in the profile's own text and page colors.
+        const { "--fg": fg, "--bg": bg } = profileRgb(name, index);
+        expect(containerPaint).toEqual([fg, bg]);
+        expect(await paint(page, "body")).toEqual([fg, bg]);
+      });
+    }
+  }
+
+  test("a consumer linking the lean entry and importing one profile's export selects it with data-palette", async () => {
+    const pkg = await Bun.file(join(root, "package.json")).json();
+    for (const [index, scheme] of SCHEMES.entries()) {
+      const page = await open(consumerFixture, { scheme });
+      // The page imports the file the export names, relative to the entry, into the color
+      // sub-layer.
+      const imported = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
+        .map((rule) => [rule.layerName, rule.href])`);
+      expect(imported).toEqual([
+        [`${PACKAGE}.tokens.color`, `../../${pkg.exports["./profiles/catppuccin"].slice(2)}`],
+      ]);
+      const catppuccin = profileRgb("catppuccin", index);
+      expect(await resolveColors(page, "body")).toEqual(catppuccin);
+      expect(await paint(page, "body")).toEqual([catppuccin["--fg"], catppuccin["--bg"]]);
+      // A profile the page didn't import names nothing: its scope keeps the root's tokens.
+      expect(await resolveColors(page, "#everforest p")).toEqual(catppuccin);
+    }
   });
 });
 
@@ -1064,7 +1534,7 @@ describe("elements", () => {
           ${JSON.stringify(pseudo || null)});
         return [style.color, style.backgroundColor, style.borderTopColor];
       })()`);
-    const tiers = ["--fg", "--bg-2", "--border-3"].map((name) => COLORS[name][0]);
+    const tiers = ["--fg", "--bg-2", "--border-2"].map((name) => COLORS[name][0]);
     for (const [selector, pseudo] of controls) {
       expect([selector, await paint(selector, pseudo)]).toEqual([selector, tiers]);
     }
@@ -1101,7 +1571,7 @@ describe("elements", () => {
     const page = await open(specimen, { scheme: "light" });
     for (const [selector, token] of [
       ["body", "--leading-body"],
-      ["#prose h3", "--leading-heading"],
+      ["#prose .cell h3", "--leading-heading"],
       ["#prose pre", "--leading-code"],
     ]) {
       const [size, leading] = [
@@ -1128,7 +1598,7 @@ describe("elements", () => {
         body: "--text-m",
         "#prose h1": "--text-3xl",
         "#prose h2": "--text-2xl",
-        "#prose h3": "--text-xl",
+        "#prose .cell h3": "--text-xl",
         "#prose h4": "--text-l",
         "#prose h5": "--text-m",
         "#prose h6": "--text-s",
@@ -1155,7 +1625,10 @@ describe("elements", () => {
     for (const cell of ["th", "td"]) {
       expect(await page.style(`#prose ${cell}`, "border-top")).toBe(`1px solid ${divider}`);
     }
-    expect(await page.style("#prose blockquote", "border-left")).toBe(`2px solid ${divider}`);
+    // A quotation's edge is neutral, the control boundary's step, not the interaction color.
+    expect(await page.style("#prose blockquote", "border-left")).toBe(
+      `2px solid ${COLORS["--border-2"][0]}`,
+    );
     expect(await page.style("#prose hr", "border-top")).toBe(`1px solid ${divider}`);
     expect(await page.style("#prose hr", "border-bottom-width")).toBe("0px");
     expect(await page.style("#prose pre", "border-top")).toBe(`1px solid ${divider}`);
@@ -1238,6 +1711,333 @@ describe("elements", () => {
       .filter((s) => s.display !== "");
     expect(new Set(styles.map((s) => s["box-shadow"]))).toEqual(new Set(["none"]));
     expect(new Set(styles.map((s) => s["background-image"]))).toEqual(new Set(["none"]));
+  });
+});
+
+// HOOKS are the custom properties the elements layer reads with a fallback and never declares.
+const HOOKS = ["--interaction-color", "--code-color", "--kbd-color"];
+
+// HOVERED are the controls whose boundary takes the interaction color on hover, as markup, each
+// with the pseudo-element its boundary is drawn on, if any; DISABLED are their disabled twins.
+const HOVERED = [
+  ['<input type="text" id="h-text" />', "#h-text", ""],
+  ['<input type="search" id="h-search" />', "#h-search", ""],
+  ['<input type="number" id="h-number" />', "#h-number", ""],
+  ['<select id="h-select"><option>One</option></select>', "#h-select", ""],
+  ['<textarea id="h-textarea"></textarea>', "#h-textarea", ""],
+  ['<button type="button" id="h-button">Button</button>', "#h-button", ""],
+  ['<input type="button" id="h-input-button" value="Input" />', "#h-input-button", ""],
+  ['<input type="submit" id="h-submit" />', "#h-submit", ""],
+  ['<input type="reset" id="h-reset" />', "#h-reset", ""],
+  ['<input type="file" id="h-file" />', "#h-file", "::file-selector-button"],
+  ['<a class="button" id="h-base" href="#hooks">Base</a>', "#h-base", ""],
+];
+const DISABLED = [
+  ['<input type="text" id="d-text" disabled />', "#d-text", ""],
+  ['<select id="d-select" disabled><option>One</option></select>', "#d-select", ""],
+  ['<textarea id="d-textarea" disabled></textarea>', "#d-textarea", ""],
+  ['<button type="button" id="d-button" disabled>Button</button>', "#d-button", ""],
+  ['<input type="submit" id="d-submit" disabled />', "#d-submit", ""],
+  ['<input type="file" id="d-file" disabled />', "#d-file", "::file-selector-button"],
+  ['<button type="button" class="button" id="d-base" disabled>Base</button>', "#d-base", ""],
+];
+
+// addControls puts html, one sample per line, in a container of its own first in the body, so
+// the first Tab reaches its first focusable element and nothing in the specimen's layout lays it
+// out.
+function addControls(page, html, attributes = "") {
+  return page.evaluate(`document.body.insertAdjacentHTML("afterbegin",
+    ${JSON.stringify(`<div id="hooks" ${attributes}>${html.map((line) => `<p>${line}</p>`).join("")}</div>`)})`);
+}
+
+// boundary resolves to the computed [border-top-color, background-color] of the element matching
+// selector, or of its pseudo-element.
+function boundary(page, selector, pseudo = "") {
+  return page.evaluate(`(() => {
+    const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}),
+      ${JSON.stringify(pseudo || null)});
+    return [style.borderTopColor, style.backgroundColor];
+  })()`);
+}
+
+// interaction resolves to the interaction paint inside the element matching within: a link's
+// color, a text field's caret, a checkbox's accent, and selected text's mix, as a tint.
+async function interaction(page, within) {
+  const read = await page.evaluate(`(() => {
+    const scope = document.querySelector(${JSON.stringify(within)});
+    return {
+      link: getComputedStyle(scope.querySelector("a")).color,
+      caret: getComputedStyle(scope.querySelector("input[type=text]")).caretColor,
+      accent: getComputedStyle(scope.querySelector("input[type=checkbox]")).accentColor,
+      selection: getComputedStyle(scope.querySelector("p"), "::selection").backgroundColor,
+    };
+  })()`);
+  return { ...read, selection: tint(read.selection)?.hue };
+}
+
+// channels parses a computed opaque color, rgb() or color(srgb), into its 0..255 channels.
+function channels(value) {
+  const srgb = value.match(/^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)\)$/);
+  if (srgb) return srgb.slice(1).map((c) => Number(c) * 255);
+  return value
+    .match(/^rgb\((\d+), (\d+), (\d+)\)$/)
+    .slice(1)
+    .map(Number);
+}
+
+const INTERACTIVE = [
+  '<a href="#hooks" id="i-link">A link</a>',
+  '<input type="text" id="i-text" /> <input type="checkbox" id="i-check" />',
+];
+
+describe("element hooks", () => {
+  test("neither the baseline nor its color profile declares a hook", async () => {
+    const page = await open(server.url, { scheme: "light" });
+    const declared = (await layerRules(page, ...LAYERS)).flatMap((rule) =>
+      rule.declarations.map(([name]) => name).filter((name) => HOOKS.includes(name)),
+    );
+    expect(declared).toEqual([]);
+    for (const hook of HOOKS) expect(await page.style("body", hook)).toBe("");
+  });
+
+  test("interaction falls back to --blue: link, caret, accent, selected text and focus outline", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addControls(page, INTERACTIVE);
+    const [blue] = COLORS["--blue"];
+    expect(await interaction(page, "#hooks")).toEqual({
+      link: blue,
+      caret: blue,
+      accent: blue,
+      selection: blue,
+    });
+    await tabTo(page, "#i-link");
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineColor`)).toBe(blue);
+  });
+
+  test("a consumer setting --interaction-color on an ancestor re-colors all interaction in its subtree", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addControls(page, [...INTERACTIVE, HOVERED[0][0], HOVERED[5][0]]);
+    await addAppStyle(page, "@layer app { #hooks { --interaction-color: rgb(1, 2, 3); } }");
+    const hook = "rgb(1, 2, 3)";
+    expect(await interaction(page, "#hooks")).toEqual({
+      link: hook,
+      caret: hook,
+      accent: hook,
+      selection: hook,
+    });
+    await tabTo(page, "#i-link");
+    expect(await page.evaluate(`getComputedStyle(document.activeElement).outlineColor`)).toBe(hook);
+    for (const selector of ["#h-text", "#h-button"]) {
+      await hover(page, selector);
+      expect([selector, (await boundary(page, selector))[0]]).toEqual([selector, hook]);
+    }
+    // Outside the subtree, interaction keeps --blue.
+    expect(await page.style("#prose a", "color")).toBe(COLORS["--blue"][0]);
+    expect(await page.style("#prose p", "caret-color")).toBe(COLORS["--blue"][0]);
+  });
+
+  for (const [index, forced] of SCHEMES.entries()) {
+    const system = index ? "light" : "dark";
+    test(`interaction resolves in a data-scheme="${forced}" container's own scheme, in a ${system} page`, async () => {
+      const page = await open(specimen, { scheme: system });
+      await addControls(page, [...INTERACTIVE, HOVERED[0][0]], `data-scheme="${forced}"`);
+      const blue = COLORS["--blue"][index];
+      expect(await interaction(page, "#hooks")).toEqual({
+        link: blue,
+        caret: blue,
+        accent: blue,
+        selection: blue,
+      });
+      await hover(page, "#h-text");
+      expect((await boundary(page, "#h-text"))[0]).toBe(blue);
+      // The page outside keeps its own scheme's blue.
+      expect(await page.style("#prose p", "caret-color")).toBe(COLORS["--blue"][1 - index]);
+    });
+  }
+
+  test("interaction resolves in a data-palette container's own profile", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addProbePalette(page);
+    await addControls(page, INTERACTIVE, 'data-palette="probe"');
+    const blue = PROBE_PALETTE["--blue"];
+    expect(await interaction(page, "#hooks")).toEqual({
+      link: blue,
+      caret: blue,
+      accent: blue,
+      selection: blue,
+    });
+  });
+
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`hovered, every enabled field and neutral button takes a boundary in the interaction color, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      await addControls(
+        page,
+        HOVERED.map(([html]) => html),
+      );
+      await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+      const rest = COLORS["--border-2"][index];
+      for (const [, selector, pseudo] of HOVERED) {
+        expect([selector, (await boundary(page, selector, pseudo))[0]]).toEqual([selector, rest]);
+      }
+      for (const [, selector, pseudo] of HOVERED) {
+        await hover(page, selector);
+        expect([selector, (await boundary(page, selector, pseudo))[0]]).toEqual([
+          selector,
+          COLORS["--blue"][index],
+        ]);
+      }
+    });
+  }
+
+  test("hovered, a disabled control doesn't change", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addControls(
+      page,
+      DISABLED.map(([html]) => html),
+    );
+    for (const [, selector, pseudo] of DISABLED) {
+      await page.view.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+      const rest = await boundary(page, selector, pseudo);
+      expect([selector, rest[0]]).toEqual([selector, COLORS["--border-2"][0]]);
+      await hover(page, selector);
+      expect([selector, await boundary(page, selector, pseudo)]).toEqual([selector, rest]);
+    }
+  });
+
+  test("hovered, a hue variant keeps its own hook color for its boundary", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const [red] = COLORS["--red"];
+    for (const selector of ["#buttons button.button-red", "#buttons a.button-red"]) {
+      await hover(page, selector);
+      expect([selector, (await boundary(page, selector))[0]]).toEqual([selector, red]);
+    }
+  });
+
+  // chip reads, in the page, what would make an element a chip: its background, its paddings,
+  // its radius and its border, then its color.
+  const chip = (page, selector) =>
+    page.evaluate(`(() => {
+      const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)}));
+      return [style.backgroundColor, style.paddingLeft, style.paddingRight, style.paddingTop,
+        style.borderTopLeftRadius, style.borderTopWidth, style.color];
+    })()`);
+  const PLAIN = ["rgba(0, 0, 0, 0)", "0px", "0px", "0px", "0px", "0px"];
+
+  // linkCode adds a link holding inline code to the prose section's first paragraph, as
+  // #code-link, and resolves to its selector.
+  const linkCode = async (page) => {
+    await page.evaluate(`document.querySelector("#prose p").insertAdjacentHTML("beforeend",
+      ' <a id="code-link" href="#prose"><code>mise run check</code></a>')`);
+    return "#code-link > code";
+  };
+
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`inline code is green text in the code font, with no chip, and code in a pre is plain, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      const inline = "#prose p > code";
+      expect(await chip(page, inline)).toEqual([...PLAIN, COLORS["--green"][index]]);
+      expect(await page.style(inline, "font-family")).toBe(MONO);
+      expect(await chip(page, "#prose pre > code")).toEqual([
+        ...PLAIN,
+        await page.style("#prose pre", "color"),
+      ]);
+    });
+  }
+
+  test("a consumer re-colors inline code's text through --code-color, and code in a pre keeps its own", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { #prose { --code-color: rgb(1, 2, 3); } }");
+    expect(await chip(page, "#prose p > code")).toEqual([...PLAIN, "rgb(1, 2, 3)"]);
+    expect(await page.style("#prose pre > code", "color")).toBe(COLORS["--fg"][0]);
+  });
+
+  test("code inside a link takes the link's color and runs under its underline", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const code = await linkCode(page);
+    expect(await chip(page, code)).toEqual([...PLAIN, COLORS["--blue"][0]]);
+    // The link's underline propagates to an inline descendant: the code stays inline and sets
+    // no decoration of its own.
+    expect(await page.style("#code-link", "text-decoration-line")).toBe("underline");
+    expect(await page.style(code, "display")).toBe("inline");
+    expect(await page.style(code, "text-decoration-line")).toBe("none");
+    // The link's color wins over the code hook, and follows the interaction hook.
+    await addAppStyle(
+      page,
+      "@layer app { #prose { --code-color: rgb(1, 2, 3); --interaction-color: rgb(4, 5, 6); } }",
+    );
+    expect(await page.style(code, "color")).toBe("rgb(4, 5, 6)");
+  });
+
+  test("a dialog pads one step tighter, and its actions sit a step further below its content", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await page.evaluate(`document.querySelector("#specimen-dialog").showModal()`);
+    const s = `${await resolveToken(page, "--space-s", "length")}px`;
+    const m = `${await resolveToken(page, "--space-m", "length")}px`;
+    expect(await page.style("#specimen-dialog", "padding-top")).toBe(s);
+    expect(await page.style("#specimen-dialog", "padding-left")).toBe(s);
+    // The close form, after the text, sits --space-m below it, more than a block's --space-s.
+    expect(await page.style("#specimen-dialog > form", "margin-top")).toBe(m);
+    // Only actions after content: a form that is the dialog's whole content, and a last block
+    // that is text, take no such margin.
+    const margins = await page.evaluate(`(() => {
+      const dialog = document.createElement("dialog");
+      dialog.innerHTML = '<form method="dialog"><button>Close</button></form>';
+      const text = document.createElement("dialog");
+      text.innerHTML = "<p>One.</p><p>Two.</p>";
+      document.body.append(dialog, text);
+      return [getComputedStyle(dialog.firstChild).marginTop,
+        getComputedStyle(text.lastChild).marginTop];
+    })()`);
+    expect(margins).toEqual(["0px", s]);
+  });
+
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`kbd is an outlined key with a heavier bottom edge over no fill, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme });
+      const key = await page.evaluate(`(() => {
+        const style = getComputedStyle(document.querySelector("#prose kbd"));
+        return {
+          widths: [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth,
+            style.borderLeftWidth],
+          colors: [...new Set([style.borderTopColor, style.borderRightColor,
+            style.borderBottomColor, style.borderLeftColor])],
+          style: style.borderTopStyle,
+          fill: style.backgroundColor,
+          color: style.color,
+          radius: style.borderTopLeftRadius,
+        };
+      })()`);
+      const [s, m] = [
+        await resolveToken(page, "--line-s", "length"),
+        await resolveToken(page, "--line-m", "length"),
+      ];
+      expect(key).toEqual({
+        widths: [`${s}px`, `${s}px`, `${m}px`, `${s}px`],
+        colors: [COLORS["--border-2"][index]],
+        style: "solid",
+        fill: "rgba(0, 0, 0, 0)",
+        color: COLORS["--fg"][index],
+        radius: `${await resolveToken(page, "--radius-sm", "length")}px`,
+      });
+    });
+  }
+
+  test("a consumer re-colors kbd's border and text through --kbd-color", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await addAppStyle(page, "@layer app { #prose { --kbd-color: rgb(1, 2, 3); } }");
+    for (const property of [
+      "border-top-color",
+      "border-right-color",
+      "border-bottom-color",
+      "border-left-color",
+      "color",
+    ]) {
+      expect([property, await page.style("#prose kbd", property)]).toEqual([
+        property,
+        "rgb(1, 2, 3)",
+      ]);
+    }
   });
 });
 
@@ -1627,13 +2427,13 @@ describe("tools", () => {
   test("scroll-y and scroll-x scroll their overflow on one axis", async () => {
     // Below the range, so --space-2xs is its smallest value, 8px.
     const page = await open(specimen, { scheme: "light", viewport: display("9:16", "small") });
-    for (const [axis, overflow, size, padding] of [
-      ["y", "overflow-y", "Height", "padding-right"],
-      ["x", "overflow-x", "Width", "padding-bottom"],
+    for (const [axis, overflow, size, padding, gutter] of [
+      ["y", "overflow-y", "Height", "padding-right", "stable"],
+      ["x", "overflow-x", "Width", "padding-bottom", "auto"],
     ]) {
       const selector = `#tools .scroll-${axis}`;
       expect(await page.style(selector, overflow)).toBe("auto");
-      expect(await page.style(selector, "scrollbar-gutter")).toBe("stable");
+      expect([axis, await page.style(selector, "scrollbar-gutter")]).toEqual([axis, gutter]);
       expect(await page.style(selector, padding)).toBe("8px");
       const scrolled = await page.evaluate(`(() => {
         const el = document.querySelector(${JSON.stringify(selector)});
@@ -1642,6 +2442,32 @@ describe("tools", () => {
       })()`);
       expect([axis, scrolled]).toEqual([axis, 10]);
     }
+  });
+
+  test("a table in scroll-x fills its wrapper, with no gutter, while scroll-y reserves one", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    // Each wrapper unbordered and too roomy to overflow, so only a reserved gutter narrows it.
+    const widths = await page.evaluate(`(() => {
+      document.querySelector("#scroll .cell").insertAdjacentHTML("beforeend",
+        '<div class="scroll-x" id="gutter-x"><table class="table-full"><tr><td>Cell</td></tr></table></div>' +
+        '<div class="scroll-y" id="gutter-y"><table class="table-full"><tr><td>Cell</td></tr></table></div>');
+      return Object.fromEntries(["x", "y"].map((axis) => {
+        const wrapper = document.querySelector("#gutter-" + axis);
+        const style = getComputedStyle(wrapper);
+        const content = wrapper.offsetWidth - Number.parseFloat(style.paddingLeft)
+          - Number.parseFloat(style.paddingRight);
+        return [axis, {
+          short: Math.round(content - wrapper.querySelector("table").offsetWidth),
+          reserved: wrapper.offsetWidth - wrapper.clientWidth > 0,
+        }];
+      }));
+    })()`);
+    expect(widths).toEqual({
+      x: { short: 0, reserved: false },
+      y: { short: widths.y.short, reserved: true },
+    });
+    // The gutter scroll-y reserves is what its table falls short by.
+    expect(widths.y.short).toBeGreaterThan(0);
   });
 
   test(".button computes as the native button, rule for rule: at rest, hovered and disabled", async () => {
@@ -1664,7 +2490,7 @@ describe("tools", () => {
         await addAppStyle(
           page,
           `@layer app { :root { --bg: rgb(1, 1, 1); --bg-2: rgb(2, 2, 2); --border: rgb(3, 3, 3);
-            --border-3: rgb(4, 4, 4); --fg: rgb(5, 5, 5); --fg-3: rgb(6, 6, 6); --space-3xs: 3px;
+            --border-2: rgb(4, 4, 4); --fg: rgb(5, 5, 5); --fg-3: rgb(6, 6, 6); --space-3xs: 3px;
             --space-s: 7px; --line-s: 3px; --radius-sm: 5px; --font-ui: fantasy;
             --leading-ui: 2; } }`,
         );
@@ -1736,7 +2562,7 @@ describe("tools", () => {
     );
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
+  for (const [index, scheme] of SCHEMES.entries()) {
     test(`each variant draws its border and text in its hue over no fill, on <button> and <a class="button">, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
       for (const hue of Object.keys(HUES)) {
@@ -1850,13 +2676,27 @@ describe("tools", () => {
     expect(table).toBeCloseTo(label, 1);
   });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
-    test(`.table-striped puts alternate body rows on --bg-2, in ${scheme}`, async () => {
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`.table-striped's stripe lies between the page and the header surface, apart from both, in ${scheme}`, async () => {
       const page = await open(specimen, { scheme });
+      const table = "#tables-tools .table-striped";
       const rows = await page.evaluate(`[...document.querySelectorAll(
-        "#tables-tools .table-striped > tbody > tr")].map((tr) => getComputedStyle(tr).backgroundColor)`);
-      const stripe = COLORS["--bg-2"][index];
+        "${table} > tbody > tr")].map((tr) => getComputedStyle(tr).backgroundColor)`);
+      const stripe = rows[1];
       expect(rows).toEqual(["rgba(0, 0, 0, 0)", stripe, "rgba(0, 0, 0, 0)", stripe]);
+      // The header cells sit on --bg-2, the page on --bg.
+      const header = await page.style(`${table} th`, "background-color");
+      expect(header).toBe(COLORS["--bg-2"][index]);
+      const [mixed, surface, bg] = [stripe, header, COLORS["--bg"][index]].map(channels);
+      // Each channel between the page's and the header's, and the stripe at least two levels
+      // from either on the channel they differ most in, so each pair is told apart.
+      for (const [c, value] of mixed.entries()) {
+        expect(value).toBeGreaterThanOrEqual(Math.min(surface[c], bg[c]) - 0.5);
+        expect(value).toBeLessThanOrEqual(Math.max(surface[c], bg[c]) + 0.5);
+      }
+      const apart = (a, b) => Math.max(...a.map((value, c) => Math.abs(value - b[c])));
+      expect(apart(mixed, surface)).toBeGreaterThanOrEqual(2);
+      expect(apart(mixed, bg)).toBeGreaterThanOrEqual(2);
     });
   }
 });
@@ -1913,28 +2753,64 @@ describe("extension", () => {
   });
 });
 
+// DESKTOP and PHONE are the viewports the specimen's layout is read at: a laptop's window, and a
+// phone's width.
+const DESKTOP = { width: 1280, height: 800 };
+const PHONE = { width: 390, height: 844 };
+
 describe("specimen", () => {
   test("shows every token with a sample that resolves it", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .specimen > code")]
-      .map((code) => [code.textContent, code.nextElementSibling.style.getPropertyValue("--sample")])`);
+    // A token shows as a row of a .specimen grid, its name then its sample, or as a row of a
+    // token table, its name then its swatch.
+    const shown = await page.evaluate(`[
+      ...[...document.querySelectorAll("#tokens .specimen > code")]
+        .map((code) => [code.textContent, code.nextElementSibling]),
+      ...[...document.querySelectorAll("#tokens .tokens tbody tr")]
+        .map((row) => [row.cells[0].textContent, row.cells[1].firstElementChild]),
+    ].map(([name, sample]) => [name, sample.style.getPropertyValue("--sample")])`);
     expect(shown.map(([name]) => name).sort()).toEqual(Object.keys(TOKENS).sort());
     for (const [name, sample] of shown) expect(sample).toBe(`var(${name})`);
   });
 
   test("shows every tier and hue with its light and dark values", async () => {
     const page = await open(specimen, { scheme: "light" });
-    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .colors > code")]
-      .map((code) => [code.textContent, code.nextElementSibling.nextElementSibling.textContent])`);
+    // Each row's light and dark cells give the value as text and paint it in a dot.
+    const shown = await page.evaluate(`[...document.querySelectorAll("#tokens .tokens tbody tr")]
+      .map((row) => [row.cells[0].textContent, [...row.cells].slice(2).map((cell) =>
+        [cell.textContent.trim(), cell.querySelector(".dot").style.getPropertyValue("--sample")])])`);
     expect(Object.fromEntries(shown)).toEqual(
       Object.fromEntries(
         Object.entries({ ...TIERS, ...HUES }).map(([name, [light, dark]]) => [
           name,
-          `${light} / ${dark}`,
+          [
+            [light, light],
+            [dark, dark],
+          ],
         ]),
       ),
     );
   });
+
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`shows a container forced into each scheme, painting it inside a ${scheme} page`, async () => {
+      const page = await open(specimen, { scheme });
+      for (const [forcedIndex, forced] of SCHEMES.entries()) {
+        const selector = `#color .scope-sample[data-scheme="${forced}"]`;
+        // Each container paints its forced scheme whatever the page's, so in each page the one
+        // forced the other way shows the scope.
+        expect([forced, await paint(page, selector)]).toEqual([
+          forced,
+          [COLORS["--fg"][forcedIndex], COLORS["--bg"][forcedIndex]],
+        ]);
+        expect([forced, await resolveColors(page, `${selector} p`)]).toEqual([
+          forced,
+          schemeColors(forcedIndex),
+        ]);
+      }
+      expect(await page.style("body", "background-color")).toBe(COLORS["--bg"][index]);
+    });
+  }
 
   test("shows every rendered element and every input type", async () => {
     const page = await open(specimen, { scheme: "light" });
@@ -1969,13 +2845,531 @@ describe("specimen", () => {
     expect(TAGS.filter((tag) => !["body", "main"].includes(tag) && !named.has(tag))).toEqual([]);
   });
 
-  test("keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
+  test("links the full entry alone, and keeps its composition in its own specimen layer, after the package layer, and says so", async () => {
     const page = await open(specimen, { scheme: "light" });
+    // The full entry holds every profile, so the page imports none itself.
+    const links = await page.evaluate(`[...document.querySelectorAll("link")]
+      .map((l) => [l.rel, l.getAttribute("href")])`);
+    expect(links).toEqual([["stylesheet", "./full.css"]]);
     const rules = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
-      .map((rule) => rule.nameList ? [...rule.nameList] : rule.name)`);
+      .map((rule) => rule.href ? [rule.layerName, rule.href]
+        : rule.nameList ? [...rule.nameList] : rule.name)`);
     expect(rules).toEqual([[PACKAGE, "specimen"], "specimen"]);
-    const note = await page.evaluate(`document.querySelector("body > header .note").textContent`);
-    expect(squash(note)).toContain("is composition");
+    // The layer's own comment says so; the page carries no note about it.
+    const comment = await page.evaluate(`document.querySelector("style").textContent`);
+    expect(squash(comment)).toContain("The arrangement is composition");
+    expect(squash(comment)).toContain("is the baseline alone");
+  });
+
+  test("carries no note about the workbench: the composition speaks for itself", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const text = await page.evaluate(`document.body.textContent`);
+    expect(squash(text)).not.toContain("This page is a workbench");
+    expect(await page.evaluate(`document.querySelectorAll(".note").length`)).toBe(0);
+  });
+
+  test("sets its header close above the first section, with no rule and no meta line beside the title", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const header = await page.evaluate(`(() => {
+      const header = document.querySelector("body > header");
+      const box = header.getBoundingClientRect();
+      return {
+        rule: getComputedStyle(header).borderBottomWidth,
+        // Each of the header's blocks spans it: nothing sits beside the title.
+        spans: [...header.children].map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
+        gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
+      };
+    })()`);
+    expect(header.rule).toBe("0px");
+    expect(new Set(header.spans)).toEqual(new Set([0]));
+    expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
+  });
+
+  test("sets its headings, banners and cell headings at --text-l or larger, and its labels at --text-s", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const sizes = await page.evaluate(`({
+      headings: [...document.querySelectorAll(
+        "main > section > header > h2, main > section > section h3, #tokens .cell > h4")]
+        .map((el) => [el.textContent, Number.parseFloat(getComputedStyle(el).fontSize)]),
+      labels: [...new Set([...document.querySelectorAll(".label")]
+        .map((el) => getComputedStyle(el).fontSize))],
+    })`);
+    expect(sizes.headings.length).toBeGreaterThan(20);
+    const large = await resolveToken(page, "--text-l", "length");
+    for (const [name, size] of sizes.headings) {
+      expect([name, size >= large - 0.01]).toEqual([name, true]);
+    }
+    const small = await resolveToken(page, "--text-s", "length");
+    expect(sizes.labels.map(Number.parseFloat)).toEqual([expect.closeTo(small, 2)]);
+  });
+
+  test("its labels' code takes the label's own color, never the code color", async () => {
+    for (const scheme of SCHEMES) {
+      const page = await open(specimen, { scheme });
+      const unlike = await page.evaluate(`[...document.querySelectorAll(".label code")]
+        .filter((code) => getComputedStyle(code).color
+          !== getComputedStyle(code.closest(".label")).color)
+        .map((code) => code.textContent)`);
+      expect([scheme, unlike]).toEqual([scheme, []]);
+    }
+  });
+
+  test("lets text span its panel: no paragraph carries a measure, and each intro fills its column", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const text = await page.evaluate(`({
+      measured: [...document.querySelectorAll("p")]
+        .filter((p) => getComputedStyle(p).maxWidth !== "none")
+        .map((p) => p.textContent.trim().slice(0, 40)),
+      // An intro's width less its column's content width: the header's, a section header's, or
+      // a subsection banner's.
+      intros: [...document.querySelectorAll(
+        "body > header > p, main > section > header > p, main > section > section > header > p")]
+        .map((p) => {
+          const column = p.parentElement;
+          const style = getComputedStyle(column);
+          const content = column.clientWidth - Number.parseFloat(style.paddingLeft)
+            - Number.parseFloat(style.paddingRight);
+          return [p.textContent.trim().slice(0, 40), Math.round(p.offsetWidth - content)];
+        }),
+    })`);
+    expect(text.measured).toEqual([]);
+    expect(text.intros.length).toBeGreaterThan(8);
+    for (const [intro, short] of text.intros) expect([intro, short]).toEqual([intro, 0]);
+  });
+
+  test("tops its tier and hue tables on one edge, and sets text above a sample a --space-s apart", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const tops = await page.evaluate(`[...document.querySelectorAll("#color .tokens")]
+      .map((table) => Math.round(table.getBoundingClientRect().top))`);
+    expect(tops.length).toBe(2);
+    expect(tops[1]).toBe(tops[0]);
+    // Every paragraph in a cell that a sample follows stands apart from it.
+    const gaps = await page.evaluate(`[...document.querySelectorAll(".cell > p")]
+      .filter((p) => p.nextElementSibling?.matches("div, table"))
+      .map((p) => [p.textContent.trim().slice(0, 40),
+        p.nextElementSibling.getBoundingClientRect().top - p.getBoundingClientRect().bottom])`);
+    expect(gaps.length).toBeGreaterThan(0);
+    const space = await resolveToken(page, "--space-s", "length");
+    for (const [text, gap] of gaps) expect([text, gap >= space - 0.5]).toEqual([text, true]);
+  });
+
+  // scale resolves the rows of the token scale whose .specimen holds token: each row's token
+  // name and the text of its notes.
+  const scale = (page, token) =>
+    page.evaluate(`[...[...document.querySelectorAll("#tokens .specimen > code")]
+      .find((code) => code.textContent === "${token}").parentElement.children]
+      .filter((el) => el.localName === "code")
+      .map((code) => [code.textContent,
+        [...code.nextElementSibling.querySelectorAll("small")].map((note) => note.textContent)])`);
+
+  test("foots each fluid scale with its fluid expansion, as the share of the display range filled", async () => {
+    for (const viewport of [DESKTOP, PHONE]) {
+      const page = await open(specimen, { scheme: "light", viewport });
+      const expansion = fluid([0, 1], viewport) / 16;
+      const fills = await page.evaluate(`[...document.querySelectorAll(".fluid-fill")]
+        .map((fill) => [fill.closest(".fluid-sample").previousElementSibling.textContent,
+          fill.getBoundingClientRect().width / fill.parentElement.clientWidth])`);
+      expect(fills.map(([name]) => name)).toEqual(["--space-fluid", "--type-fluid"]);
+      for (const [name, share] of fills) {
+        expect([name, share]).toEqual([name, expect.closeTo(expansion, 2)]);
+      }
+    }
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    // The space scale opens on the base each step multiplies, then the steps, and ends on its
+    // expansion; the type scale runs its steps, then ends on its expansion.
+    const space = await scale(page, "--space-fluid");
+    expect(space.map(([name]) => name)).toEqual([
+      "--space-base",
+      ...Object.keys(SPACE_STEPS),
+      "--space-fluid",
+    ]);
+    const type = await scale(page, "--type-fluid");
+    expect(type.map(([name]) => name)).toEqual([...Object.keys(TEXT_STEPS), "--type-fluid"]);
+  });
+
+  test("sets each fluid row apart from its scale, at least a --space-m below the last step", async () => {
+    for (const viewport of [DESKTOP, PHONE]) {
+      const page = await open(specimen, { scheme: "light", viewport });
+      // Per scale: the gaps between consecutive rows, each row spanning its name and its sample,
+      // the last gap the one above the fluid row.
+      const scales = await page.evaluate(`[...document.querySelectorAll("#tokens .fluid-sample")]
+        .map((fluid) => {
+          const rows = [...fluid.parentElement.children]
+            .filter((el) => el.localName === "code")
+            .map((code) => [code, code.nextElementSibling].map((el) => el.getBoundingClientRect()))
+            .map(([a, b]) => [Math.min(a.top, b.top), Math.max(a.bottom, b.bottom)]);
+          return [fluid.previousElementSibling.textContent,
+            rows.slice(1).map(([top], i) => top - rows[i][1])];
+        })`);
+      expect(scales.map(([name]) => name)).toEqual(["--space-fluid", "--type-fluid"]);
+      const space = await resolveToken(page, "--space-m", "length");
+      for (const [name, gaps] of scales) {
+        const fluid = gaps.at(-1);
+        const step = Math.max(...gaps.slice(0, -1));
+        expect([name, fluid >= space - 0.5, fluid > step]).toEqual([name, true, true]);
+      }
+    }
+  });
+
+  test("notes each scale step's multiple, or its size's range, as the facets state them", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const numbers = (note) => [...note.matchAll(/\d+(\.\d+)?/g)].map((m) => Number(m[0]));
+    const space = Object.fromEntries(
+      (await scale(page, "--space-fluid"))
+        .filter(([name]) => name !== "--space-fluid")
+        .map(([name, [note]]) => [name, numbers(note)]),
+    );
+    expect(space).toEqual({
+      "--space-base": SPACE_BASE,
+      ...Object.fromEntries(Object.entries(SPACE_STEPS).map(([name, k]) => [name, [k]])),
+    });
+    const type = Object.fromEntries(
+      (await scale(page, "--type-fluid"))
+        .filter(([name]) => name !== "--type-fluid")
+        .map(([name, [note]]) => [name, numbers(note)]),
+    );
+    expect(type).toEqual(
+      Object.fromEntries(
+        Object.keys(TEXT_STEPS).map((name) => [
+          name,
+          name in TEXT_FIXED ? [TEXT_FIXED[name]] : FLUID[name],
+        ]),
+      ),
+    );
+  });
+
+  test("draws each line sample as a rule exactly its token's width, in --fg, across its column", async () => {
+    for (const [index, scheme] of SCHEMES.entries()) {
+      for (const viewport of [DESKTOP, PHONE]) {
+        const page = await open(specimen, { scheme, viewport });
+        // Each sample's token, the thickness it renders at, its rule's width and color, and how
+        // long it runs.
+        const lines = await page.evaluate(`[...document.querySelectorAll(".line-sample")]
+          .map((line) => {
+            const style = getComputedStyle(line);
+            return [line.previousElementSibling.textContent, line.getBoundingClientRect().height,
+              Number.parseFloat(style.borderTopWidth), style.borderTopColor,
+              line.getBoundingClientRect().width];
+          })`);
+        expect(lines.map(([name]) => name)).toEqual(["--line-s", "--line-m"]);
+        const length = await resolveToken(page, "--space-2xl", "length");
+        for (const [name, thickness, width, color, run] of lines) {
+          const token = await resolveToken(page, name, "length");
+          expect([scheme, name, thickness, width, color, run >= length]).toEqual([
+            scheme,
+            name,
+            token,
+            token,
+            COLORS["--fg"][index],
+            true,
+          ]);
+        }
+        expect(lines[1][1]).toBeGreaterThan(lines[0][1]);
+      }
+    }
+  });
+
+  test("its tables example fills its panel, its caption as wide as the table", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const table = await page.evaluate(`(() => {
+      const table = document.querySelector("#tables table");
+      const cell = table.closest(".cell");
+      const style = getComputedStyle(cell);
+      const content = cell.clientWidth - Number.parseFloat(style.paddingLeft)
+        - Number.parseFloat(style.paddingRight);
+      return {
+        columns: table.tHead.rows[0].cells.length,
+        short: Math.round(table.offsetWidth - content),
+        caption: Math.round(table.caption.offsetWidth - table.offsetWidth),
+      };
+    })()`);
+    expect(table.columns).toBeGreaterThanOrEqual(5);
+    expect(table).toEqual({ columns: table.columns, short: 0, caption: 0 });
+  });
+
+  test("its token and contrast tables' scroll wrappers span their panels with no gutter, and the tables fill them", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const wrappers = await page.evaluate(`[...document.querySelectorAll(
+      "#color .cell > .scroll-x:has(> table), #contrast .cell > .scroll-x:has(> table)")]
+      .map((wrapper) => {
+        const cell = wrapper.closest(".cell");
+        const style = getComputedStyle(cell);
+        const content = cell.clientWidth - Number.parseFloat(style.paddingLeft)
+          - Number.parseFloat(style.paddingRight);
+        const table = wrapper.querySelector(":scope > table");
+        return {
+          name: table.id || cell.querySelector("h4").textContent,
+          wrapperShort: Math.round(content - wrapper.offsetWidth),
+          gutter: wrapper.offsetWidth - wrapper.clientWidth,
+          tableShort: Math.round(content - table.offsetWidth),
+        };
+      })`);
+    // Tiers and Hues, then one contrast record per profile and scheme, each table as wide as its
+    // panel's content.
+    expect(wrappers.map(({ name }) => name)).toEqual([
+      "Tiers",
+      "Hues",
+      ...Object.keys(COLOR_PROFILES).flatMap((name) =>
+        SCHEMES.map((scheme) => `contrast-${name}-${scheme}`),
+      ),
+    ]);
+    expect(wrappers).toEqual(
+      wrappers.map(({ name }) => ({ name, wrapperShort: 0, gutter: 0, tableShort: 0 })),
+    );
+  });
+
+  test("tiles its embedded samples evenly: equal tiles, samples on one bottom edge, names on one line", async () => {
+    for (const viewport of [DESKTOP, PHONE]) {
+      const page = await open(specimen, { scheme: "light", viewport });
+      // Per row of tiles: each tile's height, its sample's bottom edge, and its name's top.
+      const rows = await page.evaluate(`[...document.querySelectorAll("#embedded .tiles")]
+        .flatMap((tiles) => {
+          const rows = new Map();
+          for (const tile of tiles.children) {
+            const box = tile.getBoundingClientRect();
+            const top = Math.round(box.top);
+            if (!rows.has(top)) rows.set(top, []);
+            rows.get(top).push([
+              Math.round(box.height),
+              Math.round(tile.querySelector(".tile-sample > *").getBoundingClientRect().bottom),
+              Math.round(tile.querySelector(".tile-name").getBoundingClientRect().top),
+            ]);
+          }
+          return [...rows.values()];
+        })`);
+      expect(rows.length).toBeGreaterThan(3);
+      for (const row of rows) {
+        for (const index of [0, 1, 2]) {
+          expect(new Set(row.map((tile) => tile[index])).size).toBe(1);
+        }
+      }
+      // Every tile's sample area is one height, so rows match from cell to cell.
+      expect(new Set(rows.map((row) => row[0][0])).size).toBe(1);
+    }
+  });
+
+  test("opens each section on a plain h2, and each subsection on a full-width banner on the pane", async () => {
+    for (const scheme of SCHEMES) {
+      const page = await open(specimen, { scheme, viewport: DESKTOP });
+      // Every computed property of each section's heading that differs from a plain h2's, one
+      // the elements layer alone styles, opening a header in a section outside main as the
+      // specimen's do inside it. Only the properties a box's size resolves are left out.
+      const unlike = await page.evaluate(`(() => {
+        const plain = document.createElement("section");
+        plain.innerHTML = "<header><h2>Heading</h2></header>";
+        document.body.append(plain);
+        const reference = getComputedStyle(plain.querySelector("h2"));
+        const sized = new Set(["width", "height", "inline-size", "block-size",
+          "perspective-origin", "transform-origin"]);
+        const unlike = [...document.querySelectorAll("main > section > header > h2")]
+          .map((h2) => {
+            const style = getComputedStyle(h2);
+            return [h2.textContent, [...reference]
+              .filter((name) => !sized.has(name)
+                && style.getPropertyValue(name) !== reference.getPropertyValue(name))];
+          });
+        plain.remove();
+        return unlike;
+      })()`);
+      expect(unlike.length).toBe(5);
+      for (const [name, properties] of unlike) {
+        expect([scheme, name, properties]).toEqual([scheme, name, []]);
+      }
+    }
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const banners = await page.evaluate(`[...document.querySelectorAll("main > section > section")]
+      .map((section) => [section, section.querySelector(":scope > h3, :scope > header > h3")])
+      .map(([section, heading]) => {
+        const [outer, inner] = [section.getBoundingClientRect(), heading.getBoundingClientRect()];
+        return [section.id, Math.round(outer.width - inner.width),
+          getComputedStyle(heading).backgroundColor];
+      })`);
+    expect(banners.length).toBeGreaterThan(10);
+    for (const [id, short, fill] of banners) {
+      expect([id, short, fill]).toEqual([id, 0, COLORS["--bg-0"][0]]);
+    }
+  });
+
+  // panels resolves, per grid of cells, its cells' rows: each row the left edge and width of its
+  // cells, with the grid's content width, and whether each row starts where the last ended.
+  const panels = (page) =>
+    page.evaluate(`[...document.querySelectorAll(".cells")].map((grid) => {
+      const rows = new Map();
+      for (const cell of grid.children) {
+        const box = cell.getBoundingClientRect();
+        const top = Math.round(box.top);
+        if (!rows.has(top)) rows.set(top, []);
+        rows.get(top).push(box);
+      }
+      const tops = [...rows.keys()];
+      const bottoms = [...rows.values()].map((boxes) =>
+        Math.round(Math.max(...boxes.map((box) => box.bottom))));
+      const style = getComputedStyle(grid);
+      const content = grid.clientWidth - Number.parseFloat(style.paddingLeft)
+        - Number.parseFloat(style.paddingRight);
+      return {
+        cells: grid.children.length,
+        columns: Math.max(...[...rows.values()].map((boxes) => boxes.length)),
+        filled: [...rows.values()].map((boxes) =>
+          Math.round(boxes.reduce((sum, box) => sum + box.width, 0) - content)),
+        stacked: tops.slice(1).every((top, index) => top === bottoms[index]),
+      };
+    })`);
+
+  test("lays its samples out in gapless panels, two cells wide on a wide display and one on a phone", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const wide = await panels(page);
+    expect(wide.length).toBeGreaterThan(10);
+    // Every row fills its grid edge to edge, cells meeting with no gap, and each row starts
+    // where the one above it ends.
+    for (const grid of wide) {
+      expect(grid.columns).toBe(Math.min(2, grid.cells));
+      expect(new Set(grid.filled)).toEqual(new Set([0]));
+      expect(grid.stacked).toBe(true);
+    }
+    await page.setViewport(PHONE);
+    for (const grid of await panels(page)) {
+      expect(grid.columns).toBe(1);
+      expect(new Set(grid.filled)).toEqual(new Set([0]));
+      expect(grid.stacked).toBe(true);
+    }
+  });
+
+  for (const scheme of SCHEMES) {
+    test(`fits a phone's width with no horizontal page scroll, in ${scheme}`, async () => {
+      const page = await open(specimen, { scheme, viewport: PHONE });
+      expect(
+        await page.evaluate(`document.documentElement.scrollWidth
+          <= document.documentElement.clientWidth`),
+      ).toBe(true);
+    });
+  }
+
+  test("sets each input type's name beside its control, in one column of controls per grid", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const grids = await page.evaluate(`[...document.querySelectorAll("#forms .form-grid")]
+      .map((grid) => [...grid.querySelectorAll(":scope > label")].map((label) => {
+        const [name, control] = [label.getBoundingClientRect(),
+          label.control.getBoundingClientRect()];
+        return { name: label.textContent, beside: name.right <= control.left,
+          row: name.top < control.bottom && control.top < name.bottom,
+          left: Math.round(control.left) };
+      }))`);
+    expect(grids.length).toBe(2);
+    for (const rows of grids) {
+      expect(rows.length).toBeGreaterThan(5);
+      for (const { name, beside, row } of rows) {
+        expect([name, beside, row]).toEqual([name, true, true]);
+      }
+      expect(new Set(rows.map(({ left }) => left)).size).toBe(1);
+    }
+    // Every type that takes a value has its row.
+    const named = grids[0].map(({ name }) => name);
+    for (const type of ["text", "email", "date", "datetime-local", "color", "file"]) {
+      expect(named).toContain(type);
+    }
+  });
+
+  test("groups the choices in a fieldset of their own, and the button inputs in one row", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const groups = await page.evaluate(`(() => {
+      const kinds = (selector) => [...new Set([...document.querySelectorAll(selector)]
+        .map((input) => input.closest("fieldset")))]
+        .map((fieldset) => [...new Set([...fieldset.querySelectorAll("input")]
+          .map((input) => input.type))].sort());
+      const actions = [...document.querySelectorAll(
+        "#forms input:is([type=submit], [type=reset], [type=button], [type=image])")]
+        .map((input) => input.getBoundingClientRect());
+      const center = (box) => Math.round((box.top + box.bottom) / 2);
+      return {
+        choices: kinds("#forms input:is([type=radio], [type=checkbox])"),
+        actions: kinds("#forms input[type=submit]"),
+        row: actions.every((box) => Math.abs(center(box) - center(actions[0])) <= 1),
+      };
+    })()`);
+    expect(groups).toEqual({
+      choices: [["checkbox", "radio"]],
+      actions: [["button", "image", "reset", "submit"]],
+      row: true,
+    });
+  });
+
+  test("its embedded content loads nothing from the network, and its frame follows the page's scheme", async () => {
+    for (const scheme of SCHEMES) {
+      const page = await open(specimen, { scheme });
+      const read = await page.evaluate(`(() => {
+        const frame = document.querySelector("#embedded iframe").contentWindow;
+        return {
+          fetched: performance.getEntriesByType("resource").map((entry) => entry.name)
+            .filter((name) => !name.startsWith("file:")),
+          dark: frame.matchMedia("(prefers-color-scheme: dark)").matches,
+          // The frame's own ground, as the mean of its channels: dark in dark, light in light.
+          ground: frame.getComputedStyle(frame.document.body).backgroundColor
+            .match(/\\d+/g).slice(0, 3).reduce((sum, c) => sum + Number(c), 0) / 3,
+        };
+      })()`);
+      const { ground, ...rest } = read;
+      expect([scheme, rest, scheme === "dark" ? ground < 64 : ground > 192]).toEqual([
+        scheme,
+        { fetched: [], dark: scheme === "dark" },
+        true,
+      ]);
+    }
+  });
+
+  // pairs resolves, per profile in order, the boxes of the light and dark containers matching
+  // selector inside within: [name, light box, dark box], each box [left, top, right, bottom].
+  const pairs = (page, within, selector) =>
+    page.evaluate(`(() => {
+      const boxes = [...document.querySelectorAll(${JSON.stringify(`${within} ${selector}`)})]
+        .map((el) => el.closest("[data-palette]"));
+      const names = [...new Set(boxes.map((el) => el.dataset.palette))];
+      return names.map((name) => [name, ...["light", "dark"].map((scheme) => {
+        const box = boxes.find((el) => el.dataset.palette === name
+          && el.dataset.scheme === scheme).getBoundingClientRect();
+        return [box.left, box.top, box.right, box.bottom].map(Math.round);
+      })]);
+    })()`);
+
+  // expectRows expects, at a desktop width, each profile's light and dark containers to share a
+  // row, light first, each profile's row below the last; and at a phone's, dark under light.
+  async function expectRows(page, within, selector) {
+    await page.setViewport(DESKTOP);
+    const wide = await pairs(page, within, selector);
+    expect(wide.map(([name]) => name)).toEqual(Object.keys(COLOR_PROFILES));
+    for (const [index, [name, light, dark]] of wide.entries()) {
+      expect([name, dark[1] === light[1], light[2] <= dark[0]]).toEqual([name, true, true]);
+      if (index > 0) expect([name, light[1] >= wide[index - 1][1][3]]).toEqual([name, true]);
+    }
+    await page.setViewport(PHONE);
+    for (const [name, light, dark] of await pairs(page, within, selector)) {
+      expect([name, dark[1] >= light[3], dark[0] === light[0]]).toEqual([name, true, true]);
+    }
+  }
+
+  test("compares every profile in a grid of preview cards, a row per profile, light beside dark", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const cards = await page.evaluate(`[...document.querySelectorAll("#profiles .preview-card")]
+      .map((card) => [card.dataset.palette, card.dataset.scheme])`);
+    expect(cards).toEqual(
+      Object.keys(COLOR_PROFILES).flatMap((name) => SCHEMES.map((scheme) => [name, scheme])),
+    );
+    await expectRows(page, "#profiles", ".preview-card");
+  });
+
+  test("its comparison grid's cards are the preview fixture's, markup for markup", async () => {
+    const markup = async (url) =>
+      (
+        await (
+          await open(url, { scheme: "light" })
+        ).evaluate(`[...document.querySelectorAll(".preview-card")].map((card) => card.outerHTML)`)
+      ).map(squash);
+    expect(await markup(specimen)).toEqual(await markup(previewFixture));
+  });
+
+  test("records contrast a row per profile, its light and dark records side by side", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    await expectRows(page, "#contrast", "table");
   });
 
   test("shows every tools class in a labeled cell", async () => {
@@ -1999,53 +3393,80 @@ describe("specimen", () => {
     }
   });
 
-  // Contrast is graded only where legibility matters, text over a color: each scheme's matrix
-  // has a row per text token and hue and a column per surface, and a surface gets no ratio of
-  // its own.
-  for (const scheme of ["light", "dark"]) {
-    test(`the ${scheme} contrast matrix grades every text token and hue over every surface`, async () => {
-      const page = await open(specimen, { scheme: "light" });
-      const table = `#contrast-${scheme}`;
-      const rows = await page.evaluate(`[...document.querySelectorAll("${table} tbody th code")]
-        .map((code) => code.textContent)`);
-      const columns = await page.evaluate(`[...document.querySelectorAll("${table} thead th code")]
-        .map((code) => code.textContent)`);
-      // Exact matches, in order, so a new color token without a row or a column fails.
-      expect(rows).toEqual(TEXT);
-      expect(columns).toEqual(SURFACES);
-    });
-  }
+  // Contrast is graded only where legibility matters, text over a color: each profile records
+  // a matrix per scheme, with a row per text token and hue and a column per surface, and a
+  // surface gets no ratio of its own.
+  test("the contrast records' legend defines each mark they use", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const legend = await page.evaluate(`[...document.querySelectorAll("#contrast-legend dt")]
+      .map((dt) => dt.textContent.trim())`);
+    expect(legend).toEqual(Object.keys(MARKS));
+    const used =
+      await page.evaluate(`[...new Set([...document.querySelectorAll("#contrast td span")]
+      .map((span) => span.textContent))]`);
+    expect(used.filter((name) => !legend.includes(name))).toEqual([]);
+  });
 
-  for (const [index, scheme] of ["light", "dark"].entries()) {
-    test(`the ${scheme} contrast matrix matches each ratio recomputed in chromium`, async () => {
-      const page = await open(specimen, { scheme });
-      // The matrix is static: each cell is the ratio as written, then its mark.
-      const cells =
-        await page.evaluate(`[...document.querySelectorAll("#contrast-${scheme} tbody tr")]
-        .flatMap((row) => [...row.cells].slice(1).map((cell, column) => ({
-          text: row.querySelector("th code").textContent,
-          surface: ${JSON.stringify(SURFACES)}[column],
-          ratio: cell.firstChild.textContent.trim(),
-          mark: cell.querySelector("span")?.textContent,
-        })))`);
-      expect(cells.length).toBe(TEXT.length * SURFACES.length);
-      for (const { text, surface, ...cell } of cells) {
-        const fg = await resolveColor(page, text);
-        const bg = await resolveColor(page, surface);
-        // The emulated scheme took: each token resolves to its value in this scheme.
-        expect([fg, bg]).toEqual([COLORS[text][index], COLORS[surface][index]]);
-        const ratio = contrast(fg, bg);
-        expect([text, surface, cell]).toEqual([
-          text,
-          surface,
-          { ratio: ratio.toFixed(2), mark: mark(ratio) },
-        ]);
-      }
-    });
+  test("records contrast for every profile in each scheme, each in a container naming both", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const records = await page.evaluate(`[...document.querySelectorAll("#contrast table")]
+      .map((table) => {
+        const scope = table.closest("[data-palette]");
+        return [table.id, scope?.dataset.palette, scope?.dataset.scheme];
+      })`);
+    expect(records).toEqual(
+      Object.keys(COLOR_PROFILES).flatMap((name) =>
+        SCHEMES.map((scheme) => [`contrast-${name}-${scheme}`, name, scheme]),
+      ),
+    );
+  });
+
+  for (const name of Object.keys(COLOR_PROFILES)) {
+    for (const [index, scheme] of SCHEMES.entries()) {
+      const table = `#contrast-${name}-${scheme}`;
+
+      test(`${name}'s ${scheme} contrast record grades every text token and hue over every surface`, async () => {
+        const page = await open(specimen, { scheme: "light" });
+        const rows = await page.evaluate(`[...document.querySelectorAll("${table} tbody th code")]
+          .map((code) => code.textContent)`);
+        const columns =
+          await page.evaluate(`[...document.querySelectorAll("${table} thead th code")]
+          .map((code) => code.textContent)`);
+        // Exact matches, in order, so a new color token without a row or a column fails.
+        expect(rows).toEqual(TEXT);
+        expect(columns).toEqual(SURFACES);
+      });
+
+      test(`${name}'s ${scheme} contrast record matches each ratio recomputed in chromium`, async () => {
+        // The system scheme is the other one: the record's container forces its own.
+        const page = await open(specimen, { scheme: SCHEMES[1 - index] });
+        // The record is static: each cell is the ratio as written, then its mark.
+        const cells = await page.evaluate(`[...document.querySelectorAll("${table} tbody tr")]
+          .flatMap((row) => [...row.cells].slice(1).map((cell, column) => ({
+            text: row.querySelector("th code").textContent,
+            surface: ${JSON.stringify(SURFACES)}[column],
+            ratio: cell.firstChild.textContent.trim(),
+            mark: cell.querySelector("span")?.textContent,
+          })))`);
+        expect(cells.length).toBe(TEXT.length * SURFACES.length);
+        // Each token resolves, inside the record's container, to the profile's value in this
+        // scheme.
+        const colors = await resolveColors(page, table);
+        expect(colors).toEqual(profileRgb(name, index));
+        for (const { text, surface, ...cell } of cells) {
+          const ratio = contrast(colors[text], colors[surface]);
+          expect([text, surface, cell]).toEqual([
+            text,
+            surface,
+            { ratio: ratio.toFixed(2), mark: mark(ratio) },
+          ]);
+        }
+      });
+    }
   }
 
   for (const ratio of ["9:16", "1:1"]) {
-    test(`the contrast matrices scroll inside their wrappers, not the page, at ${ratio}, small`, async () => {
+    test(`the contrast records scroll inside their wrappers, not the page, at ${ratio}, small`, async () => {
       const page = await open(specimen, { scheme: "light", viewport: display(ratio, "small") });
       const boxes = await page.evaluate(`[...document.querySelectorAll("#contrast table")]
         .map((table) => {
@@ -2055,10 +3476,11 @@ describe("specimen", () => {
             inside: wrapper.getBoundingClientRect().right <= document.documentElement.clientWidth,
           };
         })`);
-      expect(boxes).toEqual([
-        { wrapped: true, inside: true },
-        { wrapped: true, inside: true },
-      ]);
+      expect(boxes).toEqual(
+        Object.keys(COLOR_PROFILES).flatMap(() =>
+          SCHEMES.map(() => ({ wrapped: true, inside: true })),
+        ),
+      );
       expect(
         await page.evaluate(`document.querySelector("#contrast").scrollWidth
         <= document.querySelector("#contrast").clientWidth`),
@@ -2075,6 +3497,18 @@ describe("specimen", () => {
     // Equal fingerprints prove nothing if the stylesheet, or one of its layer files, failed to
     // load in both.
     for (const page of [local, served]) expect(await layersLoaded(page)).toEqual(LOADED);
+    // Nor if the full entry's profiles past the default failed to load in both: a scope added
+    // after the fingerprints resolves its own profile's tokens.
+    const scoped = `${JSON.stringify(ADDED)}.map((name) => {
+      const el = document.body.appendChild(document.createElement("div"));
+      el.dataset.palette = name;
+      return getComputedStyle(el).getPropertyValue("--bg").trim();
+    })`;
+    const backgrounds = ADDED.map((name) => {
+      const [[, light], [, dark]] = COLOR_PROFILES[name].tokens["--bg"];
+      return `light-dark(${light}, ${dark})`;
+    });
     expect(await served.fingerprint()).toEqual(await local.fingerprint());
+    for (const page of [local, served]) expect(await page.evaluate(scoped)).toEqual(backgrounds);
   });
 });

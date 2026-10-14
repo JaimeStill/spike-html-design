@@ -1,7 +1,7 @@
-// pin checks a published tag live: jsDelivr serves the tag's baseline.css and each layer file it
-// imports as an immutable, byte-equal stylesheet, and the tag's pinned page renders the same from
-// file://, a local server, and GitHub Pages, in light and in dark. It reads the network and
-// writes nothing.
+// pin checks a published tag live: jsDelivr serves every stylesheet file the tag publishes (its
+// entries, baseline.css and from v0.4.0 full.css, each layer file, and each profile file) as an
+// immutable, byte-equal stylesheet, and the tag's pinned page renders the same from file://, a
+// local server, and GitHub Pages, in light and in dark. It reads the network and writes nothing.
 //
 // Usage: bun scripts/pin.js <tag>   (mise run pin <tag>)
 //
@@ -42,9 +42,9 @@ function check(ok, label, detail = "") {
   console.log(`${ok ? "✓" : "✗"} ${label}${!ok && detail ? ` (${detail})` : ""}`);
 }
 
-// Every published stylesheet file at its pinned jsDelivr URL: the root and the layer files it
-// imports, which the browser fetches from the same tag. The list is the tag's, not the working
-// tree's.
+// Every published stylesheet file at its pinned jsDelivr URL: the entries and every file they
+// import, which the browser fetches from the same tag, and any other .css file the tag holds
+// outside test/. The list is the tag's, not the working tree's.
 const FILES = stylesheets(tag);
 for (const path of FILES) {
   const cdn = `https://cdn.jsdelivr.net/gh/${REPO}@${tag}/${path}`;

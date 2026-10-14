@@ -1,9 +1,14 @@
 {
   "name": "spike-html-design",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A native, layered CSS baseline for human-facing HTML artifacts",
   "style": "./baseline.css",
   "exports": {
-    ".": "./baseline.css"
+    ".": "./baseline.css",
+    "./full": "./full.css",
+    "./profiles/flexoki": "./layers/tokens/color/flexoki.css",
+    "./profiles/primer": "./layers/tokens/color/primer.css",
+    "./profiles/catppuccin": "./layers/tokens/color/catppuccin.css",
+    "./profiles/everforest": "./layers/tokens/color/everforest.css"
   }
 }

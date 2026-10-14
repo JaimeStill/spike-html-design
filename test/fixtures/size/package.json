@@ -1,0 +1,8 @@
+{
+  "name": "size-fixture",
+  "version": "0.0.0",
+  "description": "A one-entry package the size tests audit against budgets of their choosing",
+  "exports": {
+    ".": "./entry.css"
+  }
+}

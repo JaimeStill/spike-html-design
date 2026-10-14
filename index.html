@@ -6,122 +6,305 @@
     <title>spike-html-design specimen</title>
     <!-- Relative, never root-absolute: Pages serves this page under a project subpath, and the
          page must also render from file://. -->
-    <link rel="stylesheet" href="./baseline.css" />
+    <link rel="stylesheet" href="./full.css" />
     <style>
-      /* The specimen's own composition: the page's gutters, the grids of cells, the cells and
-         their labels, and the token samples. It sits in its own layer, specimen, declared after
-         the baseline's package layer, as an artifact's own layers would be; none of it is the
-         baseline, and the baseline's layers hold nothing that serves this page. Cells are dashed
-         and labeled, so the composition reads apart from the baseline it frames. Samples read
-         the token they show from --sample. */
+      /* The specimen layer arranges this page as a console: a compact header, each section
+         under its heading, a full-width banner over each subsection, and the samples in panels,
+         gapless grids of cells that share their borders, two columns wide on a wide display and
+         one on a narrow one. Text spans its panel; only the page column is capped. The layer is
+         declared after the baseline's package layer, as an artifact's own layers would be. The
+         arrangement is composition: the banners, the panels, the cells and their labels, the
+         token tables, the forms' grids, and the preview cards' frame belong to this page, not to
+         the baseline. What sits inside each cell, under its label, is the baseline alone, and so
+         is each section's heading, a plain h2. Samples read the token they show from --sample.
+
+         The page links the full entry, which holds every color profile, so its comparison grid
+         and contrast records can name each one. */
       @layer spike-html-design, specimen;
 
       @layer specimen {
-        /* The page: full width, with gutters, and sections apart as a consumer's layout sets
-           them. */
+        /* The page: one centered column, capped, inside gutters. */
         body > header,
         main {
-          padding-inline: var(--space-m);
-        }
-
-        body > header {
-          padding-block-start: var(--space-l);
+          inline-size: min(100% - 2 * var(--space-m), 80rem);
+          margin-inline: auto;
         }
 
         main {
           padding-block-end: var(--space-2xl);
         }
 
-        main > section {
-          margin-block-start: var(--space-2xl);
-        }
+        /* The header: the title, then the intro, close above the first section. Text spans
+           the column: a reading measure belongs to a prose layout, and this page is a console. */
+        body > header {
+          padding-block-start: var(--space-l);
 
-        main section section {
-          margin-block-start: var(--space-xl);
-        }
+          & > * {
+            margin: 0;
+          }
 
-        /* The note that names the composition, dashed as the cells are. */
-        .note {
-          margin-block-start: var(--space-s);
-          padding: var(--space-xs) var(--space-s);
-          border: var(--line-s) dashed var(--border-3);
-          border-radius: var(--radius-md);
-          color: var(--fg-2);
-        }
-
-        /* A grid of cells, as many columns as fit. */
-        .cells {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-          gap: var(--space-m);
-          align-items: start;
-          margin-block-start: var(--space-m);
-
-          &.wide {
-            grid-template-columns: repeat(auto-fill, minmax(min(100%, 36rem), 1fr));
+          & > p {
+            margin-block-start: var(--space-2xs);
+            color: var(--fg-2);
           }
         }
 
-        /* A cell: a dashed frame, with its label first. What follows the label is the
-           baseline's; the first sample sits flush under the label. */
-        .cell {
+        /* A section opens on its heading, the elements layer's h2 with nothing added, then its
+           intro. The first section sits close under the page's header. */
+        main > section {
+          margin-block-start: var(--space-xl);
+        }
+
+        main > section:first-child {
+          margin-block-start: var(--space-m);
+        }
+
+        main > section > header > :is(p, dl) {
+          margin-block: var(--space-xs) 0;
+          color: var(--fg-2);
+        }
+
+        /* A subsection opens on a lighter banner, on the pane, that its panels hang from; its
+           intro, if any, sits boxed between them. */
+        main > section > section {
+          margin-block-start: var(--space-l);
+        }
+
+        main > section > section > h3,
+        main > section > section > header > h3 {
+          margin: 0;
+          padding: var(--space-3xs) var(--space-xs);
+          border: var(--line-s) solid var(--border);
+          border-block-end: 0;
+          background: var(--bg-0);
+          font-size: var(--text-xl);
+          line-height: var(--leading-ui);
+          font-variant-caps: all-small-caps;
+          letter-spacing: 0.08em;
+          color: var(--fg-2);
+        }
+
+        main > section > section > header > p {
+          margin: 0;
+          padding: var(--space-2xs) var(--space-xs);
+          border-inline: var(--line-s) solid var(--border);
+          border-block-start: var(--line-s) solid var(--border);
+          font-size: var(--text-s);
+          color: var(--fg-2);
+        }
+
+        /* Panels: a gapless grid of cells whose borders meet, one column, then two from a
+           48rem display. A last cell alone in its row spans it. */
+        .cells {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          border-block-start: var(--line-s) solid var(--border);
+          border-inline-start: var(--line-s) solid var(--border);
+
+          @media (width >= 48rem) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            & > :last-child:nth-child(odd) {
+              grid-column: 1 / -1;
+            }
+          }
+        }
+
+        /* Panels directly under a section's header stand apart from its intro. */
+        main > section > header + .cells {
+          margin-block-start: var(--space-s);
+        }
+
+        /* A cell, and a preview card standing as one: its label first, flush with its top. What
+           follows the label is the baseline's. */
+        .cell,
+        .preview-card {
           min-inline-size: 0;
-          padding: var(--space-s);
-          border: var(--line-s) dashed var(--border-3);
-          border-radius: var(--radius-md);
+          margin: 0;
+          padding: var(--space-xs) var(--space-s) var(--space-s);
+          border-block-end: var(--line-s) solid var(--border);
+          border-inline-end: var(--line-s) solid var(--border);
+
+          & > :first-child {
+            margin-block-start: 0;
+          }
 
           & > .label + * {
             margin-block-start: 0;
           }
+
+          /* Text above a sample stands apart from it. */
+          & > p + :is(div, table) {
+            margin-block-start: var(--space-s);
+          }
         }
 
+        /* A label: quiet, in the code font, naming the layer, rule or elements its cell shows. */
         .label {
           margin-block-end: var(--space-xs);
+          font-family: var(--font-code);
           font-size: var(--text-s);
           color: var(--fg-3);
+        }
+
+        /* Names in the composition, a label's, a row's or a token table's, take the text color
+           around them: code's color belongs to the content. */
+        .label code,
+        .specimen > code,
+        .rows > code,
+        .tokens code {
+          padding: 0;
+          background: none;
+          color: inherit;
+        }
+
+        /* A token cell: its heading in small caps, its note quiet. */
+        #tokens .cell {
+          & > h4 {
+            margin-block-end: var(--space-2xs);
+            font-size: var(--text-l);
+            font-variant-caps: all-small-caps;
+            letter-spacing: 0.08em;
+          }
+
+          & > p {
+            margin-block-start: 0;
+            font-size: var(--text-s);
+            color: var(--fg-2);
+          }
+        }
+
+        /* The tables example: each head and body cell on one line, so a narrow display scrolls
+           the table in its wrapper rather than wrapping its dates; its foot may wrap. */
+        #tables :is(thead, tbody) :is(th, td) {
+          white-space: nowrap;
+        }
+
+        /* A token table: the token, a swatch of its value now, then its light and dark values,
+           each with a dot of its color. */
+        .tokens {
+          inline-size: 100%;
+          font-size: var(--text-s);
+
+          & th,
+          & td {
+            white-space: nowrap;
+            vertical-align: middle;
+          }
+
+          & td:nth-child(n + 3) {
+            font-family: var(--font-code);
+          }
+        }
+
+        .tokens tbody > tr > th {
+          font-weight: normal;
+          text-align: start;
+          color: var(--fg-2);
+        }
+
+        .swatch {
+          inline-size: var(--space-xl);
+          block-size: var(--space-s);
+          border: var(--line-s) solid var(--border);
+          border-radius: var(--radius-sm);
+          background: var(--sample);
+        }
+
+        .dot {
+          display: inline-block;
+          inline-size: 0.75em;
+          block-size: 0.75em;
+          margin-inline-end: var(--space-3xs);
+          border: var(--line-s) solid var(--border);
+          background: var(--sample);
+          vertical-align: -0.05em;
         }
 
         /* Rows of a name and its sample: a token or an element, then what it renders. */
         .specimen,
         .rows {
           display: grid;
-          grid-template-columns: max-content 1fr;
-          gap: var(--space-2xs) var(--space-m);
+          grid-template-columns: max-content minmax(0, 1fr);
+          gap: var(--space-3xs) var(--space-m);
           align-items: center;
-          margin-block-start: var(--space-s);
+          margin-block-start: var(--space-xs);
 
           & > code {
-            color: var(--fg-3);
+            color: var(--fg-2);
           }
         }
 
         .specimen {
           font-size: var(--text-s);
-
-          /* A color row adds a third column: the token's light and dark values. */
-          &.colors {
-            grid-template-columns: max-content max-content 1fr;
-          }
         }
 
         .rows {
           align-items: baseline;
         }
 
-        .values {
-          font-family: var(--font-code);
-          color: var(--fg-2);
-        }
-
         .font-sample {
           font-family: var(--sample);
         }
 
-        /* A fluid token's progress, 0 to 1, as a share of the bar's track. */
+        /* A fluid token: how far the display is through the range, 0 at 22.5rem and 1 at
+           80rem, as the filled share of a track, read out as a whole percent, with the range's
+           ends under it. */
         .fluid-sample {
+          display: grid;
+          grid-template-columns: max-content minmax(0, 1fr) max-content;
+          gap: var(--space-3xs) var(--space-2xs);
+          align-items: center;
+          font-size: var(--text-xs);
+          color: var(--fg-3);
+          counter-reset: fluid round(var(--sample) * 100);
+
+          & > * {
+            margin: 0;
+          }
+
+          & > :last-child {
+            grid-column: 1 / -1;
+          }
+        }
+
+        .fluid-track {
+          block-size: var(--space-xs);
+          overflow: hidden;
+          border: var(--line-s) solid var(--border-2);
+          border-radius: var(--radius-sm);
+          background: var(--bg-0);
+        }
+
+        .fluid-fill {
           inline-size: calc(var(--sample) * 100%);
-          block-size: var(--space-s);
+          block-size: 100%;
           background: var(--blue);
+        }
+
+        .fluid-readout::after {
+          content: counter(fluid) "%";
+        }
+
+        /* A fluid row closes its scale as a group of its own: it and its name stand a --space-m
+           below the steps, both, so the name stays centered on the sample. */
+        .specimen > :has(+ .fluid-sample),
+        .specimen > .fluid-sample {
+          margin-block-start: var(--space-m);
+        }
+
+        /* A row of a sample and its note: the step's multiple, or its size's range. */
+        .scale-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: var(--space-3xs) var(--space-s);
+
+          & > small {
+            font-family: var(--font-code);
+            font-size: var(--text-xs);
+            color: var(--fg-3);
+          }
         }
 
         .space-sample {
@@ -130,8 +313,10 @@
           border: var(--line-s) solid var(--blue);
         }
 
+        /* A line sample: a rule across its column, as thick as its token, in the text color so
+           a one-pixel step between widths reads at a glance. */
         .line-sample {
-          border-block-start: var(--sample) solid var(--fg-2);
+          border-block-start: var(--sample) solid var(--fg);
         }
 
         .text-sample {
@@ -146,23 +331,30 @@
 
         .radius-sample {
           width: var(--space-2xl);
-          height: var(--space-xl);
+          height: var(--space-l);
           border: var(--line-s) solid var(--fg-2);
           border-radius: var(--sample);
         }
 
-        .swatch {
-          width: var(--space-2xl);
-          height: var(--space-l);
+        /* A scope sample: a container forcing a scheme, framed and padded apart from its cell. */
+        .scope-sample {
+          margin-block-start: var(--space-xs);
+          padding: var(--space-2xs) var(--space-s);
           border: var(--line-s) solid var(--border);
-          border-radius: var(--radius-sm);
-          background: var(--sample);
         }
 
-        /* A row of button samples, wrapping with a gap between lines. */
+        /* A hook sample: a consumer's subtree setting the elements layer's three hooks. */
+        .hook-sample {
+          --interaction-color: var(--magenta);
+          --code-color: var(--purple);
+          --kbd-color: var(--orange);
+        }
+
+        /* A row of samples, wrapping with a gap between lines. */
         .sample-row {
           display: flex;
           flex-wrap: wrap;
+          align-items: center;
           gap: var(--space-2xs);
         }
 
@@ -177,6 +369,181 @@
             white-space: nowrap;
           }
         }
+
+        /* Forms: a two-column grid, each name beside its control, inside its fieldset. Hidden
+           controls and the datalist take no row. */
+        .form-grid {
+          display: grid;
+          grid-template-columns: max-content minmax(0, 1fr);
+          gap: var(--space-2xs) var(--space-s);
+          align-items: center;
+
+          & > :not(legend) {
+            justify-self: start;
+            max-inline-size: 100%;
+            margin: 0;
+          }
+
+          & > label,
+          & > span:not(.sample-row) {
+            font-size: var(--text-s);
+            color: var(--fg-2);
+          }
+        }
+
+        #forms fieldset + fieldset {
+          margin-block-start: var(--space-xs);
+        }
+
+        /* Embedded: each sample in an equal tile, three to a row on a wide display and two on a
+           phone, its element named under it. Every tile's sample area is one height and holds
+           its sample on the area's bottom edge, so samples and names line up across a row. A
+           wide tile spans two columns, a full one the row. The frame fills its cell. */
+        .tiles {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-xs);
+
+          @media (width >= 30rem) {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+
+        .tile {
+          display: grid;
+          grid-template-rows: 7rem auto;
+          gap: var(--space-3xs);
+          min-inline-size: 0;
+          padding: var(--space-2xs);
+          border: var(--line-s) solid var(--border);
+          background: var(--bg-0);
+
+          &.tile-wide {
+            grid-column: span 2;
+          }
+
+          &.tile-full {
+            grid-column: 1 / -1;
+          }
+        }
+
+        .tile-sample {
+          display: grid;
+          place-items: end center;
+          min-inline-size: 0;
+
+          & > :is(img, picture, svg, canvas, video, object, embed) {
+            max-inline-size: 100%;
+            block-size: auto;
+          }
+
+          & > picture > img {
+            display: block;
+            max-inline-size: 100%;
+            block-size: auto;
+          }
+
+          & > :is(audio, math) {
+            inline-size: 100%;
+          }
+
+          & > math {
+            margin: 0;
+          }
+        }
+
+        .tile-name {
+          font-family: var(--font-code);
+          font-size: var(--text-xs);
+          text-align: center;
+          color: var(--fg-3);
+        }
+
+        #embedded {
+          & iframe {
+            inline-size: 100%;
+          }
+
+          & canvas {
+            border: var(--line-s) solid var(--border-2);
+            background: var(--bg);
+          }
+        }
+
+        /* The comparison grid's cards, as the preview fixture frames them: the card's parts
+           stacked, its label quiet, its buttons in a row, its strip of swatches. */
+        .preview-card {
+          display: grid;
+          align-content: start;
+          gap: var(--space-xs);
+
+          & > * {
+            margin-block: 0;
+          }
+        }
+
+        .preview-label {
+          font-family: var(--font-code);
+          font-size: var(--text-xs);
+          color: var(--fg-3);
+        }
+
+        .preview-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-2xs);
+        }
+
+        .preview-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-3xs);
+          padding: 0;
+          list-style: none;
+
+          & > li {
+            inline-size: var(--space-m);
+            block-size: var(--space-m);
+            margin: 0;
+            border: var(--line-s) solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--sample);
+          }
+        }
+
+        /* The contrast records: compact, each cell on one line, filling their wrapper, and
+           scrolling in it when its column is narrower than the record. */
+        #contrast table {
+          inline-size: 100%;
+          font-size: var(--text-s);
+
+          & caption {
+            text-align: start;
+          }
+
+          & th,
+          & td {
+            white-space: nowrap;
+          }
+
+          & code {
+            padding: 0;
+            background: none;
+            color: inherit;
+          }
+        }
+
+        /* The contrast legend: each mark beside its meaning. */
+        #contrast-legend {
+          display: grid;
+          grid-template-columns: max-content minmax(0, 1fr);
+          gap: var(--space-3xs) var(--space-s);
+          font-size: var(--text-s);
+
+          & > * {
+            margin: 0;
+          }
+        }
       }
     </style>
   </head>
@@ -184,19 +551,11 @@
     <header>
       <h1>spike-html-design</h1>
       <p>
-        The baseline's tokens, every element its elements layer styles, and its tools, rendered
-        by <code>baseline.css</code> alone. It follows the system scheme; a
-        <code>data-scheme</code> of <code>light</code> or <code>dark</code> on the root element
-        forces one.
+        This page renders every token, element and tool class in the baseline with the full
+        entry, <code>full.css</code>, alone. It follows the system color scheme; set
+        <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
+        apply a color profile to its subtree.
       </p>
-      <aside class="note">
-        <p>
-          This page is a workbench. Its arrangement, the full-width grids, the dashed cells and
-          their labels, is composition, in the page's own <code>specimen</code> layer after the
-          baseline: it shows how a composition arranges within the design system, and none of it
-          is the baseline. What sits inside each cell, under its label, is the baseline alone.
-        </p>
-      </aside>
     </header>
 
     <main>
@@ -204,78 +563,172 @@
         <header>
           <h2>Tokens</h2>
           <p>
-            Each token shows a sample that reads it. The fluid samples move between their
-            smallest value below a 22.5rem display and their largest above 80rem: resize the
-            window, or emulate a display.
+            Each token is shown with a sample that uses it. Fluid values grow from a 22.5rem
+            display to an 80rem one; resize the window to watch them change.
           </p>
         </header>
 
         <section id="color">
           <header>
             <h3>Color</h3>
-            <p>Each color token shows its swatch in the current scheme, then its light / dark values.</p>
+            <p>
+              The Now column shows each token in the current scheme and profile. The Light and
+              Dark columns give Flexoki's values.
+            </p>
           </header>
-          <div class="cells wide">
+          <div class="cells">
             <section class="cell">
-              <p class="label"><code>tokens.color</code></p>
+              <div class="label"><code>tokens.color</code></div>
               <h4>Tiers</h4>
-              <p>Surfaces and borders, from the page's surface up, then text, from the strongest down.</p>
-              <div class="specimen colors">
-                <code>--bg</code>
-                <div class="swatch" style="--sample: var(--bg)"></div>
-                <span class="values">#fffcf0 / #100f0f</span>
-                <code>--bg-2</code>
-                <div class="swatch" style="--sample: var(--bg-2)"></div>
-                <span class="values">#f2f0e5 / #1c1b1a</span>
-                <code>--border</code>
-                <div class="swatch" style="--sample: var(--border)"></div>
-                <span class="values">#e6e4d9 / #282726</span>
-                <code>--border-2</code>
-                <div class="swatch" style="--sample: var(--border-2)"></div>
-                <span class="values">#dad8ce / #343331</span>
-                <code>--border-3</code>
-                <div class="swatch" style="--sample: var(--border-3)"></div>
-                <span class="values">#cecdc3 / #403e3c</span>
-                <code>--fg</code>
-                <div class="swatch" style="--sample: var(--fg)"></div>
-                <span class="values">#100f0f / #e6e4d9</span>
-                <code>--fg-2</code>
-                <div class="swatch" style="--sample: var(--fg-2)"></div>
-                <span class="values">#575653 / #b7b5ac</span>
-                <code>--fg-3</code>
-                <div class="swatch" style="--sample: var(--fg-3)"></div>
-                <span class="values">#878580 / #6f6e69</span>
+              <div class="scroll-x">
+                <table class="tokens">
+                  <thead>
+                    <tr>
+                      <th scope="col">Token</th>
+                      <th scope="col">Now</th>
+                      <th scope="col">Light</th>
+                      <th scope="col">Dark</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><code>--bg-0</code></th>
+                      <td><div class="swatch" style="--sample: var(--bg-0)"></div></td>
+                      <td><span class="dot" style="--sample: #f2f0e5"></span>#f2f0e5</td>
+                      <td><span class="dot" style="--sample: #100f0f"></span>#100f0f</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--bg</code></th>
+                      <td><div class="swatch" style="--sample: var(--bg)"></div></td>
+                      <td><span class="dot" style="--sample: #fffcf0"></span>#fffcf0</td>
+                      <td><span class="dot" style="--sample: #1c1b1a"></span>#1c1b1a</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--bg-2</code></th>
+                      <td><div class="swatch" style="--sample: var(--bg-2)"></div></td>
+                      <td><span class="dot" style="--sample: #e6e4d9"></span>#e6e4d9</td>
+                      <td><span class="dot" style="--sample: #282726"></span>#282726</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--border</code></th>
+                      <td><div class="swatch" style="--sample: var(--border)"></div></td>
+                      <td><span class="dot" style="--sample: #dad8ce"></span>#dad8ce</td>
+                      <td><span class="dot" style="--sample: #343331"></span>#343331</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--border-2</code></th>
+                      <td><div class="swatch" style="--sample: var(--border-2)"></div></td>
+                      <td><span class="dot" style="--sample: #cecdc3"></span>#cecdc3</td>
+                      <td><span class="dot" style="--sample: #403e3c"></span>#403e3c</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--fg</code></th>
+                      <td><div class="swatch" style="--sample: var(--fg)"></div></td>
+                      <td><span class="dot" style="--sample: #100f0f"></span>#100f0f</td>
+                      <td><span class="dot" style="--sample: #e6e4d9"></span>#e6e4d9</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--fg-2</code></th>
+                      <td><div class="swatch" style="--sample: var(--fg-2)"></div></td>
+                      <td><span class="dot" style="--sample: #575653"></span>#575653</td>
+                      <td><span class="dot" style="--sample: #b7b5ac"></span>#b7b5ac</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--fg-3</code></th>
+                      <td><div class="swatch" style="--sample: var(--fg-3)"></div></td>
+                      <td><span class="dot" style="--sample: #878580"></span>#878580</td>
+                      <td><span class="dot" style="--sample: #6f6e69"></span>#6f6e69</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </section>
             <section class="cell">
-              <p class="label"><code>tokens.color</code></p>
+              <div class="label"><code>tokens.color</code></div>
               <h4>Hues</h4>
-              <p>Named for their color; they carry no meaning.</p>
-              <div class="specimen colors">
-                <code>--red</code>
-                <div class="swatch" style="--sample: var(--red)"></div>
-                <span class="values">#af3029 / #d14d41</span>
-                <code>--orange</code>
-                <div class="swatch" style="--sample: var(--orange)"></div>
-                <span class="values">#bc5215 / #da702c</span>
-                <code>--yellow</code>
-                <div class="swatch" style="--sample: var(--yellow)"></div>
-                <span class="values">#ad8301 / #d0a215</span>
-                <code>--green</code>
-                <div class="swatch" style="--sample: var(--green)"></div>
-                <span class="values">#66800b / #879a39</span>
-                <code>--cyan</code>
-                <div class="swatch" style="--sample: var(--cyan)"></div>
-                <span class="values">#24837b / #3aa99f</span>
-                <code>--blue</code>
-                <div class="swatch" style="--sample: var(--blue)"></div>
-                <span class="values">#205ea6 / #4385be</span>
-                <code>--purple</code>
-                <div class="swatch" style="--sample: var(--purple)"></div>
-                <span class="values">#5e409d / #8b7ec8</span>
-                <code>--magenta</code>
-                <div class="swatch" style="--sample: var(--magenta)"></div>
-                <span class="values">#a02f6f / #ce5d97</span>
+              <div class="scroll-x">
+                <table class="tokens">
+                  <thead>
+                    <tr>
+                      <th scope="col">Token</th>
+                      <th scope="col">Now</th>
+                      <th scope="col">Light</th>
+                      <th scope="col">Dark</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><code>--red</code></th>
+                      <td><div class="swatch" style="--sample: var(--red)"></div></td>
+                      <td><span class="dot" style="--sample: #af3029"></span>#af3029</td>
+                      <td><span class="dot" style="--sample: #d14d41"></span>#d14d41</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--orange</code></th>
+                      <td><div class="swatch" style="--sample: var(--orange)"></div></td>
+                      <td><span class="dot" style="--sample: #bc5215"></span>#bc5215</td>
+                      <td><span class="dot" style="--sample: #da702c"></span>#da702c</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--yellow</code></th>
+                      <td><div class="swatch" style="--sample: var(--yellow)"></div></td>
+                      <td><span class="dot" style="--sample: #ad8301"></span>#ad8301</td>
+                      <td><span class="dot" style="--sample: #d0a215"></span>#d0a215</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--green</code></th>
+                      <td><div class="swatch" style="--sample: var(--green)"></div></td>
+                      <td><span class="dot" style="--sample: #408739"></span>#408739</td>
+                      <td><span class="dot" style="--sample: #61a25a"></span>#61a25a</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--cyan</code></th>
+                      <td><div class="swatch" style="--sample: var(--cyan)"></div></td>
+                      <td><span class="dot" style="--sample: #24837b"></span>#24837b</td>
+                      <td><span class="dot" style="--sample: #3aa99f"></span>#3aa99f</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--blue</code></th>
+                      <td><div class="swatch" style="--sample: var(--blue)"></div></td>
+                      <td><span class="dot" style="--sample: #205ea6"></span>#205ea6</td>
+                      <td><span class="dot" style="--sample: #4385be"></span>#4385be</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--purple</code></th>
+                      <td><div class="swatch" style="--sample: var(--purple)"></div></td>
+                      <td><span class="dot" style="--sample: #5e409d"></span>#5e409d</td>
+                      <td><span class="dot" style="--sample: #8b7ec8"></span>#8b7ec8</td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--magenta</code></th>
+                      <td><div class="swatch" style="--sample: var(--magenta)"></div></td>
+                      <td><span class="dot" style="--sample: #a02f6f"></span>#a02f6f</td>
+                      <td><span class="dot" style="--sample: #ce5d97"></span>#ce5d97</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section class="cell">
+              <div class="label"><code>data-scheme</code>, <code>data-palette</code></div>
+              <h4>Scopes</h4>
+              <p>
+                Each box forces a scheme on its subtree and paints its own surface and text, as
+                the page root does.
+              </p>
+              <div class="scope-sample" data-scheme="dark" data-palette="flexoki">
+                <p>
+                  Forced <code>dark</code>: text in <code>--fg</code>, a
+                  <a href="#color">link to the color tokens</a>, and <kbd>Ctrl</kbd>.
+                </p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Dark field" placeholder="Field" /></p>
+              </div>
+              <div class="scope-sample" data-scheme="light" data-palette="flexoki">
+                <p>
+                  Forced <code>light</code>: text in <code>--fg</code>, a
+                  <a href="#color">link to the color tokens</a>, and <kbd>Ctrl</kbd>.
+                </p>
+                <p><button type="button">Button</button> <input type="text" aria-label="Light field" placeholder="Field" /></p>
               </div>
             </section>
           </div>
@@ -284,49 +737,77 @@
         <section id="space">
           <header>
             <h3>Space</h3>
-            <p>A fluid scale of nine steps from one base, two fixed line widths, and the radii.</p>
+            <p>
+              The space facet holds nine spacing steps, each a multiple of one fluid base, two
+              fixed line widths, and the radii.
+            </p>
           </header>
           <div class="cells">
             <section class="cell">
-              <p class="label"><code>tokens.space</code></p>
-              <h4>Progress and base</h4>
-              <p>
-                The facet's progress through the display range, as a share of the bar, and the fluid
-                base every step multiplies.
-              </p>
-              <div class="specimen">
-                <code>--space-fluid</code>
-                <div class="fluid-sample" style="--sample: var(--space-fluid)"></div>
-                <code>--space-base</code>
-                <div class="space-sample" style="--sample: var(--space-base)"></div>
-              </div>
-            </section>
-            <section class="cell">
-              <p class="label"><code>tokens.space</code></p>
+              <div class="label"><code>tokens.space</code></div>
               <h4>Scale</h4>
               <div class="specimen">
+                <code>--space-base</code>
+                <div class="scale-row" style="--sample: var(--space-base)">
+                  <div class="space-sample"></div>
+                  <small>1 → 1.125rem, the unit every step multiplies</small>
+                </div>
                 <code>--space-3xs</code>
-                <div class="space-sample" style="--sample: var(--space-3xs)"></div>
+                <div class="scale-row" style="--sample: var(--space-3xs)">
+                  <div class="space-sample"></div>
+                  <small>× 0.25</small>
+                </div>
                 <code>--space-2xs</code>
-                <div class="space-sample" style="--sample: var(--space-2xs)"></div>
+                <div class="scale-row" style="--sample: var(--space-2xs)">
+                  <div class="space-sample"></div>
+                  <small>× 0.5</small>
+                </div>
                 <code>--space-xs</code>
-                <div class="space-sample" style="--sample: var(--space-xs)"></div>
+                <div class="scale-row" style="--sample: var(--space-xs)">
+                  <div class="space-sample"></div>
+                  <small>× 0.75</small>
+                </div>
                 <code>--space-s</code>
-                <div class="space-sample" style="--sample: var(--space-s)"></div>
+                <div class="scale-row" style="--sample: var(--space-s)">
+                  <div class="space-sample"></div>
+                  <small>× 1</small>
+                </div>
                 <code>--space-m</code>
-                <div class="space-sample" style="--sample: var(--space-m)"></div>
+                <div class="scale-row" style="--sample: var(--space-m)">
+                  <div class="space-sample"></div>
+                  <small>× 1.5</small>
+                </div>
                 <code>--space-l</code>
-                <div class="space-sample" style="--sample: var(--space-l)"></div>
+                <div class="scale-row" style="--sample: var(--space-l)">
+                  <div class="space-sample"></div>
+                  <small>× 2</small>
+                </div>
                 <code>--space-xl</code>
-                <div class="space-sample" style="--sample: var(--space-xl)"></div>
+                <div class="scale-row" style="--sample: var(--space-xl)">
+                  <div class="space-sample"></div>
+                  <small>× 3</small>
+                </div>
                 <code>--space-2xl</code>
-                <div class="space-sample" style="--sample: var(--space-2xl)"></div>
+                <div class="scale-row" style="--sample: var(--space-2xl)">
+                  <div class="space-sample"></div>
+                  <small>× 4</small>
+                </div>
                 <code>--space-3xl</code>
-                <div class="space-sample" style="--sample: var(--space-3xl)"></div>
+                <div class="scale-row" style="--sample: var(--space-3xl)">
+                  <div class="space-sample"></div>
+                  <small>× 6</small>
+                </div>
+                <code>--space-fluid</code>
+                <div class="fluid-sample" style="--sample: var(--space-fluid)">
+                  <span>22.5rem</span>
+                  <div class="fluid-track"><div class="fluid-fill"></div></div>
+                  <span>80rem</span>
+                  <p>Fluid expansion, from the narrowest display to the widest: <span class="fluid-readout"></span></p>
+                </div>
               </div>
             </section>
             <section class="cell">
-              <p class="label"><code>tokens.space</code></p>
+              <div class="label"><code>tokens.space</code></div>
               <h4>Lines</h4>
               <div class="specimen">
                 <code>--line-s</code>
@@ -336,7 +817,7 @@
               </div>
             </section>
             <section class="cell">
-              <p class="label"><code>tokens.space</code></p>
+              <div class="label"><code>tokens.space</code></div>
               <h4>Radii</h4>
               <div class="specimen">
                 <code>--radius-base</code>
@@ -358,43 +839,66 @@
           <header>
             <h3>Type</h3>
             <p>
-              A text scale whose body and small steps stay fixed while the steps above them grow,
-              then role fonts and leadings.
+              Body and smaller text keep a fixed size; the larger steps grow with the display.
+              Fonts and leadings are named for their role.
             </p>
           </header>
           <div class="cells">
             <section class="cell">
-              <p class="label"><code>tokens.type</code></p>
-              <h4>Progress</h4>
-              <div class="specimen">
-                <code>--type-fluid</code>
-                <div class="fluid-sample" style="--sample: var(--type-fluid)"></div>
-              </div>
-            </section>
-            <section class="cell">
-              <p class="label"><code>tokens.type</code></p>
+              <div class="label"><code>tokens.type</code></div>
               <h4>Scale</h4>
               <div class="specimen">
                 <code>--text-xs</code>
-                <span class="text-sample" style="--sample: var(--text-xs)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-xs)">
+                  <span class="text-sample">Specimen</span>
+                  <small>0.7901rem, fixed</small>
+                </div>
                 <code>--text-s</code>
-                <span class="text-sample" style="--sample: var(--text-s)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-s)">
+                  <span class="text-sample">Specimen</span>
+                  <small>0.8889rem, fixed</small>
+                </div>
                 <code>--text-m</code>
-                <span class="text-sample" style="--sample: var(--text-m)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-m)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1rem, fixed</small>
+                </div>
                 <code>--text-l</code>
-                <span class="text-sample" style="--sample: var(--text-l)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-l)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.125 → 1.2rem</small>
+                </div>
                 <code>--text-xl</code>
-                <span class="text-sample" style="--sample: var(--text-xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.2656 → 1.44rem</small>
+                </div>
                 <code>--text-2xl</code>
-                <span class="text-sample" style="--sample: var(--text-2xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-2xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.4238 → 1.728rem</small>
+                </div>
                 <code>--text-3xl</code>
-                <span class="text-sample" style="--sample: var(--text-3xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-3xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.6018 → 2.0736rem</small>
+                </div>
                 <code>--text-4xl</code>
-                <span class="text-sample" style="--sample: var(--text-4xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-4xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.802 → 2.4883rem</small>
+                </div>
+                <code>--type-fluid</code>
+                <div class="fluid-sample" style="--sample: var(--type-fluid)">
+                  <span>22.5rem</span>
+                  <div class="fluid-track"><div class="fluid-fill"></div></div>
+                  <span>80rem</span>
+                  <p>Fluid expansion, from the narrowest display to the widest: <span class="fluid-readout"></span></p>
+                </div>
               </div>
             </section>
             <section class="cell">
-              <p class="label"><code>tokens.type</code></p>
+              <div class="label"><code>tokens.type</code></div>
               <h4>Fonts</h4>
               <div class="specimen">
                 <code>--font-body</code>
@@ -408,17 +912,17 @@
               </div>
             </section>
             <section class="cell">
-              <p class="label"><code>tokens.type</code></p>
+              <div class="label"><code>tokens.type</code></div>
               <h4>Leading</h4>
               <div class="specimen">
                 <code>--leading-body</code>
-                <span class="leading-sample" style="--sample: var(--leading-body)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-body)">Text that wraps onto a second line.</span>
                 <code>--leading-heading</code>
-                <span class="leading-sample" style="--sample: var(--leading-heading)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-heading)">Text that wraps onto a second line.</span>
                 <code>--leading-ui</code>
-                <span class="leading-sample" style="--sample: var(--leading-ui)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-ui)">Text that wraps onto a second line.</span>
                 <code>--leading-code</code>
-                <span class="leading-sample" style="--sample: var(--leading-code)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-code)">Text that wraps onto a second line.</span>
               </div>
             </section>
           </div>
@@ -429,9 +933,10 @@
         <header>
           <h2>Elements</h2>
           <p>
-            Every rendered element as the elements layer styles it, with no classes: paint, type,
-            borders, radius, margins and paddings only, so each keeps its native layout and
-            behavior. Each cell's label names the elements it shows.
+            The elements layer styles every rendered element without classes, and each keeps its
+            native layout and behavior. Three hooks recolor a subtree:
+            <code>--interaction-color</code> for links, focus, selection and hover borders,
+            <code>--code-color</code> for inline code, and <code>--kbd-color</code> for keys.
           </p>
         </header>
 
@@ -439,10 +944,10 @@
           <h3>Prose</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;h1&gt;</code> <code>&lt;h2&gt;</code> <code>&lt;h3&gt;</code>
                 <code>&lt;h4&gt;</code> <code>&lt;h5&gt;</code> <code>&lt;h6&gt;</code>
-              </p>
+              </div>
               <h1>Heading one</h1>
               <h2>Heading two</h2>
               <h3>Heading three</h3>
@@ -451,19 +956,37 @@
               <h6>Heading six</h6>
             </div>
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;p&gt;</code> <code>&lt;a&gt;</code> <code>&lt;strong&gt;</code>
                 <code>&lt;em&gt;</code> <code>&lt;code&gt;</code> <code>&lt;kbd&gt;</code>
-              </p>
+              </div>
               <p>
                 A paragraph of body text in the body font, with
                 <a href="#prose">a link to this section</a>, <strong>strong text</strong>,
                 <em>emphasis</em>, inline <code>code</code>, and a key, <kbd>T</kbd>.
               </p>
-              <p>A second paragraph, a block after a block.</p>
+              <p>A second paragraph follows the first.</p>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;ul&gt;</code> <code>&lt;ol&gt;</code> <code>&lt;li&gt;</code></p>
+              <div class="label">
+                <code>&lt;a&gt;</code> <code>&lt;code&gt;</code> <code>&lt;kbd&gt;</code>
+                <code>&lt;input&gt;</code> <code>&lt;button&gt;</code>, recolored by the three
+                hooks
+              </div>
+              <div class="hook-sample">
+                <p>
+                  <a href="#prose">A magenta link</a>, <code>purple code</code>, and orange keys:
+                  <kbd>Ctrl</kbd> <kbd>K</kbd>.
+                </p>
+                <p>
+                  <input type="text" aria-label="A hooked field" placeholder="Hover or type" />
+                  <input type="checkbox" aria-label="A hooked checkbox" checked />
+                  <button type="button">Hover</button>
+                </p>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="label"><code>&lt;ul&gt;</code> <code>&lt;ol&gt;</code> <code>&lt;li&gt;</code></div>
               <ul>
                 <li>An unordered item</li>
                 <li>A second item</li>
@@ -474,21 +997,21 @@
               </ol>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;blockquote&gt;</code></p>
+              <div class="label"><code>&lt;blockquote&gt;</code></div>
               <blockquote>
-                <p>A blockquote, set off by a rule at its start edge.</p>
+                <p>A quotation, set off by a rule on its leading edge.</p>
               </blockquote>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;pre&gt;</code>, with the tools layer's <code>.scroll-x</code></p>
-              <pre class="scroll-x"><code>// A preformatted block in the code font, scrolled by the tools layer's .scroll-x.
+              <div class="label"><code>&lt;pre&gt;</code> with <code>.scroll-x</code></div>
+              <pre class="scroll-x"><code>// Preformatted text in the code font. A line too long for its box scrolls.
 const answer = 42;</code></pre>
             </div>
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;table&gt;</code> <code>&lt;thead&gt;</code> <code>&lt;tbody&gt;</code>
                 <code>&lt;tr&gt;</code> <code>&lt;th&gt;</code> <code>&lt;td&gt;</code>
-              </p>
+              </div>
               <table>
                 <thead>
                   <tr>
@@ -509,7 +1032,7 @@ const answer = 42;</code></pre>
               </table>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;hr&gt;</code></p>
+              <div class="label"><code>&lt;hr&gt;</code></div>
               <p>A paragraph before the rule.</p>
               <hr />
               <p>A paragraph after the rule.</p>
@@ -521,7 +1044,7 @@ const answer = 42;</code></pre>
           <h3>Text-level</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label">Text-level elements</p>
+              <div class="label">Text-level elements</div>
               <div class="rows">
                 <code>&lt;small&gt;</code>
                 <span><small>small print</small></span>
@@ -564,7 +1087,7 @@ const answer = 42;</code></pre>
                 <code>&lt;br&gt;</code>
                 <span>a line<br />break</span>
                 <code>&lt;wbr&gt;</code>
-                <span>a long<wbr />word broken at its wbr</span>
+                <span>a long<wbr />word that may break at its wbr</span>
                 <code>&lt;del&gt;</code>
                 <span><del>removed text</del></span>
                 <code>&lt;ins&gt;</code>
@@ -572,16 +1095,16 @@ const answer = 42;</code></pre>
               </div>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;hgroup&gt;</code></p>
+              <div class="label"><code>&lt;hgroup&gt;</code></div>
               <hgroup>
                 <h4>A heading group</h4>
                 <p>Its subtitle.</p>
               </hgroup>
-              <p>A paragraph after the group.</p>
+              <p>A paragraph follows the group.</p>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;address&gt;</code></p>
-              <address>An address, for the page's contact.</address>
+              <div class="label"><code>&lt;address&gt;</code></div>
+              <address>Contact details for the page's author.</address>
             </div>
           </div>
         </section>
@@ -590,7 +1113,7 @@ const answer = 42;</code></pre>
           <h3>Grouping</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label"><code>&lt;dl&gt;</code> <code>&lt;dt&gt;</code> <code>&lt;dd&gt;</code></p>
+              <div class="label"><code>&lt;dl&gt;</code> <code>&lt;dt&gt;</code> <code>&lt;dd&gt;</code></div>
               <dl>
                 <dt>A term</dt>
                 <dd>Its definition.</dd>
@@ -599,25 +1122,25 @@ const answer = 42;</code></pre>
               </dl>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;menu&gt;</code></p>
+              <div class="label"><code>&lt;menu&gt;</code></div>
               <menu>
                 <li>A menu item</li>
                 <li>A second item</li>
               </menu>
             </div>
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;figure&gt;</code> <code>&lt;figcaption&gt;</code> <code>&lt;div&gt;</code>
-              </p>
+              </div>
               <figure>
-                <div>A div of content in a figure.</div>
-                <figcaption>A figcaption names the figure.</figcaption>
+                <div>The figure's content, in a div.</div>
+                <figcaption>A caption names the figure.</figcaption>
               </figure>
             </div>
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;search&gt;</code> <code>&lt;form&gt;</code> <code>&lt;label&gt;</code>
-              </p>
+              </div>
               <search>
                 <form>
                   <label for="specimen-search">Search</label>
@@ -626,11 +1149,11 @@ const answer = 42;</code></pre>
               </search>
             </div>
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;article&gt;</code> <code>&lt;header&gt;</code> <code>&lt;section&gt;</code>
                 <code>&lt;aside&gt;</code>
                 <code>&lt;nav&gt;</code> <code>&lt;footer&gt;</code>
-              </p>
+              </div>
               <article>
                 <header>An article's header</header>
                 <section>A section of the article.</section>
@@ -644,221 +1167,312 @@ const answer = 42;</code></pre>
 
         <section id="tables">
           <h3>Tables</h3>
-          <div class="cells wide">
+          <div class="cells">
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;caption&gt;</code> <code>&lt;colgroup&gt;</code> <code>&lt;col&gt;</code>
-                <code>&lt;tfoot&gt;</code>
-              </p>
-              <table>
-                <caption>
-                  A caption, then column groups, a head, a body and a foot.
-                </caption>
-                <colgroup>
-                  <col />
-                  <col />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th scope="col">Step</th>
-                    <th scope="col">Size</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>--text-s</code></td>
-                    <td>Small</td>
-                  </tr>
-                  <tr>
-                    <td><code>--text-m</code></td>
-                    <td>Body</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td>Two steps</td>
-                    <td>Of eight</td>
-                  </tr>
-                </tfoot>
-              </table>
+                <code>&lt;tfoot&gt;</code>, with <code>.table-full</code>
+              </div>
+              <div class="scroll-x">
+                <table class="table-full">
+                  <caption>
+                    Recent runs of the check, newest last. Durations are wall-clock time from
+                    start to finish.
+                  </caption>
+                  <colgroup>
+                    <col />
+                    <col span="2" />
+                    <col span="3" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th scope="col">Run</th>
+                      <th scope="col">Branch</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Duration</th>
+                      <th scope="col">Started</th>
+                      <th scope="col">Author</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1201</td>
+                      <td><code>main</code></td>
+                      <td>passed</td>
+                      <td>2m 09s</td>
+                      <td><time datetime="2026-10-12T09:14">Oct 12, 09:14</time></td>
+                      <td>ada</td>
+                    </tr>
+                    <tr>
+                      <td>1202</td>
+                      <td><code>profiles</code></td>
+                      <td>passed</td>
+                      <td>2m 21s</td>
+                      <td><time datetime="2026-10-12T14:02">Oct 12, 14:02</time></td>
+                      <td>grace</td>
+                    </tr>
+                    <tr>
+                      <td>1203</td>
+                      <td><code>profiles</code></td>
+                      <td>failed</td>
+                      <td>48s</td>
+                      <td><time datetime="2026-10-13T08:47">Oct 13, 08:47</time></td>
+                      <td>grace</td>
+                    </tr>
+                    <tr>
+                      <td>1204</td>
+                      <td><code>main</code></td>
+                      <td>passed</td>
+                      <td>2m 14s</td>
+                      <td><time datetime="2026-10-13T11:30">Oct 13, 11:30</time></td>
+                      <td>ada</td>
+                    </tr>
+                    <tr>
+                      <td>1205</td>
+                      <td><code>specimen</code></td>
+                      <td>cancelled</td>
+                      <td>1m 02s</td>
+                      <td><time datetime="2026-10-13T16:55">Oct 13, 16:55</time></td>
+                      <td>linus</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="3">Five runs: three passed, one failed, one cancelled</td>
+                      <td>8m 34s</td>
+                      <td colspan="2">Total duration</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         </section>
 
         <section id="forms">
           <h3>Forms</h3>
-          <form class="cells wide">
+          <form class="cells">
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>&lt;fieldset&gt;</code> <code>&lt;legend&gt;</code> <code>&lt;label&gt;</code>
-                <code>&lt;input&gt;</code>, by type, and <code>&lt;datalist&gt;</code>
-              </p>
-              <fieldset>
-                <legend>Every input type</legend>
-                <p><label>text <input type="text" placeholder="A placeholder" /></label></p>
-                <p><label>search <input type="search" /></label></p>
-                <p><label>email <input type="email" /></label></p>
-                <p><label>url <input type="url" /></label></p>
-                <p><label>tel <input type="tel" /></label></p>
-                <p><label>password <input type="password" value="password" /></label></p>
-                <p><label>number <input type="number" value="42" /></label></p>
-                <p><label>range <input type="range" /></label></p>
-                <p><label>date <input type="date" /></label></p>
-                <p><label>month <input type="month" /></label></p>
-                <p><label>week <input type="week" /></label></p>
-                <p><label>time <input type="time" /></label></p>
-                <p><label>datetime-local <input type="datetime-local" /></label></p>
-                <p><label>color <input type="color" value="#205ea6" /></label></p>
-                <p>
-                  <label><input type="checkbox" checked /> checkbox</label>
-                  <label><input type="radio" name="specimen-radio" checked /> radio</label>
-                  <label><input type="radio" name="specimen-radio" /> radio</label>
-                </p>
-                <p><label>file <input type="file" /></label></p>
-                <p>
-                  <label>list <input list="specimen-choices" /></label>
-                  <datalist id="specimen-choices">
-                    <option value="One"></option>
-                    <option value="Two"></option>
-                  </datalist>
-                </p>
+                <code>&lt;input&gt;</code> <code>&lt;datalist&gt;</code>
+              </div>
+              <fieldset class="form-grid">
+                <legend>Input types that take a value</legend>
+                <label for="form-text">text</label>
+                <input id="form-text" type="text" placeholder="A placeholder" />
+                <label for="form-search">search</label>
+                <input id="form-search" type="search" value="release notes" />
+                <label for="form-email">email</label>
+                <input id="form-email" type="email" value="ada@example.com" />
+                <label for="form-url">url</label>
+                <input id="form-url" type="url" value="https://example.com" />
+                <label for="form-tel">tel</label>
+                <input id="form-tel" type="tel" value="+1 555 0100" />
+                <label for="form-password">password</label>
+                <input id="form-password" type="password" value="password" />
+                <label for="form-number">number</label>
+                <input id="form-number" type="number" value="42" />
+                <label for="form-range">range</label>
+                <input id="form-range" type="range" />
+                <label for="form-date">date</label>
+                <input id="form-date" type="date" value="2026-10-13" />
+                <label for="form-month">month</label>
+                <input id="form-month" type="month" value="2026-10" />
+                <label for="form-week">week</label>
+                <input id="form-week" type="week" value="2026-W42" />
+                <label for="form-time">time</label>
+                <input id="form-time" type="time" value="09:30" />
+                <label for="form-datetime">datetime-local</label>
+                <input id="form-datetime" type="datetime-local" value="2026-10-13T09:30" />
+                <label for="form-color">color</label>
+                <input id="form-color" type="color" value="#205ea6" />
+                <label for="form-file">file</label>
+                <input id="form-file" type="file" />
+                <label for="form-list">list</label>
+                <input id="form-list" list="specimen-choices" />
+                <datalist id="specimen-choices">
+                  <option value="One"></option>
+                  <option value="Two"></option>
+                </datalist>
                 <input type="hidden" value="hidden" />
-                <p>
-                  <input type="submit" />
-                  <input type="reset" />
-                  <input type="button" value="input button" />
-                  <input
-                    type="image"
-                    alt="Submit"
-                    width="24"
-                    height="24"
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='4' fill='%23878580'/%3E%3C/svg%3E"
-                  />
-                </p>
               </fieldset>
             </div>
             <div class="cell">
-              <p class="label">
-                <code>&lt;button&gt;</code> <code>&lt;select&gt;</code> <code>&lt;optgroup&gt;</code>
-                <code>&lt;option&gt;</code> <code>&lt;textarea&gt;</code>
-                <code>&lt;output&gt;</code> <code>&lt;progress&gt;</code> <code>&lt;meter&gt;</code>
-              </p>
-              <fieldset>
+              <div class="label">
+                <code>&lt;fieldset&gt;</code> <code>&lt;legend&gt;</code> <code>&lt;label&gt;</code>
+                <code>&lt;input&gt;</code> (choices and buttons) <code>&lt;button&gt;</code> <code>&lt;select&gt;</code> <code>&lt;optgroup&gt;</code>
+                <code>&lt;option&gt;</code> <code>&lt;textarea&gt;</code> <code>&lt;output&gt;</code>
+                <code>&lt;progress&gt;</code> <code>&lt;meter&gt;</code>
+              </div>
+              <fieldset class="sample-row">
+                <legend>Choices</legend>
+                <label><input type="checkbox" checked /> checkbox</label>
+                <label><input type="checkbox" /> unchecked</label>
+                <label><input type="radio" name="specimen-radio" checked /> radio</label>
+                <label><input type="radio" name="specimen-radio" /> radio</label>
+              </fieldset>
+              <fieldset class="sample-row">
+                <legend>Actions</legend>
+                <input type="submit" />
+                <input type="reset" />
+                <input type="button" value="input button" />
+                <input
+                  type="image"
+                  alt="Submit"
+                  width="24"
+                  height="24"
+                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='4' fill='%23878580'/%3E%3Cpath d='M7 12h10M13 8l4 4-4 4' fill='none' stroke='%23fffcf0' stroke-width='2'/%3E%3C/svg%3E"
+                />
+              </fieldset>
+              <fieldset class="form-grid">
                 <legend>Other controls</legend>
-                <p>
+                <span>button</span>
+                <span class="sample-row">
                   <button type="button">button</button>
                   <button type="button" disabled>disabled</button>
-                </p>
-                <p>
-                  <label>
-                    select
-                    <select>
-                      <optgroup label="A group">
-                        <option>An option</option>
-                        <option>A second option</option>
-                      </optgroup>
-                    </select>
-                  </label>
-                </p>
-                <p>
-                  <label>
-                    multiple
-                    <select multiple>
-                      <option>An option</option>
-                      <option>A second option</option>
-                    </select>
-                  </label>
-                </p>
-                <p>
-                  <label>textarea <textarea placeholder="A placeholder"></textarea></label>
-                </p>
-                <p><label>output <output>42</output></label></p>
-                <p><label>progress <progress value="0.6"></progress></label></p>
-                <p><label>meter <meter value="0.6"></meter></label></p>
+                </span>
+                <label for="form-select">select</label>
+                <select id="form-select">
+                  <optgroup label="A group">
+                    <option>An option</option>
+                    <option>A second option</option>
+                  </optgroup>
+                </select>
+                <label for="form-multiple">multiple</label>
+                <select id="form-multiple" multiple>
+                  <option>An option</option>
+                  <option>A second option</option>
+                </select>
+                <label for="form-textarea">textarea</label>
+                <textarea id="form-textarea" placeholder="A placeholder"></textarea>
+                <label for="form-output">output</label>
+                <output id="form-output">42</output>
+                <label for="form-progress">progress</label>
+                <progress id="form-progress" value="0.6"></progress>
+                <label for="form-meter">meter</label>
+                <meter id="form-meter" value="0.6"></meter>
               </fieldset>
             </div>
           </form>
         </section>
 
         <section id="embedded">
-          <h3>Embedded</h3>
-          <p>Placeholders from data: URLs and empty sources, so nothing loads from the network.</p>
+          <header>
+            <h3>Embedded</h3>
+            <p>Every sample is inline or a data: URL; nothing loads from the network.</p>
+          </header>
           <div class="cells">
             <div class="cell">
-              <p class="label"><code>&lt;img&gt;</code></p>
-              <img
-                alt="A gray rectangle"
-                width="64"
-                height="40"
-                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' rx='6' fill='%23878580'/%3E%3C/svg%3E"
-              />
+              <div class="label">
+                <code>&lt;img&gt;</code> <code>&lt;picture&gt;</code> <code>&lt;source&gt;</code>
+                <code>&lt;svg&gt;</code> <code>&lt;canvas&gt;</code> <code>&lt;math&gt;</code>
+              </div>
+              <div class="tiles">
+                <div class="tile">
+                  <div class="tile-sample">
+                    <img alt="Hills under a noon sun" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%234385be'/%3E%3Ccircle cx='118' cy='30' r='13' fill='%23d0a215'/%3E%3Cpath d='M0 78 38 48 66 66 104 36 160 72V100H0Z' fill='%2366800b'/%3E%3Cpath d='M0 90 46 70 88 86 128 66 160 82V100H0Z' fill='%23879a39'/%3E%3C/svg%3E" />
+                  </div>
+                  <span class="tile-name">img</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <picture>
+                      <source type="image/svg+xml" srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%235e409d'/%3E%3Crect y='46' width='160' height='54' fill='%23bc5215'/%3E%3Ccircle cx='80' cy='58' r='18' fill='%23d0a215'/%3E%3Cpath d='M0 72 30 60 62 70 100 54 136 66 160 58V100H0Z' fill='%2324837b'/%3E%3Cpath d='M0 88 52 74 96 90 160 76V100H0Z' fill='%23100f0f' fill-opacity='.6'/%3E%3C/svg%3E" />
+                      <img alt="The sun setting over a lake" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%235e409d'/%3E%3Crect y='46' width='160' height='54' fill='%23bc5215'/%3E%3Ccircle cx='80' cy='58' r='18' fill='%23d0a215'/%3E%3Cpath d='M0 72 30 60 62 70 100 54 136 66 160 58V100H0Z' fill='%2324837b'/%3E%3Cpath d='M0 88 52 74 96 90 160 76V100H0Z' fill='%23100f0f' fill-opacity='.6'/%3E%3C/svg%3E" />
+                    </picture>
+                  </div>
+                  <span class="tile-name">picture, source</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <svg width="160" height="100" viewBox="0 0 160 100" role="img" aria-label="Weekly runs, a bar per day">
+                      <path d="M0 99.5H160" style="stroke: var(--border-2)" />
+                      <g style="fill: var(--blue)">
+                        <rect x="6" y="52" width="16" height="47" />
+                        <rect x="28" y="34" width="16" height="65" />
+                        <rect x="50" y="60" width="16" height="39" />
+                        <rect x="72" y="22" width="16" height="77" />
+                        <rect x="94" y="40" width="16" height="59" />
+                      </g>
+                      <rect x="116" y="70" width="16" height="29" style="fill: var(--red)" />
+                      <rect x="138" y="80" width="16" height="19" style="fill: var(--yellow)" />
+                    </svg>
+                  </div>
+                  <span class="tile-name">svg</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <canvas width="160" height="100"></canvas>
+                  </div>
+                  <span class="tile-name">canvas</span>
+                </div>
+                <div class="tile tile-wide">
+                  <div class="tile-sample">
+                    <math display="block">
+                      <mi>x</mi>
+                      <mo>=</mo>
+                      <mfrac>
+                        <mrow>
+                          <mo>−</mo>
+                          <mi>b</mi>
+                          <mo>±</mo>
+                          <msqrt>
+                            <msup><mi>b</mi><mn>2</mn></msup>
+                            <mo>−</mo>
+                            <mn>4</mn>
+                            <mi>a</mi>
+                            <mi>c</mi>
+                          </msqrt>
+                        </mrow>
+                        <mrow><mn>2</mn><mi>a</mi></mrow>
+                      </mfrac>
+                    </math>
+                  </div>
+                  <span class="tile-name">math</span>
+                </div>
+              </div>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;picture&gt;</code> <code>&lt;source&gt;</code></p>
-              <picture>
-                <source
-                  type="image/svg+xml"
-                  srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Ccircle cx='32' cy='20' r='18' fill='%23878580'/%3E%3C/svg%3E"
-                />
-                <img
-                  alt="A gray circle"
-                  width="64"
-                  height="40"
-                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Ccircle cx='32' cy='20' r='18' fill='%23878580'/%3E%3C/svg%3E"
-                />
-              </picture>
+              <div class="label">
+                <code>&lt;video&gt;</code> <code>&lt;track&gt;</code> <code>&lt;audio&gt;</code>
+                <code>&lt;object&gt;</code> <code>&lt;embed&gt;</code>
+              </div>
+              <div class="tiles">
+                <div class="tile">
+                  <div class="tile-sample">
+                    <video controls width="160" height="90" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%231c1b1a'/%3E%3Cpath d='M0 66 40 44 70 58 110 34 160 60V90H0Z' fill='%23403e3c'/%3E%3Ccircle cx='80' cy='45' r='16' fill='%23fffcf0' fill-opacity='.85'/%3E%3Cpath d='M75 37v16l13-8Z' fill='%231c1b1a'/%3E%3C/svg%3E"><track kind="captions" /></video>
+                  </div>
+                  <span class="tile-name">video, track</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <object title="Pass rate, a line over ten runs" type="image/svg+xml" width="120" height="48" data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' style='color-scheme: light dark'%3E%3Cpath d='M0 47.5H120' stroke='%23878580'/%3E%3Cpolyline points='0,38 15,32 30,35 45,22 60,27 75,15 90,20 105,8 120,12' fill='none' stroke='%234385be' stroke-width='2'/%3E%3C/svg%3E">
+                      A line chart of the pass rate.
+                    </object>
+                  </div>
+                  <span class="tile-name">object</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <embed title="Run times, a bar per run" type="image/svg+xml" width="120" height="48" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' style='color-scheme: light dark'%3E%3Cpath d='M0 47.5H120' stroke='%23878580'/%3E%3Cg fill='%23879a39'%3E%3Crect x='4' y='26' width='12' height='21'/%3E%3Crect x='24' y='18' width='12' height='29'/%3E%3Crect x='44' y='30' width='12' height='17'/%3E%3Crect x='64' y='10' width='12' height='37'/%3E%3Crect x='84' y='22' width='12' height='25'/%3E%3C/g%3E%3Crect x='104' y='34' width='12' height='13' fill='%23d14d41'/%3E%3C/svg%3E" />
+                  </div>
+                  <span class="tile-name">embed</span>
+                </div>
+                <div class="tile tile-full">
+                  <div class="tile-sample">
+                    <audio controls><track kind="captions" /></audio>
+                  </div>
+                  <span class="tile-name">audio, track</span>
+                </div>
+              </div>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;iframe&gt;</code></p>
-              <iframe title="An iframe" srcdoc="<p>An iframe's own document.</p>"></iframe>
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;embed&gt;</code></p>
-              <embed
-                type="image/svg+xml"
-                width="64"
-                height="40"
-                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' fill='%23878580'/%3E%3C/svg%3E"
-              />
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;object&gt;</code></p>
-              <object
-                title="A gray rectangle"
-                type="image/svg+xml"
-                width="64"
-                height="40"
-                data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Crect width='64' height='40' fill='%23878580'/%3E%3C/svg%3E"
-              >
-                An object.
-              </object>
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;video&gt;</code> <code>&lt;track&gt;</code></p>
-              <video controls width="240"><track kind="captions" /></video>
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;audio&gt;</code></p>
-              <audio controls><track kind="captions" /></audio>
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;canvas&gt;</code></p>
-              <canvas width="64" height="40"></canvas>
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;svg&gt;</code></p>
-              <svg width="64" height="40" viewBox="0 0 64 40" aria-label="An svg">
-                <rect width="64" height="40" rx="6" fill="currentColor" />
-              </svg>
-            </div>
-            <div class="cell">
-              <p class="label"><code>&lt;math&gt;</code></p>
-              <math display="block">
-                <mi>E</mi>
-                <mo>=</mo>
-                <mi>m</mi>
-                <msup><mi>c</mi><mn>2</mn></msup>
-              </math>
+              <div class="label"><code>&lt;iframe&gt;</code></div>
+              <iframe
+                title="A build log, in an iframe"
+                srcdoc="<!doctype html><meta name='color-scheme' content='light dark'><style>body{margin:0;padding:8px 12px;font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText}h1{margin:0 0 4px;font-size:14px}ul{margin:0;padding-left:18px}span{opacity:.7}</style><h1>Build 1206</h1><ul><li>Lint and format <span>· 12s</span></li><li>Browser tests, headless <span>· 2m 14s</span></li><li>Size report <span>· 3s</span></li></ul><p style='margin:6px 0 0'><span>The frame's own document, in the page's color scheme.</span></p>"
+              ></iframe>
             </div>
           </div>
         </section>
@@ -867,18 +1481,18 @@ const answer = 42;</code></pre>
           <h3>Interactive</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label"><code>&lt;details&gt;</code> <code>&lt;summary&gt;</code></p>
+              <div class="label"><code>&lt;details&gt;</code> <code>&lt;summary&gt;</code></div>
               <details open>
-                <summary>An open details</summary>
-                <p>Its content, shown.</p>
+                <summary>Open by default</summary>
+                <p>Its content shows.</p>
               </details>
               <details>
-                <summary>A closed details</summary>
-                <p>Its content, hidden until opened.</p>
+                <summary>Closed by default</summary>
+                <p>Its content shows once opened.</p>
               </details>
             </div>
             <div class="cell">
-              <p class="label"><code>&lt;dialog&gt;</code></p>
+              <div class="label"><code>&lt;dialog&gt;</code></div>
               <p>
                 <button
                   type="button"
@@ -888,7 +1502,7 @@ const answer = 42;</code></pre>
                 </button>
               </p>
               <dialog id="specimen-dialog">
-                <p>A modal dialog, centered over the page's backdrop.</p>
+                <p>A modal dialog, centered over a dimmed page.</p>
                 <form method="dialog">
                   <button type="submit">Close</button>
                 </form>
@@ -902,10 +1516,9 @@ const answer = 42;</code></pre>
         <header>
           <h2>Tools</h2>
           <p>
-            Opt-in classes, each labeled with its class. A consumer extends buttons and tables
-            by setting their hooks in its own layer: <code>--button-color</code> for buttons,
-            <code>--table-stripe</code> for tables. Scroll and forms have no hook; a consumer's
-            own layer restates their classes.
+            The tools layer's classes are opt-in; each cell's label names its class. A consumer
+            recolors buttons with
+            <code>--button-color</code> and table stripes with <code>--table-stripe</code>.
           </p>
         </header>
 
@@ -913,19 +1526,17 @@ const answer = 42;</code></pre>
           <h3>Buttons</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label">
-                <code>.button</code> on <code>&lt;a&gt;</code>, beside a native
+              <div class="label">
+                <code>.button</code> on <code>&lt;a&gt;</code>, next to a native
                 <code>&lt;button&gt;</code>
-              </p>
+              </div>
               <div class="sample-row">
                 <a class="button" href="#buttons">Jump to buttons</a>
                 <button type="button">A button</button>
               </div>
             </div>
-          </div>
-          <div class="cells wide">
             <div class="cell">
-              <p class="label"><code>.button-&lt;hue&gt;</code> on <code>&lt;button&gt;</code></p>
+              <div class="label"><code>.button-&lt;hue&gt;</code> on <code>&lt;button&gt;</code></div>
               <div class="sample-row">
                 <button type="button" class="button-red">red</button>
                 <button type="button" class="button-orange">orange</button>
@@ -938,9 +1549,9 @@ const answer = 42;</code></pre>
               </div>
             </div>
             <div class="cell">
-              <p class="label">
+              <div class="label">
                 <code>.button-&lt;hue&gt;</code> on <code>&lt;a class="button"&gt;</code>
-              </p>
+              </div>
               <div class="sample-row">
                 <a class="button button-red" href="#buttons">red</a>
                 <a class="button button-orange" href="#buttons">orange</a>
@@ -959,9 +1570,9 @@ const answer = 42;</code></pre>
           <h3>Scroll</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label"><code>.scroll-y</code></p>
+              <div class="label"><code>.scroll-y</code></div>
               <div class="scroll-sample scroll-y">
-                <p>.scroll-y scrolls its overflow vertically, with a stable gutter.</p>
+                <p>.scroll-y scrolls overflow vertically, with a stable gutter.</p>
                 <p>A second paragraph.</p>
                 <p>A third paragraph.</p>
                 <p>A fourth paragraph.</p>
@@ -969,10 +1580,10 @@ const answer = 42;</code></pre>
               </div>
             </div>
             <div class="cell">
-              <p class="label"><code>.scroll-x</code></p>
+              <div class="label"><code>.scroll-x</code></div>
               <div class="scroll-sample scroll-x">
-                .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that
-                will not wrap stays readable to its end in a box narrower than itself.
+                .scroll-x scrolls overflow horizontally, so a line that cannot wrap stays readable
+                to its end.
               </div>
             </div>
           </div>
@@ -982,15 +1593,15 @@ const answer = 42;</code></pre>
           <h3>Forms</h3>
           <div class="cells">
             <div class="cell">
-              <p class="label"><code>.field</code></p>
+              <div class="label"><code>.field</code></div>
               <div class="field">
                 <label for="tools-field">A label</label>
                 <input id="tools-field" type="text" placeholder="Its control" />
-                <small>An optional hint, under its control.</small>
+                <small>An optional hint, below the control.</small>
               </div>
             </div>
             <div class="cell">
-              <p class="label"><code>.field-grow</code> in <code>.field</code></p>
+              <div class="label"><code>.field-grow</code> in <code>.field</code></div>
               <div class="field">
                 <label for="tools-field-grow">A growing field</label>
                 <input
@@ -999,7 +1610,7 @@ const answer = 42;</code></pre>
                   type="text"
                   value="It grows as you type"
                 />
-                <small>Its width follows its content, from a few characters wide.</small>
+                <small>The field widens to fit its content.</small>
               </div>
             </div>
           </div>
@@ -1007,9 +1618,9 @@ const answer = 42;</code></pre>
 
         <section id="tables-tools">
           <h3>Tables</h3>
-          <div class="cells wide">
+          <div class="cells">
             <div class="cell">
-              <p class="label"><code>.table-full</code></p>
+              <div class="label"><code>.table-full</code></div>
               <table class="table-full">
                 <thead>
                   <tr>
@@ -1020,13 +1631,13 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <td><code>.table-full</code></td>
-                    <td>Takes the full inline size.</td>
+                    <td>Fills its container's width.</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div class="cell">
-              <p class="label"><code>.table-striped</code></p>
+              <div class="label"><code>.table-striped</code></div>
               <table class="table-striped">
                 <thead>
                   <tr>
@@ -1041,7 +1652,7 @@ const answer = 42;</code></pre>
                   </tr>
                   <tr>
                     <td>2</td>
-                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code> mixed into <code>--bg</code></td>
                   </tr>
                   <tr>
                     <td>3</td>
@@ -1049,7 +1660,7 @@ const answer = 42;</code></pre>
                   </tr>
                   <tr>
                     <td>4</td>
-                    <td><code>--table-stripe</code>, by default <code>--bg-2</code></td>
+                    <td><code>--table-stripe</code>, by default <code>--bg-2</code> mixed into <code>--bg</code></td>
                   </tr>
                 </tbody>
               </table>
@@ -1058,146 +1669,651 @@ const answer = 42;</code></pre>
         </section>
       </section>
 
+      <section id="profiles">
+        <header>
+          <h2>Profiles</h2>
+          <p>
+            Each row shows one color profile, light then dark. Each card sets
+            <code>data-palette</code> and <code>data-scheme</code> on its own container.
+          </p>
+        </header>
+        <div class="cells">
+          <article class="preview-card" data-palette="flexoki" data-scheme="light">
+            <p class="preview-label">Flexoki · light</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-flexoki-light-branch">Branch</label>
+              <input type="text" id="preview-flexoki-light-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="flexoki" data-scheme="dark">
+            <p class="preview-label">Flexoki · dark</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-flexoki-dark-branch">Branch</label>
+              <input type="text" id="preview-flexoki-dark-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="primer" data-scheme="light">
+            <p class="preview-label">Primer Light Default · light</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-primer-light-branch">Branch</label>
+              <input type="text" id="preview-primer-light-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="primer" data-scheme="dark">
+            <p class="preview-label">Primer Dark Dimmed · dark</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-primer-dark-branch">Branch</label>
+              <input type="text" id="preview-primer-dark-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="catppuccin" data-scheme="light">
+            <p class="preview-label">Catppuccin latte · light</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-catppuccin-light-branch">Branch</label>
+              <input type="text" id="preview-catppuccin-light-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="catppuccin" data-scheme="dark">
+            <p class="preview-label">Catppuccin mocha · dark</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-catppuccin-dark-branch">Branch</label>
+              <input type="text" id="preview-catppuccin-dark-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="everforest" data-scheme="light">
+            <p class="preview-label">Everforest hard · light</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-everforest-light-branch">Branch</label>
+              <input type="text" id="preview-everforest-light-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+          <article class="preview-card" data-palette="everforest" data-scheme="dark">
+            <p class="preview-label">Everforest hard · dark</p>
+            <h3>Nightly build</h3>
+            <p>
+              Read the <a href="#release-notes">release notes</a>, run <code>mise run check</code>,
+              or press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.
+            </p>
+            <p class="preview-buttons">
+              <button type="button">Cancel</button>
+              <button type="button" class="button-blue">Deploy</button>
+              <button type="button" class="button-red">Delete</button>
+            </p>
+            <div class="field">
+              <label for="preview-everforest-dark-branch">Branch</label>
+              <input type="text" id="preview-everforest-dark-branch" value="main" />
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Run</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1204</td>
+                  <td>passed</td>
+                  <td>2m 14s</td>
+                </tr>
+                <tr>
+                  <td>1205</td>
+                  <td>failed</td>
+                  <td>48s</td>
+                </tr>
+                <tr>
+                  <td>1206</td>
+                  <td>queued</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+            <ul class="preview-swatches">
+              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
+              <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-2)" title="--bg-2"></li>
+              <li style="--sample: var(--border)" title="--border"></li>
+              <li style="--sample: var(--border-2)" title="--border-2"></li>
+              <li style="--sample: var(--fg)" title="--fg"></li>
+              <li style="--sample: var(--fg-2)" title="--fg-2"></li>
+              <li style="--sample: var(--fg-3)" title="--fg-3"></li>
+              <li style="--sample: var(--red)" title="--red"></li>
+              <li style="--sample: var(--orange)" title="--orange"></li>
+              <li style="--sample: var(--yellow)" title="--yellow"></li>
+              <li style="--sample: var(--green)" title="--green"></li>
+              <li style="--sample: var(--cyan)" title="--cyan"></li>
+              <li style="--sample: var(--blue)" title="--blue"></li>
+              <li style="--sample: var(--purple)" title="--purple"></li>
+              <li style="--sample: var(--magenta)" title="--magenta"></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
       <section id="contrast">
         <header>
           <h2>Contrast</h2>
           <p>
-            Contrast is graded where legibility matters: text over a color. Each matrix, one per
-            scheme, grades every text token and hue, its rows, over every surface and border, its
-            columns, by the WCAG 2 ratio from relative luminance. AA meets 4.5 for body text; AA
-            large meets 3 for large text; fail is below 3. Each mark is judged on the unrounded
-            ratio, so a 4.50 can still be AA large and a 3.00 can still fail. Surfaces and borders
-            get no ratio of their own. Failures are recorded here, not corrected.
+            Each record gives the WCAG 2 contrast ratio of each text token and hue over each
+            surface and border, for one profile and scheme. Marks are judged on the unrounded
+            ratio; failures are recorded, not corrected.
           </p>
+          <dl id="contrast-legend">
+            <dt>AA</dt>
+            <dd>4.5 or more: meets AA for body text.</dd>
+            <dt>AA-L</dt>
+            <dd>3 or more, under 4.5: meets AA for large text only.</dd>
+            <dt>fail</dt>
+            <dd>Under 3: meets neither.</dd>
+          </dl>
         </header>
-        <div class="cells wide">
-          <div class="cell">
-            <p class="label"><code>&lt;table&gt;</code> in <code>.scroll-x</code></p>
+        <div class="cells">
+          <div class="cell" data-palette="flexoki" data-scheme="light">
+            <div class="label">Flexoki, light</div>
             <div class="scroll-x">
-              <table id="contrast-light">
+              <table id="contrast-flexoki-light">
                 <caption>
-                  Light: each text token's and hue's WCAG 2 contrast ratio over each surface and
-                  border.
+                  Flexoki, light: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
                 </caption>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
-                    <th scope="col"><code>--border-3</code></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>18.62 <span>AA</span></td>
                     <td>16.74 <span>AA</span></td>
+                    <td>18.62 <span>AA</span></td>
                     <td>15.00 <span>AA</span></td>
                     <td>13.39 <span>AA</span></td>
                     <td>11.98 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>7.14 <span>AA</span></td>
                     <td>6.42 <span>AA</span></td>
+                    <td>7.14 <span>AA</span></td>
                     <td>5.75 <span>AA</span></td>
                     <td>5.14 <span>AA</span></td>
                     <td>4.59 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>3.59 <span>AA large</span></td>
-                    <td>3.22 <span>AA large</span></td>
+                    <td>3.22 <span>AA-L</span></td>
+                    <td>3.59 <span>AA-L</span></td>
                     <td>2.89 <span>fail</span></td>
                     <td>2.58 <span>fail</span></td>
                     <td>2.31 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>6.23 <span>AA</span></td>
                     <td>5.61 <span>AA</span></td>
+                    <td>6.23 <span>AA</span></td>
                     <td>5.02 <span>AA</span></td>
-                    <td>4.48 <span>AA large</span></td>
-                    <td>4.01 <span>AA large</span></td>
+                    <td>4.48 <span>AA-L</span></td>
+                    <td>4.01 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
+                    <td>4.22 <span>AA-L</span></td>
                     <td>4.69 <span>AA</span></td>
-                    <td>4.22 <span>AA large</span></td>
-                    <td>3.78 <span>AA large</span></td>
-                    <td>3.37 <span>AA large</span></td>
-                    <td>3.02 <span>AA large</span></td>
+                    <td>3.78 <span>AA-L</span></td>
+                    <td>3.37 <span>AA-L</span></td>
+                    <td>3.02 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>3.39 <span>AA large</span></td>
-                    <td>3.05 <span>AA large</span></td>
+                    <td>3.05 <span>AA-L</span></td>
+                    <td>3.39 <span>AA-L</span></td>
                     <td>2.73 <span>fail</span></td>
                     <td>2.44 <span>fail</span></td>
                     <td>2.18 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>4.39 <span>AA large</span></td>
-                    <td>3.94 <span>AA large</span></td>
-                    <td>3.53 <span>AA large</span></td>
-                    <td>3.16 <span>AA large</span></td>
-                    <td>2.82 <span>fail</span></td>
+                    <td>3.87 <span>AA-L</span></td>
+                    <td>4.31 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                    <td>3.10 <span>AA-L</span></td>
+                    <td>2.77 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>4.43 <span>AA large</span></td>
-                    <td>3.99 <span>AA large</span></td>
-                    <td>3.57 <span>AA large</span></td>
-                    <td>3.19 <span>AA large</span></td>
+                    <td>3.99 <span>AA-L</span></td>
+                    <td>4.43 <span>AA-L</span></td>
+                    <td>3.57 <span>AA-L</span></td>
+                    <td>3.19 <span>AA-L</span></td>
                     <td>2.85 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>6.36 <span>AA</span></td>
                     <td>5.72 <span>AA</span></td>
+                    <td>6.36 <span>AA</span></td>
                     <td>5.12 <span>AA</span></td>
                     <td>4.57 <span>AA</span></td>
-                    <td>4.09 <span>AA large</span></td>
+                    <td>4.09 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>7.58 <span>AA</span></td>
                     <td>6.81 <span>AA</span></td>
+                    <td>7.58 <span>AA</span></td>
                     <td>6.11 <span>AA</span></td>
                     <td>5.45 <span>AA</span></td>
                     <td>4.88 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>6.53 <span>AA</span></td>
                     <td>5.87 <span>AA</span></td>
+                    <td>6.53 <span>AA</span></td>
                     <td>5.26 <span>AA</span></td>
                     <td>4.69 <span>AA</span></td>
-                    <td>4.20 <span>AA large</span></td>
+                    <td>4.20 <span>AA-L</span></td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
-          <div class="cell">
-            <p class="label"><code>&lt;table&gt;</code> in <code>.scroll-x</code></p>
+          <div class="cell" data-palette="flexoki" data-scheme="dark">
+            <div class="label">Flexoki, dark</div>
             <div class="scroll-x">
-              <table id="contrast-dark">
+              <table id="contrast-flexoki-dark">
                 <caption>
-                  Dark: each text token's and hue's WCAG 2 contrast ratio over each surface and
-                  border.
+                  Flexoki, dark: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
                 </caption>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
-                    <th scope="col"><code>--border-3</code></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1219,17 +2335,17 @@ const answer = 42;</code></pre>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>3.75 <span>AA large</span></td>
-                    <td>3.37 <span>AA large</span></td>
+                    <td>3.75 <span>AA-L</span></td>
+                    <td>3.37 <span>AA-L</span></td>
                     <td>2.92 <span>fail</span></td>
                     <td>2.47 <span>fail</span></td>
                     <td>2.08 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>4.42 <span>AA large</span></td>
-                    <td>3.97 <span>AA large</span></td>
-                    <td>3.44 <span>AA large</span></td>
+                    <td>4.42 <span>AA-L</span></td>
+                    <td>3.97 <span>AA-L</span></td>
+                    <td>3.44 <span>AA-L</span></td>
                     <td>2.91 <span>fail</span></td>
                     <td>2.46 <span>fail</span></td>
                   </tr>
@@ -1237,9 +2353,9 @@ const answer = 42;</code></pre>
                     <th scope="row"><code>--orange</code></th>
                     <td>5.77 <span>AA</span></td>
                     <td>5.19 <span>AA</span></td>
-                    <td>4.50 <span>AA large</span></td>
-                    <td>3.81 <span>AA large</span></td>
-                    <td>3.21 <span>AA large</span></td>
+                    <td>4.50 <span>AA-L</span></td>
+                    <td>3.81 <span>AA-L</span></td>
+                    <td>3.21 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
@@ -1247,47 +2363,713 @@ const answer = 42;</code></pre>
                     <td>7.26 <span>AA</span></td>
                     <td>6.29 <span>AA</span></td>
                     <td>5.33 <span>AA</span></td>
-                    <td>4.49 <span>AA large</span></td>
+                    <td>4.49 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>6.12 <span>AA</span></td>
-                    <td>5.50 <span>AA</span></td>
-                    <td>4.77 <span>AA</span></td>
-                    <td>4.03 <span>AA large</span></td>
-                    <td>3.40 <span>AA large</span></td>
+                    <td>6.22 <span>AA</span></td>
+                    <td>5.59 <span>AA</span></td>
+                    <td>4.85 <span>AA</span></td>
+                    <td>4.10 <span>AA-L</span></td>
+                    <td>3.46 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
                     <td>6.70 <span>AA</span></td>
                     <td>6.02 <span>AA</span></td>
                     <td>5.22 <span>AA</span></td>
-                    <td>4.42 <span>AA large</span></td>
-                    <td>3.73 <span>AA large</span></td>
+                    <td>4.42 <span>AA-L</span></td>
+                    <td>3.73 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
                     <td>4.86 <span>AA</span></td>
-                    <td>4.37 <span>AA large</span></td>
-                    <td>3.79 <span>AA large</span></td>
-                    <td>3.21 <span>AA large</span></td>
+                    <td>4.37 <span>AA-L</span></td>
+                    <td>3.79 <span>AA-L</span></td>
+                    <td>3.21 <span>AA-L</span></td>
                     <td>2.71 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
                     <td>5.39 <span>AA</span></td>
                     <td>4.85 <span>AA</span></td>
-                    <td>4.20 <span>AA large</span></td>
-                    <td>3.56 <span>AA large</span></td>
+                    <td>4.20 <span>AA-L</span></td>
+                    <td>3.56 <span>AA-L</span></td>
                     <td>3.00 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
                     <td>5.14 <span>AA</span></td>
                     <td>4.62 <span>AA</span></td>
-                    <td>4.00 <span>AA large</span></td>
-                    <td>3.39 <span>AA large</span></td>
+                    <td>4.00 <span>AA-L</span></td>
+                    <td>3.39 <span>AA-L</span></td>
                     <td>2.86 <span>fail</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="primer" data-scheme="light">
+            <div class="label">Primer, light (Light Default)</div>
+            <div class="scroll-x">
+              <table id="contrast-primer-light">
+                <caption>
+                  Primer, light: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>14.84 <span>AA</span></td>
+                    <td>15.80 <span>AA</span></td>
+                    <td>13.55 <span>AA</span></td>
+                    <td>11.65 <span>AA</span></td>
+                    <td>10.88 <span>AA</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>4.93 <span>AA</span></td>
+                    <td>5.25 <span>AA</span></td>
+                    <td>4.50 <span>AA-L</span></td>
+                    <td>3.87 <span>AA-L</span></td>
+                    <td>3.61 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>4.27 <span>AA-L</span></td>
+                    <td>4.55 <span>AA</span></td>
+                    <td>3.90 <span>AA-L</span></td>
+                    <td>3.35 <span>AA-L</span></td>
+                    <td>3.13 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>5.03 <span>AA</span></td>
+                    <td>5.36 <span>AA</span></td>
+                    <td>4.59 <span>AA</span></td>
+                    <td>3.95 <span>AA-L</span></td>
+                    <td>3.69 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>4.73 <span>AA</span></td>
+                    <td>5.03 <span>AA</span></td>
+                    <td>4.32 <span>AA-L</span></td>
+                    <td>3.71 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>4.57 <span>AA</span></td>
+                    <td>4.87 <span>AA</span></td>
+                    <td>4.17 <span>AA-L</span></td>
+                    <td>3.59 <span>AA-L</span></td>
+                    <td>3.35 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>4.77 <span>AA</span></td>
+                    <td>5.08 <span>AA</span></td>
+                    <td>4.36 <span>AA-L</span></td>
+                    <td>3.75 <span>AA-L</span></td>
+                    <td>3.50 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>4.63 <span>AA</span></td>
+                    <td>4.93 <span>AA</span></td>
+                    <td>4.23 <span>AA-L</span></td>
+                    <td>3.64 <span>AA-L</span></td>
+                    <td>3.40 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>4.88 <span>AA</span></td>
+                    <td>5.19 <span>AA</span></td>
+                    <td>4.45 <span>AA-L</span></td>
+                    <td>3.83 <span>AA-L</span></td>
+                    <td>3.57 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>4.74 <span>AA</span></td>
+                    <td>5.05 <span>AA</span></td>
+                    <td>4.33 <span>AA-L</span></td>
+                    <td>3.72 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>4.74 <span>AA</span></td>
+                    <td>5.05 <span>AA</span></td>
+                    <td>4.33 <span>AA-L</span></td>
+                    <td>3.72 <span>AA-L</span></td>
+                    <td>3.47 <span>AA-L</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="primer" data-scheme="dark">
+            <div class="label">Primer, dark (Dark Dimmed)</div>
+            <div class="scroll-x">
+              <table id="contrast-primer-dark">
+                <caption>
+                  Primer, dark: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>8.19 <span>AA</span></td>
+                    <td>7.60 <span>AA</span></td>
+                    <td>6.45 <span>AA</span></td>
+                    <td>5.47 <span>AA</span></td>
+                    <td>4.40 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>4.18 <span>AA-L</span></td>
+                    <td>3.88 <span>AA-L</span></td>
+                    <td>3.29 <span>AA-L</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>2.25 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>3.12 <span>AA-L</span></td>
+                    <td>2.90 <span>fail</span></td>
+                    <td>2.46 <span>fail</span></td>
+                    <td>2.08 <span>fail</span></td>
+                    <td>1.68 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>4.37 <span>AA-L</span></td>
+                    <td>4.06 <span>AA-L</span></td>
+                    <td>3.44 <span>AA-L</span></td>
+                    <td>2.92 <span>fail</span></td>
+                    <td>2.35 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>4.40 <span>AA-L</span></td>
+                    <td>4.08 <span>AA-L</span></td>
+                    <td>3.46 <span>AA-L</span></td>
+                    <td>2.94 <span>fail</span></td>
+                    <td>2.36 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>5.72 <span>AA</span></td>
+                    <td>5.31 <span>AA</span></td>
+                    <td>4.50 <span>AA</span></td>
+                    <td>3.82 <span>AA-L</span></td>
+                    <td>3.07 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>5.69 <span>AA</span></td>
+                    <td>5.28 <span>AA</span></td>
+                    <td>4.48 <span>AA-L</span></td>
+                    <td>3.80 <span>AA-L</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>7.75 <span>AA</span></td>
+                    <td>7.20 <span>AA</span></td>
+                    <td>6.10 <span>AA</span></td>
+                    <td>5.18 <span>AA</span></td>
+                    <td>4.17 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>5.68 <span>AA</span></td>
+                    <td>5.28 <span>AA</span></td>
+                    <td>4.47 <span>AA-L</span></td>
+                    <td>3.80 <span>AA-L</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>4.36 <span>AA-L</span></td>
+                    <td>4.05 <span>AA-L</span></td>
+                    <td>3.44 <span>AA-L</span></td>
+                    <td>2.92 <span>fail</span></td>
+                    <td>2.35 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>4.35 <span>AA-L</span></td>
+                    <td>4.04 <span>AA-L</span></td>
+                    <td>3.43 <span>AA-L</span></td>
+                    <td>2.91 <span>fail</span></td>
+                    <td>2.34 <span>fail</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="catppuccin" data-scheme="light">
+            <div class="label">Catppuccin, light (latte)</div>
+            <div class="scroll-x">
+              <table id="contrast-catppuccin-light">
+                <caption>
+                  Catppuccin, light: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>6.57 <span>AA</span></td>
+                    <td>7.06 <span>AA</span></td>
+                    <td>5.17 <span>AA</span></td>
+                    <td>4.39 <span>AA-L</span></td>
+                    <td>3.07 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>4.06 <span>AA-L</span></td>
+                    <td>4.37 <span>AA-L</span></td>
+                    <td>3.20 <span>AA-L</span></td>
+                    <td>2.72 <span>fail</span></td>
+                    <td>1.90 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>2.63 <span>fail</span></td>
+                    <td>2.83 <span>fail</span></td>
+                    <td>2.07 <span>fail</span></td>
+                    <td>1.76 <span>fail</span></td>
+                    <td>1.23 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>4.46 <span>AA-L</span></td>
+                    <td>4.80 <span>AA</span></td>
+                    <td>3.52 <span>AA-L</span></td>
+                    <td>2.99 <span>fail</span></td>
+                    <td>2.09 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>2.45 <span>fail</span></td>
+                    <td>2.64 <span>fail</span></td>
+                    <td>1.93 <span>fail</span></td>
+                    <td>1.64 <span>fail</span></td>
+                    <td>1.15 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>2.15 <span>fail</span></td>
+                    <td>2.31 <span>fail</span></td>
+                    <td>1.70 <span>fail</span></td>
+                    <td>1.44 <span>fail</span></td>
+                    <td>1.01 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>2.75 <span>fail</span></td>
+                    <td>2.96 <span>fail</span></td>
+                    <td>2.17 <span>fail</span></td>
+                    <td>1.84 <span>fail</span></td>
+                    <td>1.28 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>3.08 <span>AA-L</span></td>
+                    <td>3.31 <span>AA-L</span></td>
+                    <td>2.43 <span>fail</span></td>
+                    <td>2.06 <span>fail</span></td>
+                    <td>1.44 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>4.04 <span>AA-L</span></td>
+                    <td>4.34 <span>AA-L</span></td>
+                    <td>3.18 <span>AA-L</span></td>
+                    <td>2.70 <span>fail</span></td>
+                    <td>1.89 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>4.45 <span>AA-L</span></td>
+                    <td>4.79 <span>AA</span></td>
+                    <td>3.51 <span>AA-L</span></td>
+                    <td>2.98 <span>fail</span></td>
+                    <td>2.08 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>2.17 <span>fail</span></td>
+                    <td>2.34 <span>fail</span></td>
+                    <td>1.71 <span>fail</span></td>
+                    <td>1.45 <span>fail</span></td>
+                    <td>1.01 <span>fail</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="catppuccin" data-scheme="dark">
+            <div class="label">Catppuccin, dark (mocha)</div>
+            <div class="scroll-x">
+              <table id="contrast-catppuccin-dark">
+                <caption>
+                  Catppuccin, dark: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>12.14 <span>AA</span></td>
+                    <td>11.34 <span>AA</span></td>
+                    <td>8.69 <span>AA</span></td>
+                    <td>6.31 <span>AA</span></td>
+                    <td>3.38 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>7.89 <span>AA</span></td>
+                    <td>7.37 <span>AA</span></td>
+                    <td>5.65 <span>AA</span></td>
+                    <td>4.10 <span>AA-L</span></td>
+                    <td>2.19 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>4.75 <span>AA</span></td>
+                    <td>4.44 <span>AA-L</span></td>
+                    <td>3.40 <span>AA-L</span></td>
+                    <td>2.47 <span>fail</span></td>
+                    <td>1.32 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>7.58 <span>AA</span></td>
+                    <td>7.08 <span>AA</span></td>
+                    <td>5.43 <span>AA</span></td>
+                    <td>3.94 <span>AA-L</span></td>
+                    <td>2.11 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>9.92 <span>AA</span></td>
+                    <td>9.27 <span>AA</span></td>
+                    <td>7.10 <span>AA</span></td>
+                    <td>5.15 <span>AA</span></td>
+                    <td>2.76 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>13.81 <span>AA</span></td>
+                    <td>12.91 <span>AA</span></td>
+                    <td>9.89 <span>AA</span></td>
+                    <td>7.18 <span>AA</span></td>
+                    <td>3.84 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>11.81 <span>AA</span></td>
+                    <td>11.03 <span>AA</span></td>
+                    <td>8.46 <span>AA</span></td>
+                    <td>6.14 <span>AA</span></td>
+                    <td>3.28 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>11.79 <span>AA</span></td>
+                    <td>11.01 <span>AA</span></td>
+                    <td>8.44 <span>AA</span></td>
+                    <td>6.12 <span>AA</span></td>
+                    <td>3.28 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>8.34 <span>AA</span></td>
+                    <td>7.79 <span>AA</span></td>
+                    <td>5.97 <span>AA</span></td>
+                    <td>4.33 <span>AA-L</span></td>
+                    <td>2.32 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>8.64 <span>AA</span></td>
+                    <td>8.07 <span>AA</span></td>
+                    <td>6.19 <span>AA</span></td>
+                    <td>4.49 <span>AA-L</span></td>
+                    <td>2.40 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>11.50 <span>AA</span></td>
+                    <td>10.74 <span>AA</span></td>
+                    <td>8.23 <span>AA</span></td>
+                    <td>5.97 <span>AA</span></td>
+                    <td>3.20 <span>AA-L</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="everforest" data-scheme="light">
+            <div class="label">Everforest, light (hard)</div>
+            <div class="scroll-x">
+              <table id="contrast-everforest-light">
+                <caption>
+                  Everforest, light: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>4.84 <span>AA</span></td>
+                    <td>5.40 <span>AA</span></td>
+                    <td>5.10 <span>AA</span></td>
+                    <td>4.62 <span>AA</span></td>
+                    <td>3.14 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>2.88 <span>fail</span></td>
+                    <td>3.21 <span>AA-L</span></td>
+                    <td>3.04 <span>AA-L</span></td>
+                    <td>2.75 <span>fail</span></td>
+                    <td>1.87 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>2.39 <span>fail</span></td>
+                    <td>2.67 <span>fail</span></td>
+                    <td>2.52 <span>fail</span></td>
+                    <td>2.28 <span>fail</span></td>
+                    <td>1.55 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>2.84 <span>fail</span></td>
+                    <td>3.17 <span>AA-L</span></td>
+                    <td>2.99 <span>fail</span></td>
+                    <td>2.71 <span>fail</span></td>
+                    <td>1.84 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>2.32 <span>fail</span></td>
+                    <td>2.59 <span>fail</span></td>
+                    <td>2.44 <span>fail</span></td>
+                    <td>2.22 <span>fail</span></td>
+                    <td>1.51 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>1.98 <span>fail</span></td>
+                    <td>2.21 <span>fail</span></td>
+                    <td>2.09 <span>fail</span></td>
+                    <td>1.90 <span>fail</span></td>
+                    <td>1.29 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>2.52 <span>fail</span></td>
+                    <td>2.81 <span>fail</span></td>
+                    <td>2.65 <span>fail</span></td>
+                    <td>2.40 <span>fail</span></td>
+                    <td>1.63 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>2.61 <span>fail</span></td>
+                    <td>2.91 <span>fail</span></td>
+                    <td>2.75 <span>fail</span></td>
+                    <td>2.49 <span>fail</span></td>
+                    <td>1.70 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>2.92 <span>fail</span></td>
+                    <td>3.26 <span>AA-L</span></td>
+                    <td>3.08 <span>AA-L</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>1.90 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>2.65 <span>fail</span></td>
+                    <td>2.96 <span>fail</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>2.53 <span>fail</span></td>
+                    <td>1.72 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>2.65 <span>fail</span></td>
+                    <td>2.96 <span>fail</span></td>
+                    <td>2.79 <span>fail</span></td>
+                    <td>2.53 <span>fail</span></td>
+                    <td>1.72 <span>fail</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="cell" data-palette="everforest" data-scheme="dark">
+            <div class="label">Everforest, dark (hard)</div>
+            <div class="scroll-x">
+              <table id="contrast-everforest-dark">
+                <caption>
+                  Everforest, dark: the WCAG 2 contrast ratio of each text token and hue over
+                  each surface and border.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Text over</th>
+                    <th scope="col"><code>--bg-0</code></th>
+                    <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-2</code></th>
+                    <th scope="col"><code>--border</code></th>
+                    <th scope="col"><code>--border-2</code></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><code>--fg</code></th>
+                    <td>9.39 <span>AA</span></td>
+                    <td>8.15 <span>AA</span></td>
+                    <td>7.11 <span>AA</span></td>
+                    <td>6.20 <span>AA</span></td>
+                    <td>4.18 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-2</code></th>
+                    <td>6.51 <span>AA</span></td>
+                    <td>5.65 <span>AA</span></td>
+                    <td>4.93 <span>AA</span></td>
+                    <td>4.30 <span>AA-L</span></td>
+                    <td>2.90 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--fg-3</code></th>
+                    <td>4.89 <span>AA</span></td>
+                    <td>4.24 <span>AA-L</span></td>
+                    <td>3.70 <span>AA-L</span></td>
+                    <td>3.23 <span>AA-L</span></td>
+                    <td>2.18 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--red</code></th>
+                    <td>5.79 <span>AA</span></td>
+                    <td>5.02 <span>AA</span></td>
+                    <td>4.38 <span>AA-L</span></td>
+                    <td>3.82 <span>AA-L</span></td>
+                    <td>2.58 <span>fail</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--orange</code></th>
+                    <td>6.88 <span>AA</span></td>
+                    <td>5.98 <span>AA</span></td>
+                    <td>5.22 <span>AA</span></td>
+                    <td>4.55 <span>AA</span></td>
+                    <td>3.07 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--yellow</code></th>
+                    <td>8.70 <span>AA</span></td>
+                    <td>7.55 <span>AA</span></td>
+                    <td>6.59 <span>AA</span></td>
+                    <td>5.74 <span>AA</span></td>
+                    <td>3.88 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--green</code></th>
+                    <td>7.93 <span>AA</span></td>
+                    <td>6.88 <span>AA</span></td>
+                    <td>6.01 <span>AA</span></td>
+                    <td>5.24 <span>AA</span></td>
+                    <td>3.53 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--cyan</code></th>
+                    <td>7.49 <span>AA</span></td>
+                    <td>6.51 <span>AA</span></td>
+                    <td>5.68 <span>AA</span></td>
+                    <td>4.95 <span>AA</span></td>
+                    <td>3.34 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--blue</code></th>
+                    <td>7.30 <span>AA</span></td>
+                    <td>6.34 <span>AA</span></td>
+                    <td>5.53 <span>AA</span></td>
+                    <td>4.82 <span>AA</span></td>
+                    <td>3.25 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--purple</code></th>
+                    <td>6.87 <span>AA</span></td>
+                    <td>5.96 <span>AA</span></td>
+                    <td>5.20 <span>AA</span></td>
+                    <td>4.54 <span>AA</span></td>
+                    <td>3.06 <span>AA-L</span></td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><code>--magenta</code></th>
+                    <td>6.87 <span>AA</span></td>
+                    <td>5.96 <span>AA</span></td>
+                    <td>5.20 <span>AA</span></td>
+                    <td>4.54 <span>AA</span></td>
+                    <td>3.06 <span>AA-L</span></td>
                   </tr>
                 </tbody>
               </table>

@@ -2,6 +2,8 @@
 // stylesheet's layer files: the layer names, and per tag a probe that tells a page whose layer
 // files all loaded from one whose root loaded but an import did not.
 
+import { ADDED, profilePath } from "./profiles.js";
+
 // PACKAGE is the working tree's one top-level layer, named for the package.
 export const PACKAGE = "spike-html-design";
 
@@ -15,9 +17,31 @@ export function layerPath(layer) {
   return `layers/${layer.replaceAll(".", "/")}.css`;
 }
 
-// PROBES holds, per tag, one computed style per layer, on that tag's specimen markup, that only
-// that layer's file sets and that no color scheme changes, as [selector, property, value when
-// every layer file loaded]. A tag's entry never changes once the tag is cut: a page pinned to it
+// DEFAULT_PROFILE is the color profile the lean entry imports into tokens.color after the facet's
+// own file: Flexoki, in the directory the facet's file name spells.
+export const DEFAULT_PROFILE = profilePath("flexoki");
+
+// IMPORTS are the working tree's lean entry's imports, in order, each [nested layer, file]: every
+// nested layer's own file, and the default profile right after the color facet's.
+export const IMPORTS = LAYERS.flatMap((layer) => [
+  [layer, layerPath(layer)],
+  ...(layer === "tokens.color" ? [[layer, DEFAULT_PROFILE]] : []),
+]);
+
+// FULL_IMPORTS are the working tree's full entry's imports, in order, each [nested layer, file]:
+// the lean entry's, with every profile past the default right after the default's.
+export const FULL_IMPORTS = IMPORTS.flatMap((entry) => [
+  entry,
+  ...(entry[1] === DEFAULT_PROFILE ? ADDED.map((name) => [entry[0], profilePath(name)]) : []),
+]);
+
+// ENTRIES are the package's CSS entries, each repository path to its imports: the lean entry,
+// which the package exports as its root, and the full entry, exported as ./full.
+export const ENTRIES = { "baseline.css": IMPORTS, "full.css": FULL_IMPORTS };
+
+// PROBES holds, per tag, one computed style per layer file, on that tag's specimen markup, that
+// only that file sets and that no color scheme changes, as [selector, property, value when every
+// layer file loaded]. A tag's entry never changes once the tag is cut: a page pinned to it
 // keeps rendering its values whatever the working tree later renames or retunes. The last entry
 // is the working tree's, the tag it will be cut as; add the next tag's entry when a change to
 // the working tree would change a probe.
@@ -43,6 +67,24 @@ export const PROBES = {
   // "700", and "visible".
   "v0.3.0": [
     [":root", "--bg", "light-dark(#fffcf0, #100f0f)"],
+    [":root", "--line-s", "1px"],
+    [":root", "--text-m", "1rem"],
+    ["body", "box-sizing", "border-box"],
+    ["#prose h1", "font-weight", "600"],
+    ["#tools .scroll-x", "overflow-x", "auto"],
+  ],
+  // The working tree, to be cut as v0.4.0: Flexoki's ladder shifted one step, and its values moved
+  // to their own profile file, so the color probe reads the new --bg pair from Flexoki's file and
+  // a new probe reads the facet's own file's color-scheme; the other five probes are v0.3.0's.
+  // The specimen and its pinned page link the full entry, so one probe per profile past the
+  // default reads that profile's --bg pair on the first element naming it, its first preview
+  // card. Unstyled, the color-scheme probe reads "normal" and the profile probes "".
+  "v0.4.0": [
+    [":root", "color-scheme", "light dark"],
+    [":root", "--bg", "light-dark(#fffcf0, #1c1b1a)"],
+    ['[data-palette="primer"]', "--bg", "light-dark(#ffffff, #22272e)"],
+    ['[data-palette="catppuccin"]', "--bg", "light-dark(#eff1f5, #1e1e2e)"],
+    ['[data-palette="everforest"]', "--bg", "light-dark(#fffbef, #272e33)"],
     [":root", "--line-s", "1px"],
     [":root", "--text-m", "1rem"],
     ["body", "box-sizing", "border-box"],

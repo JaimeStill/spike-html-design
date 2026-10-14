@@ -1,10 +1,10 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
-import { LAYERS, layerPath, layersLoaded, loaded } from "./layers.js";
-import { show, stylesheets, tagExists } from "./tags.js";
+import { ENTRIES, layersLoaded, loaded } from "./layers.js";
+import { git, show, stylesheets, tagExists } from "./tags.js";
 
 const root = dirname(import.meta.dir);
 const CDN = "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design";
@@ -39,15 +39,23 @@ async function markup(path) {
     .replace(/<link\s[^>]*>/g, "<link>");
 }
 
+// TREE_STYLESHEETS are the stylesheet files the working tree will publish when cut as a tag, in
+// the order a tag's list holds them: the lean entry first, then the other entries and every file
+// an entry imports, each once.
+const TREE_STYLESHEETS = [
+  ...new Set([
+    ...Object.keys(ENTRIES),
+    ...Object.values(ENTRIES).flatMap((imports) => imports.map(([, path]) => path)),
+  ]),
+];
+
 // reference returns the directory holding the specimen and stylesheet files a page pinned to tag
 // is compared against, and those stylesheet files. Once the tag is cut they are the tag's own,
 // read with git show, so later changes to the working tree's tokens, layers, or specimen never
 // reach a pinned page's test. Until then they are the working tree's, since the tag is cut from
 // it after merge.
 function reference(tag) {
-  if (!tagExists(tag)) {
-    return { dir: root, files: ["baseline.css", ...LAYERS.map(layerPath)] };
-  }
+  if (!tagExists(tag)) return { dir: root, files: TREE_STYLESHEETS };
   const dir = join(scratch, tag);
   const files = stylesheets(tag);
   for (const path of ["index.html", ...files]) {
@@ -56,6 +64,28 @@ function reference(tag) {
   }
   return { dir, files };
 }
+
+// specimenEntry returns the entry the specimen at path links, as a repository path: the lean
+// entry, baseline.css, through v0.3.0, and the full entry, full.css, from v0.4.0, whose specimen
+// selects every profile. The page pinned to the specimen's tag links the same entry at its
+// jsDelivr URL.
+function specimenEntry(path) {
+  const html = readFileSync(path, "utf8");
+  const href = html.match(/<link rel="stylesheet" href="\.\/([^"]+)"/)?.[1];
+  if (!href) throw new Error(`pinned: no stylesheet link in ${path}`);
+  return href;
+}
+
+test("the working tree's stylesheet list is every stylesheet file it would publish", () => {
+  // What a tag publishes is every tracked .css file outside test/, as stylesheets() lists a cut
+  // tag's; an entry or profile file the entries never import would be missed by the list above.
+  const tracked = git("ls-files", "*.css")
+    .stdout.toString()
+    .split("\n")
+    .filter((path) => path && !path.startsWith("test/"));
+  expect([...TREE_STYLESHEETS].sort()).toEqual(tracked.sort());
+  expect(TREE_STYLESHEETS[0]).toBe("baseline.css");
+});
 
 // Every pinned page, one per tag, as pinned/<tag>.html.
 const PINNED = [...new Bun.Glob("*.html").scanSync(join(root, "pinned"))].sort();
@@ -67,15 +97,16 @@ test("there is at least one pinned page", () => {
 for (const name of PINNED) {
   const tag = basename(name, ".html");
   const pinnedPath = join(root, "pinned", name);
-  const pinned = `${CDN}@${tag}/baseline.css`;
   const { dir, files } = reference(tag);
   const specimenPath = join(dir, "index.html");
+  const entry = specimenEntry(specimenPath);
+  const pinned = `${CDN}@${tag}/${entry}`;
   const against = dir === root ? "the working tree" : `tag ${tag}`;
 
-  // hermetic answers the pinned URL, and the layer files its imports resolve to under the same
-  // tag, from the reference files, and answers every other https:// request 404 from a file that
-  // does not exist, so no test of the pinned page reaches the network. The harness takes the
-  // first matching prefix.
+  // hermetic answers every stylesheet file the tag publishes at its URL under the same tag, the
+  // pinned entry and the files its imports resolve to among them, from the reference files, and
+  // answers every other https:// request 404 from a file that does not exist, so no test of the
+  // pinned page reaches the network. The harness takes the first matching prefix.
   const hermetic = {
     ...Object.fromEntries(files.map((path) => [new URL(path, pinned).href, join(dir, path)])),
     "https://": join(import.meta.dir, "fixtures", "absent"),
@@ -86,7 +117,7 @@ for (const name of PINNED) {
       expect(await markup(pinnedPath)).toBe(await markup(specimenPath));
     });
 
-    test("links exactly one stylesheet, the baseline at its pinned jsDelivr URL", async () => {
+    test(`links exactly one stylesheet, ${entry} at its pinned jsDelivr URL`, async () => {
       const page = await open(fileUrl(pinnedPath), { scheme: "light", intercept: hermetic });
       const links = await page.evaluate(`[...document.querySelectorAll("link")]
         .map((l) => [l.rel, l.getAttribute("href")])`);

@@ -14,9 +14,11 @@
  * The hooks are public API, frozen with each tag's class names: --button-color for buttons and
  * --table-stripe for tables. Scroll and forms have none: each of their classes sets its layout
  * in a declaration or two that a consumer's own class restates as cheaply as it would set a hook.
+ * The neutral .button also reads the elements layer's --interaction-color, for its hover border,
+ * as the native button does.
  *
- * baseline.css imports this file into spike-html-design.tools. Pages link baseline.css, never
- * this file: linked on its own, its rules would be unlayered.
+ * Both entries, baseline.css and full.css, import this file into spike-html-design.tools. Pages
+ * link an entry, never this file: linked on its own, its rules would be unlayered.
  */
 
 /* Buttons. .button gives any element, a link most often, the native button's look: the elements
@@ -31,7 +33,7 @@
 .button {
   display: inline-block;
   padding: var(--space-3xs) var(--space-s);
-  border: var(--line-s) solid var(--border-3);
+  border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-sm);
   background-color: var(--bg-2);
   color: var(--fg);
@@ -43,6 +45,7 @@
 }
 
 .button:hover:where(:not(:disabled)) {
+  border-color: var(--interaction-color, var(--blue));
   background-color: var(--border);
 }
 
@@ -113,8 +116,11 @@
   background-color: color-mix(in srgb, var(--button-color) 15%, transparent);
 }
 
-/* Scroll. Each scrolls its overflow on one axis, with a stable gutter and a small space between
-   the content and the scrollbar. */
+/* Scroll. Each scrolls its overflow on one axis, with a small space between the content and the
+   scrollbar. .scroll-y also reserves a stable gutter, so its content keeps its width whether or not
+   it overflows. .scroll-x reserves none: scrollbar-gutter reserves only a vertical scrollbar's
+   inline space, which a horizontal scroller never shows, and that space would leave a wrapped
+   table short of its container. */
 
 .scroll-y {
   overflow-y: auto;
@@ -124,7 +130,6 @@
 
 .scroll-x {
   overflow-x: auto;
-  scrollbar-gutter: stable;
   padding-block-end: var(--space-2xs);
 }
 
@@ -153,8 +158,10 @@
 }
 
 /* --table-stripe (public API): the surface a striped table's alternate body rows sit on, by
-   default --bg-2. Set it on the table or any ancestor; it is read with a fallback, never
-   declared here, so a value set on an ancestor reaches every striped table inside it. */
+   default halfway from the element surface, --bg-2, to the page, --bg, so a stripe reads apart
+   from both the page and the header cells, which sit on --bg-2. Set it on the table or any
+   ancestor; it is read with a fallback, never declared here, so a value set on an ancestor
+   reaches every striped table inside it. */
 .table-striped > tbody > tr:nth-child(even) {
-  background-color: var(--table-stripe, var(--bg-2));
+  background-color: var(--table-stripe, color-mix(in srgb, var(--bg-2) 50%, var(--bg)));
 }

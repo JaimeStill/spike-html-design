@@ -9,115 +9,170 @@
 1. [x] layers
 2. [x] themes
 3. [x] facets
-4. [ ] profiles
+4. [x] profiles
 5. [ ] preferences
 6. [ ] keys
 7. [ ] validate
 
-## Task brief · experiment.html.spike-html-design · facets
+## Task brief · experiment.html.spike-html-design · profiles
 
-Problem       v0.2.0 is four flat layers: Primer colors, herald's fixed scales, role tokens,
-              and components inside the foundation. The spike's question now needs a
-              foundation of swappable facets consumed as a package: one nested package layer;
-              color, space, and type token interfaces; an elements layer that changes no
-              native element's behavior; opt-in tools; and a package.json. profiles,
-              preferences, and validate all build on it. (Evidence 1, 2, 4.)
+Problem       v0.3.0 has one color profile, Flexoki, fixed at the root, and an interface
+              built from Flexoki alone. Evidence 3 and 5 need four color profiles, each
+              light and dark, applied to any subtree, with contrast recorded per profile.
+              Measured against all four palettes, the interface lacked a pane surface and
+              carried a border step nothing reads. Profiles also brings the full entry
+              point, the enforced size budget, the workbench layout the architect called
+              out, and the kbd styling formerly assigned to keys. preferences and validate
+              build on it. (Evidence 3, 5; 11's budget.)
 
 Behaviors
-  1. The lean entry, at the same URL as v0.2.0's stylesheet, declares one top-level layer,
-     spike-html-design, with nested layers in order: tokens (color, space, type), reset,
-     elements, tools. It imports every file directly into its nested layer (one hop).
-  2. A consumer's own later layer, and its unlayered CSS, beat any foundation rule of any
-     specificity with no !important; a fixture shows it against an elements rule and a
-     tools variant.
-  3. Color: tiers --bg, --bg-2, --border, --border-2, --border-3, --fg, --fg-2, --fg-3 and
-     hues --red, --orange, --yellow, --green, --cyan, --blue, --purple, --magenta, each
-     resolving to a Flexoki value under each scheme. Starting values: surfaces and borders
-     from the reviewed variant A, text from variant B, hues 600 light / 400 dark; tuned at
-     the review stop. No role tokens (no --accent, --success, --warning, --danger), and no
-     v0.2.0 token name remains.
-  4. Scheme: with no data-scheme attribute the page follows the system scheme, live;
-     data-scheme="light" or "dark" forces it; data-theme has no effect.
-  5. Space: --space-3xs to --space-3xl (nine steps); --line-s and --line-m (px); and
-     --radius-sm, --radius-md, --radius-lg, --radius-full derived from one radius base, so
-     changing the base rescales every radius but full.
-  6. Type: --text-xs to --text-4xl (eight steps); --font-body (sans), --font-heading,
-     --font-ui, --font-code (mono; system stacks); --leading-body, --leading-heading,
-     --leading-ui, --leading-code; and --measure.
-  7. Every fluid space and type token interpolates with progress() between rem endpoints
-     over 22.5rem to 80rem of min(100vi, 100svb * 16 / 9): it holds its smallest value
-     below the range and its largest above it, follows browser zoom, and a short, wide
-     window reads smaller than its width alone gives. Viewport emulation in the check
-     proves each case, including 3440×1440.
-  8. A test profile applied to one facet's sub-layer changes only that facet's tokens.
-  9. The elements layer styles every rendered HTML element, plus ::file-selector-button,
-     ::marker, ::placeholder, and ::backdrop, with zero-specificity selectors and no
-     classes. It reads hues and tiers directly: links, focus outlines, selection, caret,
-     and accent-color use blue; the native button is neutral.
- 10. For every element of a fixture covering every rendered element, a page with only the
-     tokens and elements layers has the same computed layout properties as the same page
-     with no stylesheet: display, position, float, overflow, visibility, inline and block
-     sizes with min and max, flex and grid properties, white-space, list-style-position,
-     appearance, pointer-events, user-select.
- 11. Tools ships four opt-in families, open for extension through one hook per family:
-     - buttons: .button, a base class that gives any element (such as a link) the native
-       button's look, and .button-<hue> for all eight hues, outline style, read through
-       --button-color, on .button or a native button;
-     - scroll: .scroll-x, .scroll-y;
-     - forms: .field, .field-grow;
-     - tables: .table-full, .table-striped.
-     A consumer adds a variant in its own layer by setting a family's hook, and it renders
-     with that family's treatment.
- 12. The components layer and its classes (badge, card, input, label, btn) are gone.
- 13. A package.json names spike-html-design at 0.3.0, exports the lean entry, has no
-     dependencies, and every export resolves to a published file.
- 14. The check reports each entry's raw size and per-file brotli sum, and enforces no number.
- 15. The specimen is a workbench with a section per layer and facet showing every token
-     with a resolving sample, every element, and every tools class; Flexoki's contrast
-     table (every tier and hue against --bg, each scheme) is recomputed by the check.
- 16. The specimen renders the same from file:// and from a local server under the Pages
-     subpath.
- 17. A v0.3.0 pinned page is the specimen linking the @v0.3.0 jsDelivr lean entry; its
-     hermetic test and the live pin check cover every stylesheet file the tag publishes,
-     wherever it sits; v0.1.0 and v0.2.0 pinned pages still pass against their own tags.
- 18. mise run serve serves the working tree on localhost under the Pages subpath.
- 19. README, STANDARDS.md, and the goal record describe v0.3.0: hues are named for color
-     and carry no meaning; semantic variants are the consumer's, through hooks or its own
-     layers; the feature policy is Baseline Newly available plus non-Baseline as
-     progressive enhancement; no px in fluid bounds, and aspect-ratio queries are
-     layout's; fluid tokens need progress(); sizes are reported, enforced from profiles on.
+  Color interface
+  1. The color facet is exactly 16 tokens, each a light and dark pair:
+     --bg-0, the pane: darker than --bg in both schemes; --bg, the page; --bg-2, the
+     element surface: one step from --bg toward the text in each scheme; --border, for
+     dividers, containers, and hover fills; --border-2, for control boundaries; --fg,
+     --fg-2, --fg-3, for text; the eight hues. --border-3 is gone, and no other v0.3.0
+     color name changes. Flexoki's ladder shifts one step: light pane base-50, page
+     paper, surface base-100, borders base-150 and base-200; dark pane black, page
+     base-950, surface base-900, borders base-850 and base-800. Text and hues keep their
+     v0.3.0 Flexoki steps.
+  2. Four color profiles, each its own file, in this order: Flexoki (default), Primer
+     (GitHub Light Default / Dark Dimmed), Catppuccin (latte / mocha), and Everforest (hard
+     light / hard dark). Each maps upstream swatches onto the 16 tokens by role, with
+     values as upstream ships them (Flexoki's green, rotated to OKLCH hue 142°, is the one
+     departure). Each is credited by a heading comment naming source, license, and
+     upstream version: Flexoki MIT; Primer (github-vscode-theme) MIT at v6.3.5;
+     Catppuccin MIT at palette v1.8.0; Everforest MIT at v0.3.0. (Redirects: Kanagawa
+     dropped at review stop 1, Tokyo Night at the session brief.)
+
+  Selection
+  3. data-palette="flexoki" | "primer" | "catppuccin" | "everforest" on any element
+     applies that profile to its subtree at zero specificity; the nearest scope wins.
+     With no attribute anywhere Flexoki applies; data-palette on the root overrides it.
+     A scope sets only color tokens and re-sets color and background on its own element,
+     so a scoped container paints as the root does. A consumer's later layer still beats
+     every profile.
+  4. data-scheme="light" | "dark" on any element forces that scheme for its subtree. With
+     no attribute the page follows the system scheme, live; data-theme does nothing.
+  5. A preview container, an element with data-palette and data-scheme, renders its
+     subtree as that profile and scheme render at the root: for every profile and scheme,
+     every element of the preview card has the same computed colors in both cases.
+
+  Interaction and elements
+  6. Interaction reads one hook, --interaction-color, falling back to --blue: link color,
+     the focus outline, the caret, accent-color, ::selection's 30% mix, and control hover
+     borders. Neither the baseline nor any profile declares it; a consumer setting it on
+     any element re-colors all interaction in that subtree.
+  7. On hover, enabled text inputs, select, textarea, the native button, button inputs,
+     the file button, and neutral .button take a border in the interaction color. Active
+     and focus keep their treatment, .button-<hue> keeps its own hook color, and disabled
+     controls don't change.
+  8. Inline code outside pre has no chip: the code font, its text read as
+     var(--code-color, var(--green)); inside a link it takes the link's color and
+     underline. (Review redirect: replaces the --bg-2 chip.)
+  9. kbd is an outlined key: a --border-2 border at --line-s with a --line-m bottom edge,
+     no fill, --radius-sm. Its border and text read --kbd-color, falling back to
+     --border-2 and --fg. All key-hint styling is kbd's.
+  10. Table header cells sit on --bg-2. .table-striped's default stripe becomes a
+      color-mix() distinct from the header surface, still replaced by --table-stripe.
+  11. The elements behavior test still holds: under reset and elements, every element lays
+      out as with no stylesheet, apart from the reset's allowances.
+  11a. A blockquote's start edge is a neutral --border-2 rule, not the interaction color.
+  11b. A dialog's padding is a step tighter, with more space before its actions.
+
+  Contrast
+  12. Each profile records its contrast in each scheme: every text token and hue over
+      every surface (--bg-0, --bg, --bg-2, --border, --border-2), WCAG 2, short marks and
+      a legend. Recorded, not corrected; the check recomputes every cell in chromium at 2
+      decimals.
+
+  Package
+  13. The lean entry holds the foundation and Flexoki. The full entry is self-contained:
+      everything the lean entry holds plus Primer, Catppuccin, and Everforest, each
+      imported one hop deep into the color sub-layer.
+  14. package.json names spike-html-design at 0.4.0 and exports the lean entry as ".",
+      the full entry as "./full", and each profile as its own export; no dependencies;
+      every export resolves to a published file.
+  15. A consumer linking the lean entry and importing one profile's export into the color
+      sub-layer can select that profile with data-palette.
+  16. The check fails when an entry's per-file brotli-11 sum exceeds its budget: 14,000
+      bytes lean, 18,000 full. (Review redirects: lean raised from 12,000, full from 16,000.) Raw sizes stay reported, not enforced.
+
+  Specimen
+  17. The specimen is a workbench in reference variant A's console layout, with no
+      workbench note. It loads every profile; forms are rearranged within the specimen's
+      own composition; embedded cells are denser, with realistic data: URL content and a
+      scheme-aware iframe; a comparison grid holds a compact preview card for every
+      profile and scheme (eight); the contrast section gives each profile one row, light
+      and dark records side by side. All arrangement stays in the specimen layer.
+  17a. (Review redirect.) The specimen's copy reads as clear, grammatical technical
+      documentation for a human reader. No paragraph carries its own measure: text spans
+      its panel, and the page column caps at 80rem. The header has no rule or meta line
+      and sits close to Tokens; section labels and layer names are larger; color panels
+      drop their intros and top-align their tables, with room between text and table;
+      --space-base heads the space scale and --space-fluid foots it, and --type-fluid
+      foots the type scale, shown as fluid expansion across the display range, with no separate
+      progress panel (the progress tokens are documented as internal); the tables
+      example is wider, with more columns and room for its caption; the embedded cells
+      are evenly arranged.
+  18. The preview card shows a heading; a paragraph with a link, inline code, and kbd; a
+      neutral button and two hue buttons; a labeled text input; a three-row table with a
+      header and a striped row; a strip of every color token; and a label naming the
+      profile and scheme. A fixture page renders the same card per profile, for reuse by
+      validate's extension fixture.
+  19. The specimen renders the same from file:// and from a local server under the Pages
+      subpath.
+  20. A v0.4.0 pinned page is the specimen linking the @v0.4.0 jsDelivr full entry. Its
+      hermetic test and the live pin check cover every stylesheet the tag publishes; the
+      v0.1.0, v0.2.0, and v0.3.0 pinned pages still pass against their own tags.
+  21. README, STANDARDS.md, and the goal record describe v0.4.0: the interface and its
+      roles, profile selection and nesting, the three hooks in elements and their
+      fallbacks, kbd's ownership, the entries and exports, and the enforced budgets.
 
 Test seams    the harness page: a page in headless chromium, read for computed styles under
-              emulated media and viewport size; the check's size report over the published
-              files.
+              emulated scheme and viewport; the check's size report over the exported entries.
 
 Slices
-  1. Skeleton: nested layers with one-hop imports, components removed, data-scheme,
-     package.json, mise run serve, pin tooling listing every published file, the v0.3.0
-     probe entry and pinned page. Demo: check passes; serve shows the specimen.
-  2. Color facet: Flexoki tiers and hues, the scheme hook, the contrast table. Demo: the
-     specimen in both schemes.
-  3. Space and type facets: progress() scales with the two-axis bound, lines, radius, font
-     and leading roles, measure; viewport emulation in the harness; facet-independence
-     test. Demo: the specimen at emulated displays.
-  4. Elements layer over every element, with the behavior test and the specimen's element
-     sections. Demo: the workbench.
-  ── REVIEW STOP: the architect views the served workbench and profiles it across
-     emulated displays and the 3440×1440 ultrawide; starting values for type, space,
-     radius, leading, measure, and Flexoki's tier and hue steps are confirmed or changed
-     before tools is built ──
-  5. Tools layer: four families with hooks, the .button base, the extension fixture, the
-     specimen's tools section.
-  6. Size report, docs (README, STANDARDS.md, goal record), pinned page re-synced with the
-     final specimen.
+  1. The interface: the 16-token color facet with Flexoki's shifted ladder, --border-3
+     renamed, data-palette and data-scheme scopes on any element. Demo: the specimen in
+     both schemes, a container forced dark inside a light page.
+  2. Interaction and elements: --interaction-color and hover borders, the code chip and
+     --code-color, the kbd keycap and --kbd-color, the header surface, the stripe mix,
+     each with an extension test. Demo: the specimen's elements and tools sections.
+  3. Three profiles: Kanagawa, Tokyo Night, Catppuccin, credited, with per-profile
+     exports, the preview-container equivalence test, per-profile contrast records, and
+     the preview-card fixture page. Demo: the fixture, one card per profile and scheme.
+  4. The workbench: console layout, note removed, forms rearranged, embedded cells, the
+     eight-card comparison grid, the contrast rows. Demo: the served workbench.
+  ── REVIEW STOP 1 (held after slice 4): Flexoki's shifted ladder, the stripe, Tokyo
+     Night and Catppuccin accepted; redirect recorded in Decisions ──
+  4b. Review fixes: drop Kanagawa; add Everforest (hard) and Primer (Light Default /
+     Dark Dimmed) with exports, contrast records, and cards; inline code as green text;
+     the blockquote edge; the dialog spacing; the specimen copy and layout fixes. Demo:
+     the served workbench.
+  ── REVIEW STOP 2: the architect views the new profiles and the fixes in both schemes
+     before the full entry and budget are built ──
+  4c. (Review stop 2.) The tools layer's .scroll-x reserves no vertical scrollbar gutter, so
+     a wrapped table fills its container; .scroll-y keeps its stable gutter. Lands with
+     slice 5.
+  5. The full entry and package: self-contained full entry, package.json at 0.4.0 with
+     ".", "./full", and per-profile exports, a lean-plus-one-profile consumer test, the
+     specimen on the full entry. Demo: the check passes; the size report lists both.
+  6. The budget: per-entry brotli budgets enforced by the check. Demo: the check passes;
+     a fixture entry over its budget fails.
+  7. Docs and pin: README, STANDARDS.md, the goal record, and the v0.4.0 pinned page
+     synced with the final specimen. Demo: the check passes; serve shows the final
+     workbench.
 
-Out of scope  Kanagawa, Tokyo Night, Catppuccin, profile attribute scopes and preview
-              containers (profiles); the full entry and an enforced budget (profiles); JS
-              modules, registry, preferences, keys; components; layouts and aspect-ratio
-              media queries (client-layouts); motion; bundling; the git-tag install proof
-              (validate); @function, @mixin, if().
-Door          one-way for tag v0.3.0, which jsDelivr caches as immutable; two-way otherwise.
-Release       v0.3.0
+Out of scope  second space and type profiles and data-space/data-type (preferences); the
+              registry, theming menu, persistence (preferences); the shortcuts API and ?
+              dialog (keys); Kanagawa; dragon, storm, moon, frappe, macchiato; Everforest medium and soft; role tokens, a
+              selection token, surface hooks for code or kbd; correcting any contrast; a
+              shipped card or any component; layouts; bundling; the git-tag install and
+              exported conformance test (validate); @function, @mixin, if().
+Door          one-way for tag v0.4.0, which jsDelivr caches as immutable; two-way otherwise.
+              v0.3.0 keeps --border-3 and its Flexoki values on its own pin.
+Release       v0.4.0
 
 ## Decisions
 
@@ -345,7 +400,8 @@ Release       v0.3.0
   preview container renders as that profile does at the root.
 - plan (facets redirect): color profiles are Flexoki first, then Kanagawa (wave and lotus), Tokyo
   Night (night and day), and Catppuccin (mocha and latte). Contrast is a per-profile fact,
-  recorded and not corrected.
+  recorded and not corrected. Superseded in part by profiles review stop 1: Kanagawa dropped,
+  Everforest and Primer added.
 - plan (facets redirect): the color token contract is open again; the hue and role model is not
   assumed. Resolved by facets: tiers and hues, no role tokens.
 - plan (facets redirect): the token contract is new, with herald as inspiration only: fluid space
@@ -416,7 +472,8 @@ Release       v0.3.0
 - facets (BUILD, architect): contrast is graded only where legibility is the concern, text over a
   color: every text token (--fg, --fg-2, --fg-3) and every hue against every surface (--bg,
   --bg-2, --border, --border-2, --border-3), in each scheme. Surfaces get no ratio of their own.
-  Amends behavior 15; rejected grading surfaces against --bg with text thresholds.
+  Amends behavior 15; rejected grading surfaces against --bg with text thresholds. From profiles
+  the surfaces are --bg-0, --bg, --bg-2, --border, and --border-2.
 - facets (BUILD, architect): display tests are framed by aspect ratio, not by any one monitor:
   21:9, 16:9, 16:10, 4:3, 1:1, and their portrait mirrors down to 9:21, each at a small and a
   large size. Amends behavior 7's "including 3440×1440".
@@ -480,9 +537,132 @@ Release       v0.3.0
 - plan web-client (architect): HTML is for persistent artifacts (reports, stats) hosted in the
   coordinator; task briefs, plan rounds, session briefs, and context notes stay Markdown. The
   section tree and review script move with spike-html-artifacts to spike-html-hosting.
+- plan profiles: hues come from the upstream swatch whose color matches the hue's name, ANSI slot as
+  tie-breaker (Tokyo Night magenta = magenta2; lotus yellow = lotusYellow3).
+- plan profiles: per-profile tier and hue values are starting values from upstream UI roles,
+  confirmed at the review stop.
+- plan profiles: one light and one dark variant per profile (lotus/wave, day/night, latte/mocha);
+  rejected dragon, storm, moon, frappe, macchiato.
+- plan profiles: Tokyo Night from folke/tokyonight.nvim v4.14.1 (Apache-2.0), day from its generated
+  extras; rejected enkia's MIT theme, whose light variant isn't day.
+- plan profiles: data-scheme forces a scheme on any element at zero specificity.
+- plan profiles: budget is the brotli-11 per-file sum per entry, 12,000 lean / 16,000 full, enforced
+  by the check; raw reported only. The review stops raised them to 14,000 / 18,000.
+- plan profiles: the profiles review stop sits after profiles and grid render, before full entry
+  and budget.
+- plan profiles: workbench follows reference variant A (console); note deleted; forms rearranged in
+  the specimen only; denser embedded cells with realistic data: content and a scheme-aware
+  iframe.
+- plan profiles: header cells get a --bg-2 surface in elements; .table-striped's default stripe
+  becomes a mix.
+- plan profiles: comparison grid is a compact preview card per profile and scheme; contrast gives one
+  row per profile, light and dark side by side, short marks and a legend.
+- plan profiles: the tier ladder is kept; rejected role names.
+- plan profiles: full entry is self-contained, exported as ./full, each profile its own export;
+  rejected a profiles-only add-on.
+- plan profiles: profiles sit in tokens.color; rejected a nested sub-layer per profile.
+- plan profiles: preview card is specimen composition plus a fixture page, not a shipped component,
+  with the fuller contents.
+- plan profiles: second space and type profiles, with data-space and data-type, move to preferences;
+  profiles ships data-palette only.
+- plan profiles: inline code is a --bg-2 chip in elements, text through --code-color with fallback
+  --fg. Superseded by profiles review stop 1: green text, no chip.
+- plan profiles: --bg-2 steps toward the text in both schemes (lighter in dark).
+- plan profiles: pane token --bg-0, darker than --bg in both schemes.
+- plan profiles: Flexoki's ladder shifts one step so the pane is distinct; supersedes the Flexoki
+  tiers confirmed at the facets review stop.
+- plan profiles: two border steps: --border (dividers, containers, hover fills) and --border-2
+  (control boundaries, replacing --border-3); rejected keeping an unread middle step.
+- plan profiles: controls take a colored border on hover only; active and focus keep their
+  treatment.
+- plan profiles: interaction reads one hook, --interaction-color, fallback --blue, never declared by
+  the baseline or a profile; supersedes facets' "Rejected an --accent read at each use".
+- plan profiles: key-hint styling moves to profiles as kbd's element styling; keys is the shortcuts
+  API alone; supersedes setup's and layers' "key-hint styling stays with keys".
+- plan profiles: kbd is an outlined key with a --line-m bottom edge; --kbd-color colors border and
+  text.
+- plan profiles: no surface hooks for code or kbd.
+- profiles BUILD (architect): every color profile, Flexoki included, is its own file and
+  export; color.css keeps only the facet's contract (scheme rules, scope paint rule, the token
+  roles). Space and type split the same way when preferences adds their second profiles.
+- profiles review stop 1 (architect): drop Kanagawa (it doesn't translate to a UI); add
+  Everforest at its hard light and dark variants and Primer from the GitHub VS Code theme,
+  GitHub Light Default and Dark Dimmed. Primer was removed at v0.3.0 only because one scheme
+  was planned then, a preference for Flexoki, not a dislike; supersedes "Primer reads too cold"
+  as a reason to exclude it. data-palette values: everforest, primer.
+- profiles review stop 1 (architect): inline code is the code font in --green through
+  --code-color, with no chip; code in a link takes the link's color. Supersedes plan profiles'
+  --bg-2 chip.
+- profiles review stop 1 (architect): a blockquote's edge stays neutral (--border-2); the
+  interaction color marks only what can be acted on.
+- profiles review stop 1 (architect): a reading measure belongs to prose-centric layouts, on the
+  reading column, never to single paragraphs; mechanical interfaces like the workbench let text
+  span its panel. The baseline ships no measure class.
+- profiles review stop 1 (architect): --space-fluid and --type-fluid are fluid expansion across
+  the display range, internal to their facets; the specimen shows them with --space-base at the
+  head of each scale, not as a "progress" panel.
+- profiles review stop 1 (architect): lean budget raised to 14,000 B brotli; full stays 16,000.
+- profiles review stop 1 (architect): a second review stop follows the fix slice.
+- profiles review stop 2 (architect): accepted the new profiles (Everforest magenta = purple,
+  as upstream; Primer light fg-2 ≈ fg-3, as upstream; Primer light bg-2 = scale.gray[1]) and the
+  layout and copy fixes. Full budget raised to 18,000 B brotli (five profiles with swatch
+  comments). .scroll-x drops scrollbar-gutter: stable, which left wrapped tables short of their
+  container; .scroll-y keeps it.
+- profiles (architect): Flexoki's --green is #408739 light / #61a25a dark, its own green
+  (#66800b / #879a39, OKLCH hue ~123°) rotated to hue 142° at Flexoki's lightness and chroma
+  (L 0.559 / C 0.134 light, L 0.651 / C 0.124 dark), away from yellow. A documented departure
+  from upstream Flexoki.
+- profiles BUILD: package.json moved to 0.4.0 in slice 1, not slice 5: the package test ties the
+  version to the newest probes tag, and slice 1 added v0.4.0's probes.
+- profiles BUILD: one rule, `:where([data-palette], [data-scheme])`, paints `--bg` and `--fg`, so
+  a container that only forces a scheme repaints too; text color inherits as a resolved color.
+- profiles BUILD: caret-color and accent-color moved from the body to `:where(*)`, so each element
+  resolves `--interaction-color` in its own palette and scheme. Trade-off: a consumer's plain
+  accent-color on an ancestor no longer inherits; the hook is the path.
+- profiles BUILD: the default stripe is `color-mix(in srgb, var(--bg-2) 50%, var(--bg))`.
+- profiles BUILD: the inline-code rule is `:where(code:not(pre code, a code))`, so code in a pre
+  stays plain and code in a link takes the link's color and underline.
+- profiles BUILD: a dialog's actions sit `--space-m` below its content, through
+  `dialog > :is(form, menu, footer):last-child:not(:first-child)` in the elements layer, so
+  every consumer's `method="dialog"` form gets the space.
+- profiles BUILD: Everforest pinned at v0.3.0; its `--border` is bg3 light (bg2 light equals
+  bg_dim, the pane) and bg2 dark. Its magenta is its purple, which fills the ANSI magenta slots.
+- profiles BUILD: Primer pinned at github-vscode-theme v6.3.5, resolving @primer/primitives 7.10.0
+  with the theme's src/colors.js overrides; every new hex was checked against upstream, 64 of 64.
+- profiles BUILD: the specimen's banners are `--text-2xl`, `--text-xl`, and `--text-l`, since
+  synthesized small caps render near 70% of the font size; the fluid readout is a CSS counter set
+  by `round(var(--sample) * 100)`, with no script.
+- profiles BUILD: the budgets live once, in `BUDGETS` in `scripts/size.js`. An entry with no
+  budget fails the check, and one exactly at its budget passes. Raising a budget is the
+  architect's decision, never a fix for a failing check (STANDARDS.md).
+- profiles standards review: the color-facet test reads every token the color sub-layer declares,
+  so an extra token fails; the budget tests hold BUDGETS' keys to the exported entries and the
+  audit to no failures, replacing tests that restated BUDGETS and audit's arithmetic.
+- profiles session brief redirect (architect): drop Tokyo Night; it is too close to Catppuccin
+  and translates less well to a web UI. Profiles are ordered Flexoki, Primer, Catppuccin,
+  Everforest everywhere. Upstream values stay as upstream ships them, contrast fails included;
+  the Flexoki green rotation is the one exception. The fluid-expansion rows sit at the foot of
+  their scales; section h2s take the standard h2 style with no banner block; the line samples
+  must show --line-s and --line-m distinctly.
+- profiles session brief redirect (architect): the line tokens stay 1px and 2px; the samples
+  render correctly and now draw in --fg. Rejected 0.5px for --line-s: it renders as 1px on 1x
+  displays and thins every control boundary to a hairline on HiDPI. The fluid rows sit a
+  --space-m below their scales.
+- profiles SHIP (architect): accepted the session brief; v0.4.0 releases four color profiles
+  (Flexoki, Primer, Catppuccin, Everforest) over the 16-token interface.
 
 ## Pending edits
 
 - coordinator · html-artifacts.md, "Style baseline": rewritten at the answer to describe the
   faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
-  replaces the layers and themes edits to "Style baseline", "Palette", and "Themes").
+  replaces the layers and themes edits to "Style baseline", "Palette", and "Themes"). From
+  profiles it covers the sixteen-token color interface, `data-palette` and `data-scheme` scopes
+  on any element, the five color profiles, the hooks (`--interaction-color`, `--code-color`,
+  `--kbd-color`, `--button-color`, `--table-stripe`), and the lean and full entries with their
+  enforced brotli budgets.
+- coordinator · roadmap.toml, preferences summary: gains a second space and a second type
+  profile, and the data-space and data-type scopes (plan profiles).
+- coordinator · roadmap.toml, keys summary: drop "plus key-hint styling"; keys is the
+  shortcuts API alone (plan profiles).
+- coordinator · html-artifacts.md, "Keyboard": key-hint styling ships with the baseline's
+  elements layer (profiles), not keys.js; joins the "Style baseline" rewrite (plan profiles).
