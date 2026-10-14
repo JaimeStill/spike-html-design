@@ -32,16 +32,15 @@ Behaviors
   Space and type profiles
   1. Space and type split as color did: each facet's contract stands alone, and each profile
      is its own file, applied by a zero-specificity attribute scope on any element,
-     data-space="regular" | "compact" and data-type="mono" | "serif". The nearest scope wins.
+     data-space="regular" | "compact" and data-type="mono" | "sans". The nearest scope wins.
      With no attribute anywhere, regular and mono apply; an attribute on the root overrides
      them. A consumer's later layer beats every profile.
   2. regular keeps v0.4.0's space values. compact sets --space-base from 0.75rem on a 22.5rem
      display to 0.875rem on an 80rem one, and --radius-base to 0.25rem. Lines stay 1px and
      2px. Both stay fluid by progress() between rem bounds.
-  3. mono keeps v0.4.0's type values. serif sets the heading and ui fonts to the system stack
-     ui-serif, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif, and keeps the body
-     sans, code mono, and the default scale and leadings. The pair is framed as interface
-     (mono) and editorial (serif).
+  3. mono keeps v0.4.0's type values. sans sets the heading, ui, and body fonts to the system
+     sans stack and keeps code mono and the default scale and leadings. (Review stop: sans
+     replaces serif.)
   4. Swapping a space or type profile changes only that facet's tokens. A preview container
      carrying data-space or data-type renders its subtree as that profile renders at the root.
   5. The lean entry holds the defaults: Flexoki, regular, mono. The full entry adds every
@@ -115,6 +114,10 @@ Behaviors
       Served and on Pages, the menu works. From file://, the working-tree specimen has no
       menu (chromium blocks relative module scripts); the gap is recorded. Its CSS still
       renders the same from file:// and a local server under the Pages subpath.
+  20a. The specimen's Color, Space, and Type sections follow the current selection: the Color
+      section's Light and Dark columns show the selected profile's swatches and hex values in
+      each scheme, and the Space and Type captions describe the selected profile. Specimen-only
+      code; no package or budget change. (Review stop.)
   21. The harness answers intercepted requests with Access-Control-Allow-Origin, so a module
       page from file:// can be tested hermetically.
   22. A v0.5.0 pinned page is the specimen linking the @v0.5.0 jsDelivr full entry and modules.
@@ -146,6 +149,9 @@ Slices
      Demo: the served workbench with the menu in use.
   ── REVIEW STOP (after slice 4): the architect uses the menu and views compact and serif on
      the served workbench (`mise run serve`), before any tag; redirects go to Decisions ──
+  4b. Review-stop fixes: sans replaces serif; the Theme button sits beneath the title and
+      above the intro; the specimen's Color, Space, and Type sections follow the selection
+      (behavior 20a). Demo: the served workbench, switching profiles in the menu.
   5. Package and budgets: nested profile keys, JS exports, JS budgets in the size report and
      check, lean and full consumer tests on the new keys. Demo: check passes; size report
      lists every CSS and JS entry.
@@ -168,7 +174,7 @@ Release       v0.5.0
 
 ## Progress
 
-slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · review stop pending · standards — · spec — · editor —
+slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · review stop redirected, slice 4b next · standards — · spec — · editor —
 
 ## Decisions
 
@@ -680,7 +686,8 @@ slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · review stop pending
 - plan preferences: serif sets heading and ui to the transitional system stack ui-serif,
   Charter, "Bitstream Charter", "Sitka Text", Cambria, serif; body stays sans, code mono, and the
   scale and leadings stay the default's. The serif ui font is dialed in at the review stop and at
-  validate (architect). Rejected the old-style stack (Iowan, Palatino).
+  validate (architect). Rejected the old-style stack (Iowan, Palatino). Superseded at the review
+  stop: sans replaces serif.
 - plan preferences: space and type profiles are files under their facet directories, as color's
   are (profiles BUILD).
 - plan preferences: profile export keys nest by facet, ./profiles/<facet>/<name>, and color's
@@ -731,6 +738,17 @@ slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · review stop pending
   aria-keyshortcuts="T" at the end of the header's title row.
 - plan preferences: chromium 152 blocks relative module scripts from file://, which confirms
   context/file-modules.md.
+- preferences review stop (architect): the Theme button sits beneath the title and above the
+  intro. Accepted: Up/Down stop at the first and last rows, h/l wrap; values show registry
+  names; the preview is inert; the menu is rebuilt each open and any other close counts as
+  Cancel; the registry is preloaded with modulepreload (first paint ~244 ms versus ~456 ms with
+  fetches held 200 ms).
+- preferences review stop (architect): the second type profile is sans, not serif: heading, ui,
+  and body in the system sans stack, code mono, the default scale and leadings. The pair is mono
+  (interface) and sans.
+- preferences review stop (architect): the specimen's Color, Space, and Type sections follow the
+  current selection, in this task (slice 4b): Light and Dark swatches as scheme-scoped cells,
+  hex values filled by a specimen-only script, captions per profile.
 
 ## Pending edits
 
@@ -748,7 +766,7 @@ slices 4/6 committed (462a4fd, f027429, 13c53de, f89feca) · review stop pending
 - coordinator · html-artifacts.md, "Keyboard": key-hint styling ships with the baseline's
   elements layer (profiles), not keys.js; joins the "Style baseline" rewrite (plan profiles).
 - coordinator · roadmap.toml, preferences summary: drop "Replaces the theme toggle" (it was
-  never built); add the second space and type profiles (compact, serif) and the data-space and
+  never built); add the second space and type profiles (compact, sans) and the data-space and
   data-type scopes (plan preferences; supersedes the plan profiles edit above).
 - coordinator · roadmap.toml, keys summary: keys.js is purely the shortcut API, binding specific
   shortcuts a higher-level concern; capture the question of an optional leader key, with a
