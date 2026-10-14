@@ -4,8 +4,8 @@
  * Every rendered HTML element on the tokens, with no classes: sections and headings, grouping
  * and text-level elements, edits, embedded content, tables, forms, details and dialog, and the
  * ::file-selector-button, ::marker, ::placeholder and ::backdrop pseudo-elements. An element
- * whose native look already sits on the tokens, through the body's font, color and accent, has
- * no rule of its own.
+ * whose native look already sits on the tokens, through the body's font and color and the accent
+ * color every element sets, has no rule of its own.
  *
  * Two limits hold for every rule here:
  *
@@ -258,9 +258,9 @@
   font-size: inherit;
 }
 
-/* Inline code is colored text, with no chip: the code font, read in --code-color, green by
-   default. Code inside a pre is the block's, and stays plain; code inside a link is the link's,
-   so it inherits the link's color, and the link's underline runs under it. */
+/* Inline code is colored text: the code font, read in --code-color, green by default. Code
+   inside a pre is the block's, and stays plain; code inside a link is the link's, so it
+   inherits the link's color, and the link's underline runs under it. */
 :where(code:not(pre code, a code)) {
   color: var(--code-color, var(--green));
 }
@@ -342,8 +342,8 @@
 }
 
 /* Forms. Text fields, selects and text areas share one outlined look; checkboxes, radios,
-   ranges, color wells, progress and meter keep their native look, tinted by the inherited
-   accent-color. */
+   ranges, color wells, progress and meter keep their native look, tinted by the accent color
+   every element sets. */
 
 :where(
   input:not(

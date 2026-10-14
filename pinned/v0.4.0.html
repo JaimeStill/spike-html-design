@@ -13,15 +13,15 @@
       href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.4.0/full.css"
     />
     <style>
-      /* The specimen's own composition, a console: a compact header, each section under a
-         full-width banner, and its samples in panels, a gapless grid of cells sharing their
-         borders, two columns wide on a wide display and one on a narrow one. Text spans its
-         panel; only the page column is capped. It sits in
-         its own layer, specimen, declared after the baseline's package layer, as an artifact's
-         own layers would be. The arrangement is composition: the banners, the panels, the cells
-         and their quiet labels, the token tables, the forms' grids, and the preview cards' frame
-         are this page's, and none of it is the baseline. What sits inside each cell, under its
-         label, is the baseline alone. Samples read the token they show from --sample.
+      /* The specimen layer arranges this page as a console: a compact header, a full-width
+         banner over each section, and the section's samples in panels, gapless grids of cells
+         that share their borders, two columns wide on a wide display and one on a narrow one.
+         Text spans its panel; only the page column is capped. The layer is declared after the
+         baseline's package layer, as an artifact's own layers would be. The arrangement is
+         composition: the banners, the panels, the cells and their labels, the token tables, the
+         forms' grids, and the preview cards' frame belong to this page, not to the baseline.
+         What sits inside each cell, under its label, is the baseline alone. Samples read the
+         token they show from --sample.
 
          The page links the full entry, which holds every color profile, so its comparison grid
          and contrast records can name each one. */
@@ -559,8 +559,8 @@
     <header>
       <h1>spike-html-design</h1>
       <p>
-        Every token, element and tool class in the baseline, rendered by the full entry,
-        <code>full.css</code>, alone. The page follows the system color scheme; set
+        This page renders every token, element and tool class in the baseline with the full
+        entry, <code>full.css</code>, alone. It follows the system color scheme; set
         <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
         apply a color profile to its subtree.
       </p>
@@ -746,8 +746,8 @@
           <header>
             <h3>Space</h3>
             <p>
-              Nine spacing steps, each a multiple of one fluid base, then two fixed line widths
-              and the radii.
+              The space facet holds nine spacing steps, each a multiple of one fluid base, two
+              fixed line widths, and the radii.
             </p>
           </header>
           <div class="cells">
@@ -941,7 +941,7 @@
         <header>
           <h2>Elements</h2>
           <p>
-            Every rendered element, styled by the elements layer without classes; each keeps its
+            The elements layer styles every rendered element without classes, and each keeps its
             native layout and behavior. Three hooks recolor a subtree:
             <code>--interaction-color</code> for links, focus, selection and hover borders,
             <code>--code-color</code> for inline code, and <code>--kbd-color</code> for keys.
@@ -1524,7 +1524,8 @@ const answer = 42;</code></pre>
         <header>
           <h2>Tools</h2>
           <p>
-            Opt-in classes, each cell labeled with its class. A consumer recolors buttons with
+            The tools layer's classes are opt-in; each cell's label names its class. A consumer
+            recolors buttons with
             <code>--button-color</code> and table stripes with <code>--table-stripe</code>.
           </p>
         </header>
@@ -1680,7 +1681,7 @@ const answer = 42;</code></pre>
         <header>
           <h2>Profiles</h2>
           <p>
-            Each color profile in light and dark, one row per profile. Each card sets
+            Each row shows one color profile, light then dark. Each card sets
             <code>data-palette</code> and <code>data-scheme</code> on its own container.
           </p>
         </header>
@@ -2302,9 +2303,9 @@ const answer = 42;</code></pre>
         <header>
           <h2>Contrast</h2>
           <p>
-            The WCAG 2 contrast ratio of each text token and hue over each surface and border,
-            per profile and scheme. Marks are judged on the unrounded ratio; failures are
-            recorded, not corrected.
+            Each record gives the WCAG 2 contrast ratio of each text token and hue over each
+            surface and border, for one profile and scheme. Marks are judged on the unrounded
+            ratio; failures are recorded, not corrected.
           </p>
           <dl id="contrast-legend">
             <dt>AA</dt>

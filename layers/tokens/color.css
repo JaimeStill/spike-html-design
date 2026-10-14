@@ -2,7 +2,7 @@
  * layers/tokens/color.css, the color facet of the tokens layer: its contract, with no values.
  *
  * The color facet is sixteen tokens, each a light and a dark value paired through light-dark():
- * five surfaces, three text weights, and eight hues named for their color. The surfaces, by role:
+ * five surfaces, three text steps, and eight hues named for their color. The surfaces, by role:
  *
  *   --bg-0      the pane: a side or tool pane, darker than the page in both schemes
  *   --bg        the page

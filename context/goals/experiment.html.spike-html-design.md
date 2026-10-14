@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** building
+- **State:** brief ready
 - **Task:** profiles
 - **Branch:** profiles
 
@@ -176,7 +176,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor —
+slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor done
 
 ## Decisions
 
@@ -404,7 +404,8 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
   preview container renders as that profile does at the root.
 - plan (facets redirect): color profiles are Flexoki first, then Kanagawa (wave and lotus), Tokyo
   Night (night and day), and Catppuccin (mocha and latte). Contrast is a per-profile fact,
-  recorded and not corrected.
+  recorded and not corrected. Superseded in part by profiles review stop 1: Kanagawa dropped,
+  Everforest and Primer added.
 - plan (facets redirect): the color token contract is open again; the hue and role model is not
   assumed. Resolved by facets: tiers and hues, no role tokens.
 - plan (facets redirect): the token contract is new, with herald as inspiration only: fluid space
@@ -475,7 +476,8 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
 - facets (BUILD, architect): contrast is graded only where legibility is the concern, text over a
   color: every text token (--fg, --fg-2, --fg-3) and every hue against every surface (--bg,
   --bg-2, --border, --border-2, --border-3), in each scheme. Surfaces get no ratio of their own.
-  Amends behavior 15; rejected grading surfaces against --bg with text thresholds.
+  Amends behavior 15; rejected grading surfaces against --bg with text thresholds. From profiles
+  the surfaces are --bg-0, --bg, --bg-2, --border, and --border-2.
 - facets (BUILD, architect): display tests are framed by aspect ratio, not by any one monitor:
   21:9, 16:9, 16:10, 4:3, 1:1, and their portrait mirrors down to 9:21, each at a small and a
   large size. Amends behavior 7's "including 3440×1440".
@@ -549,7 +551,7 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
   extras; rejected enkia's MIT theme, whose light variant isn't day.
 - plan profiles: data-scheme forces a scheme on any element at zero specificity.
 - plan profiles: budget is the brotli-11 per-file sum per entry, 12,000 lean / 16,000 full, enforced
-  by the check; raw reported only.
+  by the check; raw reported only. The review stops raised them to 14,000 / 18,000.
 - plan profiles: the profiles review stop sits after profiles and grid render, before full entry
   and budget.
 - plan profiles: workbench follows reference variant A (console); note deleted; forms rearranged in
@@ -568,7 +570,7 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
 - plan profiles: second space and type profiles, with data-space and data-type, move to preferences;
   profiles ships data-palette only.
 - plan profiles: inline code is a --bg-2 chip in elements, text through --code-color with fallback
-  --fg.
+  --fg. Superseded by profiles review stop 1: green text, no chip.
 - plan profiles: --bg-2 steps toward the text in both schemes (lighter in dark).
 - plan profiles: pane token --bg-0, darker than --bg in both schemes.
 - plan profiles: Flexoki's ladder shifts one step so the pane is distinct; supersedes the Flexoki
@@ -614,12 +616,42 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
   (#66800b / #879a39, OKLCH hue ~123°) rotated to hue 142° at Flexoki's lightness and chroma
   (L 0.559 / C 0.134 light, L 0.651 / C 0.124 dark), away from yellow. A documented departure
   from upstream Flexoki.
+- profiles BUILD: package.json moved to 0.4.0 in slice 1, not slice 5: the package test ties the
+  version to the newest probes tag, and slice 1 added v0.4.0's probes.
+- profiles BUILD: one rule, `:where([data-palette], [data-scheme])`, paints `--bg` and `--fg`, so
+  a container that only forces a scheme repaints too; text color inherits as a resolved color.
+- profiles BUILD: caret-color and accent-color moved from the body to `:where(*)`, so each element
+  resolves `--interaction-color` in its own palette and scheme. Trade-off: a consumer's plain
+  accent-color on an ancestor no longer inherits; the hook is the path.
+- profiles BUILD: the default stripe is `color-mix(in srgb, var(--bg-2) 50%, var(--bg))`.
+- profiles BUILD: the inline-code rule is `:where(code:not(pre code, a code))`, so code in a pre
+  stays plain and code in a link takes the link's color and underline.
+- profiles BUILD: a dialog's actions sit `--space-m` below its content, through
+  `dialog > :is(form, menu, footer):last-child:not(:first-child)` in the elements layer, so
+  every consumer's `method="dialog"` form gets the space.
+- profiles BUILD: Everforest pinned at v0.3.0; its `--border` is bg3 light (bg2 light equals
+  bg_dim, the pane) and bg2 dark. Its magenta is its purple, which fills the ANSI magenta slots.
+- profiles BUILD: Primer pinned at github-vscode-theme v6.3.5, resolving @primer/primitives 7.10.0
+  with the theme's src/colors.js overrides; every new hex was checked against upstream, 64 of 64.
+- profiles BUILD: the specimen's banners are `--text-2xl`, `--text-xl`, and `--text-l`, since
+  synthesized small caps render near 70% of the font size; the fluid readout is a CSS counter set
+  by `round(var(--sample) * 100)`, with no script.
+- profiles BUILD: the budgets live once, in `BUDGETS` in `scripts/size.js`. An entry with no
+  budget fails the check, and one exactly at its budget passes. Raising a budget is the
+  architect's decision, never a fix for a failing check (STANDARDS.md).
+- profiles standards review: the color-facet test reads every token the color sub-layer declares,
+  so an extra token fails; the budget tests hold BUDGETS' keys to the exported entries and the
+  audit to no failures, replacing tests that restated BUDGETS and audit's arithmetic.
 
 ## Pending edits
 
 - coordinator · html-artifacts.md, "Style baseline": rewritten at the answer to describe the
   faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
-  replaces the layers and themes edits to "Style baseline", "Palette", and "Themes").
+  replaces the layers and themes edits to "Style baseline", "Palette", and "Themes"). From
+  profiles it covers the sixteen-token color interface, `data-palette` and `data-scheme` scopes
+  on any element, the five color profiles, the hooks (`--interaction-color`, `--code-color`,
+  `--kbd-color`, `--button-color`, `--table-stripe`), and the lean and full entries with their
+  enforced brotli budgets.
 - coordinator · roadmap.toml, preferences summary: gains a second space and a second type
   profile, and the data-space and data-type scopes (plan profiles).
 - coordinator · roadmap.toml, keys summary: drop "plus key-hint styling"; keys is the

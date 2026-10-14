@@ -10,6 +10,8 @@ jsDelivr, and extend it. The repository is managed with the marathon workflow; s
 - **Standards:** `STANDARDS.md`, with pointers into the architecture repository.
 - **Check:** `mise run check`. It runs browser tests in headless chromium and fails when
   chromium is missing. The tests open pages through `test/harness.js`.
+- **Size budgets:** `BUDGETS` in `scripts/size.js`; `mise run size` reports each entry against
+  its budget, and the check fails when one is over.
 - **Live pin check:** `mise run pin <tag>` checks a published tag against jsDelivr and Pages; it
   reads the network, so the check never runs it.
 - **Goals:** this spike's tasks live in the coordinator's roadmap,

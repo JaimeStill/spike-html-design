@@ -119,8 +119,8 @@
 /* Scroll. Each scrolls its overflow on one axis, with a small space between the content and the
    scrollbar. .scroll-y also reserves a stable gutter, so its content keeps its width whether or not
    it overflows. .scroll-x reserves none: scrollbar-gutter reserves only a vertical scrollbar's
-   inline space, which a horizontal scroller never shows, and it left a wrapped table short of its
-   container by that width. */
+   inline space, which a horizontal scroller never shows, and that space would leave a wrapped
+   table short of its container. */
 
 .scroll-y {
   overflow-y: auto;

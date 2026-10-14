@@ -21,8 +21,9 @@ The architecture pages that apply, in the architecture repository:
 - Fluid tokens need `progress()`. A browser without it computes them as invalid: fluid margins
   and padding fall to 0 and headings to body size.
 - A variant is a suffix, never a prefix: `--red-bright`, `.button-red`.
-- Each entry has a compressed size budget. Raising one is the architect's decision, recorded in
-  the goal record with its reason; it is never the fix for a failing check.
+- Each entry has a brotli size budget, in `BUDGETS` in `scripts/size.js`. Raising one is the
+  architect's decision, recorded in the goal record with its reason; it is never the fix for a
+  failing check.
 
 ## Tokens
 
@@ -51,7 +52,7 @@ restating it.
 - The interaction color marks only what a reader can act on: links, focus, the caret, form
   accents, selection, and control hover borders. A blockquote's edge and other decoration stay
   neutral.
-- No surface hooks for code or kbd: inline code is colored text, and kbd is an outlined key.
+- Code and kbd have no surface hooks: inline code is colored text, and kbd is an outlined key.
 
 ## Layers
 

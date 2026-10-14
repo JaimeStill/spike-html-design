@@ -36,8 +36,8 @@ package and through a pinned CDN URL, and extended by other packages?
 
 Whether the baseline graduates, and where: the architecture layer, beside the diagram and voice
 standards, or its own standards-lab repository. experiment.html's later spikes
-(spike-html-components, spike-html-hosting, spike-html-go-wasm, spike-html-apps) link to it. Its packaging, a git-tag package that other packages extend, is
-also an input to v1.client.
+(spike-html-components, spike-html-hosting, spike-html-go-wasm, spike-html-apps) link to it.
+Its packaging, a git-tag package that other packages extend, is also an input to v1.client.
 
 ## The evidence
 
@@ -74,13 +74,12 @@ also an input to v1.client.
   Tools are pinned in mise. Bundling at release waits until validate measures the cost of the
   @import chain from the CDN.
 - **Packaging.** From facets on, a `package.json` names and versions the package and exports
-  its CSS entry points, and from preferences on its JS modules, with no dependencies. At v0.4.0
-  it exports the lean entry, `baseline.css`, as the package root, the full entry, `full.css`, as
-  `./full`, and each color profile as `./profiles/<name>`. A consumer installs it by
-  git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which validate proves. The lean
-  entry point holds the foundation and the default profiles, and the full one, from profiles
-  on, every profile. Each entry's size, raw and brotli, is measured and reported in facets, and
-  its brotli size is enforced against a budget from profiles on.
+  its CSS entry points, and from preferences on its JS modules, with no dependencies. A
+  consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which
+  validate proves. The lean entry point holds the foundation and the default profiles, and the
+  full one every profile; "Entries and exports", below, lists v0.4.0's exports. Each entry's
+  size, raw and brotli, is reported from facets on, and its brotli size is held to a budget from
+  profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
   tested secondary channel: `cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@vX.Y.Z/...`.
 - **Releases.** One minor tag per task, v0.1.0 to v0.6.0. A tag is never changed or re-cut. The
@@ -92,35 +91,30 @@ also an input to v1.client.
 
 ## Capabilities
 
-Each entry names the task that builds it. v0.2.0 had four flat layers (tokens, reset, theme,
-components) under `baseline.css`, Primer-derived dark and light themes with the `data-theme`
-hook, role tokens, and component classes. v0.3.0, the facets tag, replaces them: the nested
-layers, the facet tokens under new names with no aliases, the elements and tools layers, and
-`package.json`; v0.1.0 and v0.2.0 keep their own names and pinned pages. v0.4.0, the profiles
-tag, adds the pane surface and drops `--border-3`, adds four color profiles beside Flexoki, the
-interaction, code, and kbd hooks, and the full entry with enforced budgets; v0.3.0 keeps
-`--border-3` on its own pin. "Using v0.4.0", below, describes the interface a page uses.
+Each entry names the task that builds it. Each tag keeps its own names on its own pinned page:
+v0.1.0 and v0.2.0 have flat layers, Primer-derived themes with the `data-theme` hook, role
+tokens, and component classes, and v0.3.0 has `--border-3`. "Using v0.4.0", below, describes
+the interface a page uses now.
 
 - **Layers** (facets): one top-level layer named for the package holds tokens, with color,
   space, and type sub-layers, then reset, elements, and tools.
-- **Facets** (facets): the token contract, one profile per facet. Color is sixteen tokens:
-  surfaces, borders, and text, and eight hues named for their color, with no role tokens; a hue
-  carries no meaning, and semantic variants are the consumer's. With no `data-scheme` attribute
-  the page follows the system scheme, live, and `data-scheme="light"` or `"dark"` forces it.
-  Space is a nine-step fluid scale, two line widths, and radii from one base; type is an
-  eight-step scale, fluid from `--text-l` up, with fonts and leadings keyed by role (body,
-  heading, ui, code). The fluid tokens interpolate with `progress()` between rem bounds over the
-  display's size. Browsers without `progress()`, older than Firefox 155 and Safari 26, lose
-  fluid sizing: the space tokens and the fluid text steps fail to compute, so the margins,
-  paddings, and heading sizes that read them fall back to their unset values.
-- **Profiles** (profiles): the sixteen-token color interface, with a pane surface, `--bg-0`,
-  and two border steps; Flexoki, Tokyo Night, Catppuccin, Everforest, and Primer, each light and
-  dark, each in its own file, with a contrast record per profile and scheme. `data-palette`
-  applies a profile to any element at zero specificity, and Flexoki applies with no attribute.
-  A scope re-sets its own color and background, so a preview container renders as its profile
-  renders at the root. The elements layer reads three hooks, `--interaction-color`,
-  `--code-color`, and `--kbd-color`, and styles `kbd` as an outlined key, which is all the
-  key-hint styling the baseline has.
+- **Facets** (facets): each facet is a token contract that one profile fills. Color holds
+  surfaces, borders, text, and eight hues named for their color, with no role tokens: a hue
+  carries no meaning, and semantic variants are the consumer's. The page follows the system
+  scheme, live, unless `data-scheme` forces one. Space holds a nine-step fluid scale, two line
+  widths, and radii from one base. Type holds an eight-step scale, fluid from `--text-l` up,
+  with fonts and leadings keyed by role (body, heading, ui, code). The fluid tokens interpolate
+  with `progress()` between rem bounds over the display's size. Browsers without `progress()`,
+  older than Firefox 155 and Safari 26, lose fluid sizing: the space tokens and the fluid text
+  steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
+  their unset values.
+- **Profiles** (profiles): the color interface is sixteen tokens, with a pane surface,
+  `--bg-0`, and two border steps. Five profiles fill it, Flexoki, Tokyo Night, Catppuccin,
+  Everforest, and Primer, each light and dark in its own file, with a contrast record per
+  profile and scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any
+  element's subtree, so a preview container renders as its profile renders at the root. The
+  elements layer reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`,
+  and styles `kbd` as an outlined key, the baseline's only key-hint styling.
 - **Elements** (facets): class-free, zero-specificity styling of every rendered native element,
   limited to paint, type, border (with a table's `border-collapse` and `border-spacing`), radius,
   margin, and padding, with `::file-selector-button`, `::marker`, `::placeholder`, and
@@ -131,10 +125,10 @@ interaction, code, and kbd hooks, and the full entry with enforced budgets; v0.3
   has a hook where it has a treatment to extend: a consumer's variant sets `--button-color` or
   `--table-stripe` in its own layer. Scroll and forms have no hook; a consumer extends them in
   its own later layer.
-- **JS modules** (preferences, keys): a profile registry that the package and each extension
-  package register into; preferences, where T opens a theming menu with a section per facet and
-  the scheme, with a second space and a second type profile applied by `data-space` and
-  `data-type`; `keys.js` and the ? help dialog.
+- **JS modules** (preferences, keys): planned. The package and each extension package register
+  profiles into one registry. In preferences, T opens a theming menu with a section per facet
+  and the scheme, and a second space and a second type profile apply by `data-space` and
+  `data-type`. `keys.js` binds keys and opens the ? help dialog.
 - **Package** (facets, profiles, validate): `package.json` and the lean entry point, with each
   entry's size reported by `mise run size` and the check (facets); the full entry point and the
   enforced size budget (profiles); the git-tag install and an extension fixture that passes the
@@ -207,10 +201,10 @@ OKLCH lightness and chroma but rotate from a hue near yellow to 142°, sRGB gree
 ### Hooks
 
 A hook is a custom property that a layer reads, so a consumer extends a treatment by setting
-one property on any element. The baseline reads each hook with a fallback, and neither the
-baseline nor any profile declares one; the only exception is the tools layer's `.button-<hue>`
-variants, which a page opts in to by class and which set `--button-color`. Hooks are public
-API, frozen with each tag.
+one property on any element. The baseline reads each hook with a fallback. Neither the
+baseline nor any profile declares a hook, except the tools layer's `.button-<hue>` variants,
+which a page opts in to by class and which set `--button-color`. Hooks are public API, frozen
+with each tag.
 
 | Hook | Layer | Colors | Fallback |
 | --- | --- | --- | --- |
@@ -228,8 +222,12 @@ API, frozen with each tag.
 }
 ```
 
-`kbd` is styled by the elements layer as an outlined key with a heavier bottom edge. That is all
-the key-hint styling the baseline has; the keys module binds keys and styles nothing.
+The elements layer sets `caret-color` and `accent-color` on every element from
+`--interaction-color`, so each resolves in its own element's palette and scheme. A plain
+`accent-color` set on an ancestor therefore doesn't reach its descendants: set the hook instead.
+
+The elements layer styles `kbd` as an outlined key with a heavier bottom edge, the baseline's
+only key-hint styling. The planned keys module binds keys and styles nothing.
 
 ### Entries and exports
 
@@ -255,15 +253,15 @@ A profile file linked on its own is unlayered, and beats the consumer's layers.
 ### Size budgets
 
 Each entry's size is the sum of its files' brotli-11 sizes, the entry and every file it imports.
-The check fails when an entry exceeds its budget: 14,000 bytes for the lean entry and 18,000
-bytes for the full entry. Raw sizes are reported, not enforced. `mise run size` prints each
-entry's files with their raw and brotli sizes, the totals, and the headroom.
+The check fails when an entry exceeds its budget, 14,000 bytes for the lean entry and 18,000
+bytes for the full entry, or has none. The budgets live in `BUDGETS` in `scripts/size.js`, and
+raising one is the architect's decision. Raw sizes are reported, not enforced. `mise run size`
+prints each entry's files with their raw and brotli sizes, the totals, and the headroom.
 
 ### Reading measure
 
-A reading measure belongs on a prose-centric layout's reading column, never on single
-paragraphs. An interface such as the workbench lets text span its panel. The baseline ships no
-measure token and no measure class: line length is the layout's.
+The baseline ships no measure token and no measure class. A reading measure belongs on a
+prose layout's reading column, which the layout sets (STANDARDS.md, "Reading measure").
 
 ### Fluid tokens
 
@@ -286,10 +284,10 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
    size measured and reported, the specimen's section per layer and facet, `mise run serve`,
    and a visual review after the tokens and elements render; v0.3.0 (evidence 1, 2, 4).
 4. `profiles`: the sixteen-token color interface, Tokyo Night, Catppuccin, Everforest, and
-   Primer beside Flexoki, the interaction, code, and kbd hooks, preview containers, the specimen's grid of
-   every profile and scheme with the workbench layout reworked (the architect's screenshots of
-   what fails are the plan round's input), the full entry point, the enforced size budget, contrast per
-   profile, and a planned visual review after the grid renders; v0.4.0 (evidence 3, 5).
+   Primer beside Flexoki, the interaction, code, and kbd hooks, preview containers, the
+   specimen's grid of every profile and scheme with the workbench layout reworked, the full
+   entry point, the enforced size budget, contrast per profile, and a visual review after the
+   grid renders; v0.4.0 (evidence 3, 5).
 5. `preferences`: the profile registry, the T theming menu, persistence, and the flash
    measurement; v0.5.0 (evidence 6).
 6. `keys`: `keys.js` and the ? dialog; v0.6.0 (evidence 7).
@@ -305,4 +303,4 @@ design, `app/client/design`, and its presentation palette,
 
 ## The answer
 
-Pending: the `validate` task writes it.
+Planned: the `validate` task writes it.

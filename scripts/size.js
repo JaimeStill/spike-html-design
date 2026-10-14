@@ -22,9 +22,9 @@ const root = dirname(import.meta.dir);
 export const BUDGETS = { "baseline.css": 14_000, "full.css": 18_000 };
 
 // entries returns the package's CSS entries, as repository paths: every target its exports map
-// names that ends in .css, whatever the map's nesting of conditions, once each, but the profiles.
-// A profile export (./profiles/<name>) is one file a page imports beside an entry, not an entry,
-// so its size counts where an entry imports it.
+// names that ends in .css, whatever the map's nesting of conditions, once each, except the
+// profiles. A profile export (./profiles/<name>) is one file a page imports beside an entry, not
+// an entry, so its size counts where an entry imports it.
 export async function entries(dir = root) {
   const pkg = await Bun.file(join(dir, "package.json")).json();
   const targets = (exports) =>
