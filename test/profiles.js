@@ -64,8 +64,10 @@ export const COLOR_PROFILES = {
         ["yellow-400", "#d0a215"],
       ],
       "--green": [
-        ["green-600", "#66800b"],
-        ["green-400", "#879a39"],
+        // The one departure from Flexoki's scale: green-600 and green-400 (#66800b, #879a39)
+        // rotated from OKLCH hues ~123° and ~119° to 142° at their own lightness and chroma.
+        ["green-600 at hue 142°", "#408739"],
+        ["green-400 at hue 142°", "#61a25a"],
       ],
       "--cyan": [
         ["cyan-600", "#24837b"],

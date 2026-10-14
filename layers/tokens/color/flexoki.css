@@ -1,6 +1,7 @@
 /*
  * Colors from Flexoki (MIT, Steph Ango), https://stephango.com/flexoki: its light and dark values,
- * the 600 hue steps in light and the 400 steps in dark.
+ * the 600 hue steps in light and the 400 steps in dark. Green alone departs from them; its comment
+ * says how.
  *
  * layers/tokens/color/flexoki.css, the Flexoki profile of the color facet, the default: one
  * zero-specificity block, applied by data-palette="flexoki" on any element to its subtree and on
@@ -31,7 +32,10 @@
   --red: light-dark(#af3029, #d14d41); /* red-600 / red-400 */
   --orange: light-dark(#bc5215, #da702c); /* orange-600 / orange-400 */
   --yellow: light-dark(#ad8301, #d0a215); /* yellow-600 / yellow-400 */
-  --green: light-dark(#66800b, #879a39); /* green-600 / green-400 */
+  /* Green departs from Flexoki's green-600 / green-400, #66800b / #879a39, which sit at OKLCH hues
+     ~123° and ~119°, close to yellow: each keeps its lightness and chroma (L 0.559, C 0.134 light; L 0.651,
+     C 0.124 dark), rotated to hue 142°, sRGB green's. */
+  --green: light-dark(#408739, #61a25a); /* green-600 at hue 142° / green-400 at hue 142° */
   --cyan: light-dark(#24837b, #3aa99f); /* cyan-600 / cyan-400 */
   --blue: light-dark(#205ea6, #4385be); /* blue-600 / blue-400 */
   --purple: light-dark(#5e409d, #8b7ec8); /* purple-600 / purple-400 */
