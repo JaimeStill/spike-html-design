@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
-- **Task:** preferences
-- **Branch:** preferences
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -10,7 +10,7 @@
 2. [x] themes
 3. [x] facets
 4. [x] profiles
-5. [ ] preferences
+5. [x] preferences
 6. [ ] keys
 7. [ ] validate
 
@@ -173,10 +173,6 @@ Door          one-way for tag v0.5.0, which jsDelivr caches as immutable: the ne
               keys). The storage key becomes shared state for readers on an origin, so renaming
               it later drops saved choices. Two-way otherwise.
 Release       v0.5.0
-
-## Progress
-
-slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe590) · review stop 2 accepted · standards done (03cda5e, d68c240) · spec done, no gaps · editor done
 
 ## Decisions
 
@@ -790,6 +786,9 @@ slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe
 - preferences editor: context/file-modules.md is integrated: README "Modules from `file://`"
   states the exception, and the coordinator edit to html-artifacts.md "Build" is in Pending
   edits.
+- preferences SHIP (architect): accepted the session brief and the JS budgets (registry 1,200,
+  preferences 3,800, theme-menu 8,500, register 1,450, register-full 1,550 B brotli), "fine for
+  the spike"; size is to be revisited with the holistic client strategy. v0.5.0 releases.
 
 ## Pending edits
 
