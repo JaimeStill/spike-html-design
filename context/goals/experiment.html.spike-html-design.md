@@ -174,7 +174,7 @@ Release       v0.5.0
 
 ## Progress
 
-slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe590) · review stop 2 accepted · standards — · spec — · editor —
+slices 6/6 committed (462a4fd, f027429, 13c53de, f89feca, 480f573, 2405002, cefe590) · review stop 2 accepted · standards done (03cda5e, d68c240) · spec — · editor —
 
 ## Decisions
 
