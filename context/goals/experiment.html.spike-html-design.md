@@ -36,15 +36,17 @@ Behaviors
      paper, surface base-100, borders base-150 and base-200; dark pane black, page
      base-950, surface base-900, borders base-850 and base-800. Text and hues keep their
      v0.3.0 Flexoki steps.
-  2. Four color profiles: Flexoki (default), Kanagawa (lotus / wave), Tokyo Night
-     (day / night), Catppuccin (latte / mocha). Each maps upstream swatches onto the 16
-     tokens per the accepted mapping, as starting values the review stop confirms. Each
-     is credited by a heading comment naming source, license, and upstream version:
-     Flexoki MIT; Kanagawa MIT at bb85e4b; Tokyo Night Apache-2.0 at v4.14.1;
-     Catppuccin MIT at palette v1.8.0.
+  2. Five color profiles, each its own file: Flexoki (default), Tokyo Night (day /
+     night), Catppuccin (latte / mocha), Everforest (hard light / hard dark), and Primer
+     (GitHub Light Default / Dark Dimmed). Each maps upstream swatches onto the 16 tokens
+     by role, as starting values the review stops confirm. Each is credited by a heading
+     comment naming source, license, and upstream version: Flexoki MIT; Tokyo Night
+     Apache-2.0 at v4.14.1; Catppuccin MIT at palette v1.8.0; Everforest
+     (sainnhe/everforest) MIT and Primer (GitHub VS Code theme) MIT, each at a pinned
+     upstream version. (Review redirect: Kanagawa dropped.)
 
   Selection
-  3. data-palette="flexoki" | "kanagawa" | "tokyo-night" | "catppuccin" on any element
+  3. data-palette="flexoki" | "tokyo-night" | "catppuccin" | "everforest" | "primer" on any element
      applies that profile to its subtree at zero specificity; the nearest scope wins.
      With no attribute anywhere Flexoki applies; data-palette on the root overrides it.
      A scope sets only color tokens and re-sets color and background on its own element,
@@ -65,8 +67,9 @@ Behaviors
      the file button, and neutral .button take a border in the interaction color. Active
      and focus keep their treatment, .button-<hue> keeps its own hook color, and disabled
      controls don't change.
-  8. Inline code outside pre is a chip: --bg-2 fill, padding, --radius-sm, no border, text
-     read as var(--code-color, var(--fg)).
+  8. Inline code outside pre has no chip: the code font, its text read as
+     var(--code-color, var(--green)); inside a link it takes the link's color and
+     underline. (Review redirect: replaces the --bg-2 chip.)
   9. kbd is an outlined key: a --border-2 border at --line-s with a --line-m bottom edge,
      no fill, --radius-sm. Its border and text read --kbd-color, falling back to
      --border-2 and --fg. All key-hint styling is kbd's.
@@ -74,6 +77,8 @@ Behaviors
       color-mix() distinct from the header surface, still replaced by --table-stripe.
   11. The elements behavior test still holds: under reset and elements, every element lays
       out as with no stylesheet, apart from the reset's allowances.
+  11a. A blockquote's start edge is a neutral --border-2 rule, not the interaction color.
+  11b. A dialog's padding is a step tighter, with more space before its actions.
 
   Contrast
   12. Each profile records its contrast in each scheme: every text token and hue over
@@ -83,23 +88,33 @@ Behaviors
 
   Package
   13. The lean entry holds the foundation and Flexoki. The full entry is self-contained:
-      everything the lean entry holds plus Kanagawa, Tokyo Night, and Catppuccin, each
-      imported one hop deep into the color sub-layer.
+      everything the lean entry holds plus Tokyo Night, Catppuccin, Everforest, and
+      Primer, each imported one hop deep into the color sub-layer.
   14. package.json names spike-html-design at 0.4.0 and exports the lean entry as ".",
       the full entry as "./full", and each profile as its own export; no dependencies;
       every export resolves to a published file.
   15. A consumer linking the lean entry and importing one profile's export into the color
       sub-layer can select that profile with data-palette.
-  16. The check fails when an entry's per-file brotli-11 sum exceeds its budget: 12,000
-      bytes lean, 16,000 full. Raw sizes stay reported, not enforced.
+  16. The check fails when an entry's per-file brotli-11 sum exceeds its budget: 14,000
+      bytes lean, 16,000 full. (Review redirect: lean raised from 12,000.) Raw sizes stay reported, not enforced.
 
   Specimen
   17. The specimen is a workbench in reference variant A's console layout, with no
       workbench note. It loads every profile; forms are rearranged within the specimen's
       own composition; embedded cells are denser, with realistic data: URL content and a
       scheme-aware iframe; a comparison grid holds a compact preview card for every
-      profile and scheme (eight); the contrast section gives each profile one row, light
+      profile and scheme (ten); the contrast section gives each profile one row, light
       and dark records side by side. All arrangement stays in the specimen layer.
+  17a. (Review redirect.) The specimen's copy reads as clear, grammatical technical
+      documentation for a human reader. No paragraph carries its own measure: text spans
+      its panel, and the page column caps at 80rem. The header has no rule or meta line
+      and sits close to Tokens; section labels and layer names are larger; color panels
+      drop their intros and top-align their tables, with room between text and table;
+      --space-fluid and --space-base head the space scale and --type-fluid heads the type
+      scale, shown as fluid expansion across the display range, with no separate
+      progress panel (the progress tokens are documented as internal); the tables
+      example is wider, with more columns and room for its caption; the embedded cells
+      are evenly arranged.
   18. The preview card shows a heading; a paragraph with a link, inline code, and kbd; a
       neutral button and two hue buttons; a labeled text input; a three-row table with a
       header and a striped row; a strip of every color token; and a label naming the
@@ -129,10 +144,14 @@ Slices
      the preview-card fixture page. Demo: the fixture, one card per profile and scheme.
   4. The workbench: console layout, note removed, forms rearranged, embedded cells, the
      eight-card comparison grid, the contrast rows. Demo: the served workbench.
-  ── REVIEW STOP: the architect views the served workbench and grid in both schemes and
-     confirms or changes each profile's tier and hue values (including lotus text order,
-     lotus's near-equal pane and surface, wave's red, and Flexoki's shifted ladder) and
-     the layout, before the full entry and budget are built ──
+  ── REVIEW STOP 1 (held after slice 4): Flexoki's shifted ladder, the stripe, Tokyo
+     Night and Catppuccin accepted; redirect recorded in Decisions ──
+  4b. Review fixes: drop Kanagawa; add Everforest (hard) and Primer (Light Default /
+     Dark Dimmed) with exports, contrast records, and cards; inline code as green text;
+     the blockquote edge; the dialog spacing; the specimen copy and layout fixes. Demo:
+     the served workbench.
+  ── REVIEW STOP 2: the architect views the new profiles and the fixes in both schemes
+     before the full entry and budget are built ──
   5. The full entry and package: self-contained full entry, package.json at 0.4.0 with
      ".", "./full", and per-profile exports, a lean-plus-one-profile consumer test, the
      specimen on the full entry. Demo: the check passes; the size report lists both.
@@ -144,7 +163,7 @@ Slices
 
 Out of scope  second space and type profiles and data-space/data-type (preferences); the
               registry, theming menu, persistence (preferences); the shortcuts API and ?
-              dialog (keys); dragon, storm, moon, frappe, macchiato; role tokens, a
+              dialog (keys); Kanagawa; dragon, storm, moon, frappe, macchiato; Everforest medium and soft; role tokens, a
               selection token, surface hooks for code or kbd; correcting any contrast; a
               shipped card or any component; layouts; bundling; the git-tag install and
               exported conformance test (validate); @function, @mixin, if().
@@ -154,7 +173,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 4/7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043) · review stop pending · standards — · spec — · editor —
+slices 4/8 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043) · review stop 1 done, redirect → 4b · standards — · spec — · editor —
 
 ## Decisions
 
@@ -565,6 +584,24 @@ slices 4/7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043) · review stop pending
 - profiles BUILD (architect): every color profile, Flexoki included, is its own file and
   export; color.css keeps only the facet's contract (scheme rules, scope paint rule, the token
   roles). Space and type split the same way when preferences adds their second profiles.
+- profiles review stop 1 (architect): drop Kanagawa (it doesn't translate to a UI); add
+  Everforest at its hard light and dark variants and Primer from the GitHub VS Code theme,
+  GitHub Light Default and Dark Dimmed. Primer was removed at v0.3.0 only because one scheme
+  was planned then, a preference for Flexoki, not a dislike; supersedes "Primer reads too cold"
+  as a reason to exclude it. data-palette values: everforest, primer.
+- profiles review stop 1 (architect): inline code is the code font in --green through
+  --code-color, with no chip; code in a link takes the link's color. Supersedes plan profiles'
+  --bg-2 chip.
+- profiles review stop 1 (architect): a blockquote's edge stays neutral (--border-2); the
+  interaction color marks only what can be acted on.
+- profiles review stop 1 (architect): a reading measure belongs to prose-centric layouts, on the
+  reading column, never to single paragraphs; mechanical interfaces like the workbench let text
+  span its panel. The baseline ships no measure class.
+- profiles review stop 1 (architect): --space-fluid and --type-fluid are fluid expansion across
+  the display range, internal to their facets; the specimen shows them with --space-base at the
+  head of each scale, not as a "progress" panel.
+- profiles review stop 1 (architect): lean budget raised to 14,000 B brotli; full stays 16,000.
+- profiles review stop 1 (architect): a second review stop follows the fix slice.
 
 ## Pending edits
 
