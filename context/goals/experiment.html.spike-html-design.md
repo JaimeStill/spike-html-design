@@ -173,7 +173,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 4/8 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043) · review stop 1 done, redirect → 4b · standards — · spec — · editor —
+slices 4/8 + 4b part 1 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c) · review stop 1 done · standards — · spec — · editor —
 
 ## Decisions
 
