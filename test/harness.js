@@ -2,7 +2,8 @@
 // styles. It wraps Bun.WebView (experimental in bun 1.4.3) with the few capabilities the tests
 // use: open a URL, evaluate in the page, read a computed style, fingerprint a page's resolved
 // styles, emulate media features such as prefers-color-scheme and the viewport's size, and answer
-// a request URL prefix from a local file, with the CORS header a CDN sends. serve() is a static server for pages that must load over http://.
+// a request URL prefix from a local file, with the CORS header a CDN sends and, optionally, its
+// latency. serve() is a static server for pages that must load over http://.
 //
 // Bun.WebView spawns one chromium per bun process and opens each view as a tab in it, so the
 // first openPage() fixes the browser for the whole test run.
@@ -19,7 +20,8 @@ export function fileUrl(path) {
 // to a Page once the page has loaded. Options set up the tab before the first load:
 // `scheme` emulates prefers-color-scheme ("dark" or "light"), `viewport` emulates the viewport's
 // size in CSS px, as in { width: 1440, height: 900 }, and `intercept` maps URL prefixes to the
-// local files that answer them, as in { "https://cdn.example/x.css": "x.css" }. It throws when
+// local files that answer them, as in { "https://cdn.example/x.css": "x.css" }, or to
+// { path, delay } to answer after delay ms, as a slow CDN would. It throws when
 // chromium is not on PATH or won't start.
 export async function openPage(url, { scheme, viewport, intercept } = {}) {
   const page = new Page(spawnView());
@@ -29,8 +31,10 @@ export async function openPage(url, { scheme, viewport, intercept } = {}) {
     await page.view.navigate("about:blank");
     if (scheme) await page.setScheme(scheme);
     if (viewport) await page.setViewport(viewport);
-    for (const [prefix, path] of Object.entries(intercept ?? {}))
-      await page.intercept(prefix, path);
+    for (const [prefix, answer] of Object.entries(intercept ?? {})) {
+      const { path, delay } = typeof answer === "string" ? { path: answer } : answer;
+      await page.intercept(prefix, path, { delay });
+    }
     await page.goto(url);
   } catch (error) {
     page.close();
@@ -167,12 +171,13 @@ class Page {
 
   // intercept answers every request whose URL starts with prefix with the local file at path,
   // with its content type and Access-Control-Allow-Origin: *. A missing file answers 404, so a
-  // wrong path fails a test instead of reaching the network.
-  async intercept(prefix, path) {
+  // wrong path fails a test instead of reaching the network. `delay` holds each answer that many
+  // ms, as a CDN's latency would.
+  async intercept(prefix, path, { delay = 0 } = {}) {
     if (this.#routes.size === 0) {
       this.view.addEventListener("Fetch.requestPaused", (event) => this.#answer(event.data));
     }
-    this.#routes.set(prefix, path);
+    this.#routes.set(prefix, { path, delay });
     // Fetch.enable replaces the pattern list, so each call sends every route.
     await this.#cdp("Fetch.enable", {
       patterns: [...this.#routes.keys()].map((p) => ({ urlPattern: `${p}*` })),
@@ -180,7 +185,10 @@ class Page {
   }
 
   async #answer({ requestId, request }) {
-    const [, path] = [...this.#routes].find(([prefix]) => request.url.startsWith(prefix));
+    const [, { path, delay }] = [...this.#routes].find(([prefix]) =>
+      request.url.startsWith(prefix),
+    );
+    if (delay) await Bun.sleep(delay);
     const file = Bun.file(path);
     const found = await file.exists();
     await this.#cdp("Fetch.fulfillRequest", {
