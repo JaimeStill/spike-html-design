@@ -96,7 +96,7 @@ Behaviors
   15. A consumer linking the lean entry and importing one profile's export into the color
       sub-layer can select that profile with data-palette.
   16. The check fails when an entry's per-file brotli-11 sum exceeds its budget: 14,000
-      bytes lean, 16,000 full. (Review redirect: lean raised from 12,000.) Raw sizes stay reported, not enforced.
+      bytes lean, 18,000 full. (Review redirects: lean raised from 12,000, full from 16,000.) Raw sizes stay reported, not enforced.
 
   Specimen
   17. The specimen is a workbench in reference variant A's console layout, with no
@@ -152,6 +152,9 @@ Slices
      the served workbench.
   ── REVIEW STOP 2: the architect views the new profiles and the fixes in both schemes
      before the full entry and budget are built ──
+  4c. (Review stop 2.) The tools layer's .scroll-x reserves no vertical scrollbar gutter, so
+     a wrapped table fills its container; .scroll-y keeps its stable gutter. Lands with
+     slice 5.
   5. The full entry and package: self-contained full entry, package.json at 0.4.0 with
      ".", "./full", and per-profile exports, a lean-plus-one-profile consumer test, the
      specimen on the full entry. Demo: the check passes; the size report lists both.
@@ -173,7 +176,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 4/8 + 4b committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e) · review stop 1 done · review stop 2 pending · standards — · spec — · editor —
+slices 4/8 + 4b committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e) · review stop 1 done · review stop 2 done · standards — · spec — · editor —
 
 ## Decisions
 
@@ -602,6 +605,11 @@ slices 4/8 + 4b committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e)
   head of each scale, not as a "progress" panel.
 - profiles review stop 1 (architect): lean budget raised to 14,000 B brotli; full stays 16,000.
 - profiles review stop 1 (architect): a second review stop follows the fix slice.
+- profiles review stop 2 (architect): accepted the new profiles (Everforest magenta = purple,
+  as upstream; Primer light fg-2 ≈ fg-3, as upstream; Primer light bg-2 = scale.gray[1]) and the
+  layout and copy fixes. Full budget raised to 18,000 B brotli (five profiles with swatch
+  comments). .scroll-x drops scrollbar-gutter: stable, which left wrapped tables short of their
+  container; .scroll-y keeps it.
 
 ## Pending edits
 
