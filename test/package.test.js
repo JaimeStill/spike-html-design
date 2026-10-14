@@ -42,7 +42,10 @@ describe("package", () => {
       ...profiles.map((name) => `./profiles/${name}`),
     ]);
     for (const name of profiles) {
-      expect([name, pkg.exports[`./profiles/${name}`]]).toEqual([name, `./${profilePath(name)}`]);
+      expect([name, pkg.exports[`./profiles/${name}`]]).toEqual([
+        name,
+        `./${profilePath("color", name)}`,
+      ]);
     }
   });
 

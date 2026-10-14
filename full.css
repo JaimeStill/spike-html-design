@@ -1,16 +1,17 @@
 /*
- * full.css: the package's full entry, every color profile in one link.
+ * full.css: the package's full entry, every profile of every facet in one link.
  *
- * The lean entry, baseline.css, holds the foundation and the default color profile, Flexoki. This
- * entry holds everything the lean entry holds plus the other three profiles, Primer, Catppuccin,
- * and Everforest. A page links this entry to select any profile with data-palette, or the lean
- * entry to fetch less.
+ * The lean entry, baseline.css, holds the foundation and each facet's default profile: Flexoki,
+ * regular, and mono. This entry holds everything the lean entry holds plus every other profile:
+ * Primer, Catppuccin, and Everforest for color, compact for space, and serif for type. A page
+ * links this entry to select any profile with data-palette, data-space, or data-type, or the
+ * lean entry to fetch less.
  *
  * It is self-contained, not an add-on to the lean entry: it declares the same package layer
  * statement and imports every file the lean entry imports, in the same order, each directly into
- * its layer, one hop deep. The profiles follow Flexoki in the color sub-layer, so a data-palette
- * on the root overrides the default's block of equal, zero specificity by order alone. A page
- * links one entry, never both. Like the lean entry, it has no build: the URLs are relative, so a
+ * its layer, one hop deep. Each facet's profiles follow its default in its sub-layer, so an
+ * attribute on the root overrides the default's block of equal, zero specificity by order alone.
+ * A page links one entry, never both. Like the lean entry, it has no build: the URLs are relative, so a
  * pinned jsDelivr tag serves every file from the same tag, and it works from file:// and under a
  * Pages subpath alike.
  */
@@ -28,7 +29,11 @@
 @import url(./layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
 @import url(./layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
 @import url(./layers/tokens/space.css) layer(spike-html-design.tokens.space);
+@import url(./layers/tokens/space/regular.css) layer(spike-html-design.tokens.space);
+@import url(./layers/tokens/space/compact.css) layer(spike-html-design.tokens.space);
 @import url(./layers/tokens/type.css) layer(spike-html-design.tokens.type);
+@import url(./layers/tokens/type/mono.css) layer(spike-html-design.tokens.type);
+@import url(./layers/tokens/type/serif.css) layer(spike-html-design.tokens.type);
 @import url(./layers/reset.css) layer(spike-html-design.reset);
 @import url(./layers/elements.css) layer(spike-html-design.elements);
 @import url(./layers/tools.css) layer(spike-html-design.tools);

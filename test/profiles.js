@@ -1,7 +1,8 @@
-// profiles holds what the tests share about the color profiles: each profile's upstream source,
-// and the swatch it maps onto each of the sixteen color tokens, light and dark. It is the record
-// the profile files, their comments, the preview cards and the contrast records are all checked
-// against, so a value changed in one place and not the others fails.
+// profiles holds what the tests share about the profiles of every facet: each color profile's
+// upstream source, and the swatch it maps onto each of the sixteen color tokens, light and dark;
+// and each space and type profile's declared values. It is the record the profile files, their
+// comments, the preview cards and the contrast records are all checked against, so a value
+// changed in one place and not the others fails.
 
 // SCHEMES are the two color schemes, in the order a token's light-dark() pair holds them.
 export const SCHEMES = ["light", "dark"];
@@ -309,14 +310,78 @@ export const COLOR_PROFILES = {
   },
 };
 
-// ADDED are the profiles past the default, each in its own file: the profiles a page imports.
-export const ADDED = Object.keys(COLOR_PROFILES).filter((name) => name !== "flexoki");
+// SANS, MONO and SERIF are the system font stacks the type profiles set, as declared.
+export const SANS =
+  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
+export const MONO =
+  'ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace';
+export const SERIF = 'ui-serif, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif';
 
-// profilePath returns the file a profile sits in, the default's included: under the color facet's
-// directory, layers/tokens/color/, since the facet's own file, layers/tokens/color.css, sits at
-// the path its layer's name spells and the profiles are imported into that layer.
-export function profilePath(name) {
-  return `layers/tokens/color/${name}.css`;
+// LEADINGS are the role leadings, which every type profile declares at the same values.
+const LEADINGS = {
+  "--leading-body": "1.5",
+  "--leading-heading": "1.2",
+  "--leading-ui": "1.25",
+  "--leading-code": "1.5",
+};
+
+// SPACE_PROFILES are the space profiles, data-space name to the values its one block declares,
+// token name to its declared text, in the file's order: the default, regular, first, at v0.4.0's
+// values, then compact.
+export const SPACE_PROFILES = {
+  regular: {
+    "--space-base": "calc(1rem + (1.125rem - 1rem) * var(--space-fluid))",
+    "--line-s": "1px",
+    "--line-m": "2px",
+    "--radius-base": "0.375rem",
+  },
+  compact: {
+    "--space-base": "calc(0.75rem + (0.875rem - 0.75rem) * var(--space-fluid))",
+    "--line-s": "1px",
+    "--line-m": "2px",
+    "--radius-base": "0.25rem",
+  },
+};
+
+// TYPE_PROFILES are the type profiles, data-type name to the values its one block declares,
+// token name to its declared text with whitespace squashed, in the file's order: the default,
+// mono, the interface voice at v0.4.0's values, then serif, the editorial voice.
+export const TYPE_PROFILES = {
+  mono: {
+    "--font-body": SANS,
+    "--font-heading": MONO,
+    "--font-ui": MONO,
+    "--font-code": MONO,
+    ...LEADINGS,
+  },
+  serif: {
+    "--font-body": SANS,
+    "--font-heading": SERIF,
+    "--font-ui": SERIF,
+    "--font-code": MONO,
+    ...LEADINGS,
+  },
+};
+
+// FACET_PROFILES are the tokens layer's facets, each to its profiles' names and the attribute that
+// selects them, the default first.
+export const FACET_PROFILES = {
+  color: { attribute: "data-palette", names: Object.keys(COLOR_PROFILES) },
+  space: { attribute: "data-space", names: Object.keys(SPACE_PROFILES) },
+  type: { attribute: "data-type", names: Object.keys(TYPE_PROFILES) },
+};
+
+// ADDED are each facet's profiles past its default, facet to names: the profiles a page that links
+// the lean entry imports itself, and the full entry imports after the default.
+export const ADDED = Object.fromEntries(
+  Object.entries(FACET_PROFILES).map(([facet, { names }]) => [facet, names.slice(1)]),
+);
+
+// profilePath returns the file a facet's profile sits in, the default's included: under the
+// facet's directory, as layers/tokens/color/, since the facet's own file, layers/tokens/color.css,
+// sits at the path its layer's name spells and the profiles are imported into that layer.
+export function profilePath(facet, name) {
+  return `layers/tokens/${facet}/${name}.css`;
 }
 
 // profileColors returns a profile's hex values in the scheme at index, 0 for light and 1 for dark,
