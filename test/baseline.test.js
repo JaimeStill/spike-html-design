@@ -1088,20 +1088,32 @@ describe("color profiles", () => {
     }
   }
 
-  test("a consumer linking the lean entry and importing one profile's export selects it with data-palette", async () => {
+  test("a consumer linking the lean entry and importing one profile export per facet selects each on the root", async () => {
     const pkg = await Bun.file(join(root, "package.json")).json();
+    const keys = [
+      ["color", "./profiles/color/catppuccin"],
+      ["space", "./profiles/space/compact"],
+      ["type", "./profiles/type/sans"],
+    ];
     for (const [index, scheme] of SCHEMES.entries()) {
-      const page = await open(consumerFixture, { scheme });
-      // The page imports the file the export names, relative to the entry, into the color
-      // sub-layer.
+      const page = await open(consumerFixture, { scheme, viewport: MEDIUM });
+      // The page imports the file each nested export names, relative to the entry, into its
+      // facet's sub-layer.
       const imported = await page.evaluate(`[...document.querySelector("style").sheet.cssRules]
         .map((rule) => [rule.layerName, rule.href])`);
-      expect(imported).toEqual([
-        [`${PACKAGE}.tokens.color`, `../../${pkg.exports["./profiles/catppuccin"].slice(2)}`],
-      ]);
+      expect(imported).toEqual(
+        keys.map(([facet, key]) => [
+          `${PACKAGE}.tokens.${facet}`,
+          `../../${pkg.exports[key].slice(2)}`,
+        ]),
+      );
       const catppuccin = profileRgb("catppuccin", index);
       expect(await resolveColors(page, "body")).toEqual(catppuccin);
       expect(await paint(page, "body")).toEqual([catppuccin["--fg"], catppuccin["--bg"]]);
+      expect(pick(await resolveIn(page, "body", SPACE), compactValues(MEDIUM))).toEqual(
+        compactValues(MEDIUM),
+      );
+      expect(pick(await resolveIn(page, "body", TYPE), SANS_FONTS)).toEqual(SANS_FONTS);
       // A profile the page didn't import names nothing: its scope keeps the root's tokens.
       expect(await resolveColors(page, "#everforest p")).toEqual(catppuccin);
     }

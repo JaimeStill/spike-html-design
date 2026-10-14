@@ -5,14 +5,32 @@ import { ENTRIES } from "./layers.js";
 
 const root = dirname(import.meta.dir);
 
+// MODULES are the package's JS entries, each to the modules it statically imports, depth first,
+// each once. theme-menu.js is absent from preferences.js's: preferences.js loads it with a
+// dynamic import() when the menu first opens, so it is fetched on demand, not with preferences.js.
+const MODULES = {
+  "modules/registry.js": [],
+  "modules/preferences.js": ["modules/registry.js"],
+  "modules/theme-menu.js": ["modules/preferences.js", "modules/registry.js"],
+  "modules/register.js": ["modules/registry.js"],
+  "modules/register-full.js": ["modules/registry.js"],
+};
+
 // FIXTURE is a one-entry package, entry.css importing part.css, that the budget tests audit
 // against budgets of their own.
 const FIXTURE = join(import.meta.dir, "fixtures", "size");
 
 describe("size report", () => {
-  test("measures every CSS entry the package exports, lean then full, and no profile", async () => {
-    expect(await entries()).toEqual(Object.keys(ENTRIES));
+  test("measures every CSS entry the package exports, lean then full, then every module, and no profile", async () => {
+    expect(await entries()).toEqual([...Object.keys(ENTRIES), ...Object.keys(MODULES)]);
   });
+
+  for (const [entry, imported] of Object.entries(MODULES)) {
+    test(`covers exactly ${entry} and the modules it statically imports`, async () => {
+      const report = await measure(entry);
+      expect(report.files.map((file) => file.path)).toEqual([entry, ...imported]);
+    });
+  }
 
   for (const [entry, imported] of Object.entries(ENTRIES)) {
     test(`covers exactly ${entry} and the files it imports, in cascade order`, async () => {
@@ -62,10 +80,34 @@ describe("size report", () => {
       @import "../d.css" layer(y);`;
     expect(imports("sub/entry.css", css)).toEqual(["sub/a.css", "sub/b/c.css", "d.css"]);
   });
+
+  test("reads every static import form of a module, and skips comments, import(), and bare names", () => {
+    const js = `/* import "./skipped.js"; */
+      // import { x } from "./skipped.js";
+      import { a, b as c } from "./a.js";
+      import * as d from '../d.js';
+      import e, {
+        f,
+      } from "./e/f.js";
+      import "./side.js";
+      export { g } from "./g.js";
+      export * from "./h.js";
+      import { bare } from "bare";
+      const later = import("./lazy.js");
+      const url = new URL("./menu.js", import.meta.url);`;
+    expect(imports("sub/entry.js", js)).toEqual([
+      "sub/a.js",
+      "d.js",
+      "sub/e/f.js",
+      "sub/side.js",
+      "sub/g.js",
+      "sub/h.js",
+    ]);
+  });
 });
 
 describe("size budget", () => {
-  test("budgets every CSS entry the package exports, and nothing else", async () => {
+  test("budgets every CSS and JS entry the package exports, and nothing else", async () => {
     expect(Object.keys(BUDGETS)).toEqual(await entries());
   });
 

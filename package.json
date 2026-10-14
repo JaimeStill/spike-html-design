@@ -6,9 +6,18 @@
   "exports": {
     ".": "./baseline.css",
     "./full": "./full.css",
-    "./profiles/flexoki": "./layers/tokens/color/flexoki.css",
-    "./profiles/primer": "./layers/tokens/color/primer.css",
-    "./profiles/catppuccin": "./layers/tokens/color/catppuccin.css",
-    "./profiles/everforest": "./layers/tokens/color/everforest.css"
+    "./profiles/color/flexoki": "./layers/tokens/color/flexoki.css",
+    "./profiles/color/primer": "./layers/tokens/color/primer.css",
+    "./profiles/color/catppuccin": "./layers/tokens/color/catppuccin.css",
+    "./profiles/color/everforest": "./layers/tokens/color/everforest.css",
+    "./profiles/space/regular": "./layers/tokens/space/regular.css",
+    "./profiles/space/compact": "./layers/tokens/space/compact.css",
+    "./profiles/type/mono": "./layers/tokens/type/mono.css",
+    "./profiles/type/sans": "./layers/tokens/type/sans.css",
+    "./registry": "./modules/registry.js",
+    "./preferences": "./modules/preferences.js",
+    "./theme-menu": "./modules/theme-menu.js",
+    "./register": "./modules/register.js",
+    "./register/full": "./modules/register-full.js"
   }
 }
