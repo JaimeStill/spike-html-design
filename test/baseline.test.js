@@ -2888,15 +2888,15 @@ describe("specimen", () => {
   test("sets its headings, banners and cell headings at --text-l or larger, and its labels at --text-s", async () => {
     const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
     const sizes = await page.evaluate(`({
-      banners: [...document.querySelectorAll(
+      headings: [...document.querySelectorAll(
         "main > section > header > h2, main > section > section h3, #tokens .cell > h4")]
         .map((el) => [el.textContent, Number.parseFloat(getComputedStyle(el).fontSize)]),
       labels: [...new Set([...document.querySelectorAll(".label")]
         .map((el) => getComputedStyle(el).fontSize))],
     })`);
-    expect(sizes.banners.length).toBeGreaterThan(20);
+    expect(sizes.headings.length).toBeGreaterThan(20);
     const large = await resolveToken(page, "--text-l", "length");
-    for (const [name, size] of sizes.banners) {
+    for (const [name, size] of sizes.headings) {
       expect([name, size >= large - 0.01]).toEqual([name, true]);
     }
     const small = await resolveToken(page, "--text-s", "length");
@@ -2953,11 +2953,11 @@ describe("specimen", () => {
     for (const [text, gap] of gaps) expect([text, gap >= space - 0.5]).toEqual([text, true]);
   });
 
-  // scale resolves the rows of the token scale whose .specimen holds first: each row's token
+  // scale resolves the rows of the token scale whose .specimen holds token: each row's token
   // name and the text of its notes.
-  const scale = (page, first) =>
+  const scale = (page, token) =>
     page.evaluate(`[...[...document.querySelectorAll("#tokens .specimen > code")]
-      .find((code) => code.textContent === "${first}").parentElement.children]
+      .find((code) => code.textContent === "${token}").parentElement.children]
       .filter((el) => el.localName === "code")
       .map((code) => [code.textContent,
         [...code.nextElementSibling.querySelectorAll("small")].map((note) => note.textContent)])`);
@@ -2992,7 +2992,7 @@ describe("specimen", () => {
     const numbers = (note) => [...note.matchAll(/\d+(\.\d+)?/g)].map((m) => Number(m[0]));
     const space = Object.fromEntries(
       (await scale(page, "--space-fluid"))
-        .slice(0, -1)
+        .filter(([name]) => name !== "--space-fluid")
         .map(([name, [note]]) => [name, numbers(note)]),
     );
     expect(space).toEqual({
@@ -3001,7 +3001,7 @@ describe("specimen", () => {
     });
     const type = Object.fromEntries(
       (await scale(page, "--type-fluid"))
-        .slice(0, -1)
+        .filter(([name]) => name !== "--type-fluid")
         .map(([name, [note]]) => [name, numbers(note)]),
     );
     expect(type).toEqual(
@@ -3015,7 +3015,7 @@ describe("specimen", () => {
   });
 
   test("draws each line sample as a rule exactly its token's width, in --fg, across its column", async () => {
-    for (const [scheme, index] of SCHEMES.map((scheme, index) => [scheme, index])) {
+    for (const [index, scheme] of SCHEMES.entries()) {
       for (const viewport of [DESKTOP, PHONE]) {
         const page = await open(specimen, { scheme, viewport });
         // Each sample's token, the thickness it renders at, its rule's width and color, and how
