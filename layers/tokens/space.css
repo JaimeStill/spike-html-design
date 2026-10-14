@@ -4,11 +4,15 @@
  * Three kinds of token: a fluid spacing scale, two line widths, and the radii.
  *
  * The spacing scale is nine steps, --space-3xs to --space-3xl, each a fixed multiple of one
- * fluid base. The base interpolates between two rem endpoints as the display grows from 22.5rem
- * to 80rem, and holds its smallest value below that range and its largest above it. The size it
- * measures is min(100vi, 100svb * 16 / 9): the inline size, capped by what a 16:9 window of the
- * same block size would give, so a short, wide window reads smaller than its width alone gives.
- * The bounds are rem, never px, so the scale follows the user's font size and browser zoom.
+ * base, --space-base. The base is fluid: it grows from its smallest value on a 22.5rem display
+ * to its largest on an 80rem one, and holds those values outside the range. The display size is
+ * min(100vi, 100svb * 16 / 9), the inline size capped by the width a 16:9 window of the same
+ * height would have, so a short, wide window counts as smaller than its width. The bounds are
+ * rem, never px, so the scale follows the user's font size and browser zoom.
+ *
+ * --space-fluid is internal: the fluid expansion, 0 to 1, of the display through that range. It
+ * drives the base, and pages never read it. --space-base is public: a consumer may set it to
+ * rescale every step.
  *
  * The line widths are for borders and outlines and stay in px: a hairline should not grow with
  * the display. The radii derive from one base, so changing --radius-base rescales every radius
@@ -23,12 +27,13 @@
  */
 
 :root {
-  /* The facet's progress through the display range, 0 below 22.5rem and 1 above 80rem;
-     progress() clamps it. The type facet keeps its own copy, so the facets stay independent. */
+  /* Internal. The fluid expansion: 0 on a 22.5rem display or narrower, 1 on an 80rem display or
+     wider. The type facet keeps its own copy, so the facets stay independent. */
   /* biome-ignore lint/correctness/noUnknownFunction: biome does not know progress(), which chromium ships. */
   --space-fluid: progress(min(100vi, 100svb * 16 / 9), 22.5rem, 80rem);
 
-  /* The base, from 1rem on the narrowest display to 1.125rem on the widest. */
+  /* Public. The base every step multiplies, from 1rem on the narrowest display to 1.125rem on
+     the widest. */
   --space-base: calc(1rem + (1.125rem - 1rem) * var(--space-fluid));
 
   --space-3xs: calc(var(--space-base) * 0.25);

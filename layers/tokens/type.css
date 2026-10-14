@@ -6,16 +6,18 @@
  *
  * The text scale is eight steps of a modular scale, --text-xs to --text-4xl, steps -2 to 5 with
  * --text-m as step 0. --text-m is 1rem, the reader's own default size, at every display, and
- * the steps below it are fixed too, at the narrow ratio: --text-s is 1rem / 1.125 and --text-xs
- * 1rem / 1.125^2, so body text and small text never move. The steps above it are fluid: the
- * ratio runs from 1.125 on the narrowest display to 1.2 on the widest, so step n runs from
- * 1rem × 1.125^n to 1rem × 1.2^n and heading levels draw apart as the display grows. Each fluid
- * token states its own endpoints, precomputed to four decimals, and interpolates between them as
- * the display grows from 22.5rem to 80rem, holding its smallest value below that range and its
- * largest above it. The size it measures is min(100vi, 100svb * 16 / 9): the inline size, capped
- * by what a 16:9 window of the same block size would give, so a short, wide window reads smaller
- * than its width alone gives. The bounds are rem, never px, so the scale follows the user's font
- * size and browser zoom.
+ * the steps below it are fixed at the narrow ratio: --text-s is 1rem / 1.125 and --text-xs
+ * 1rem / 1.125^2, so body and small text never change size. The steps above it are fluid: the
+ * ratio grows from 1.125 on a 22.5rem display to 1.2 on an 80rem one, so step n grows from
+ * 1rem × 1.125^n to 1rem × 1.2^n and heading levels draw apart on wider displays. Each fluid
+ * step states its two sizes, precomputed to four decimals, and holds them outside the range.
+ * The display size is min(100vi, 100svb * 16 / 9), the inline size capped by the width a 16:9
+ * window of the same height would have, so a short, wide window counts as smaller than its
+ * width. The bounds are rem, never px, so the scale follows the user's font size and browser
+ * zoom.
+ *
+ * --type-fluid is internal: the fluid expansion, 0 to 1, of the display through that range. It
+ * drives the fluid steps, and pages never read it.
  *
  * Fonts and leadings are named for the role they serve: body text, headings, interface controls,
  * and code. The fonts are system stacks: sans for the body, mono for the rest.
@@ -28,8 +30,8 @@
  */
 
 :root {
-  /* The facet's progress through the display range, 0 below 22.5rem and 1 above 80rem;
-     progress() clamps it. The space facet keeps its own copy, so the facets stay independent. */
+  /* Internal. The fluid expansion: 0 on a 22.5rem display or narrower, 1 on an 80rem display or
+     wider. The space facet keeps its own copy, so the facets stay independent. */
   /* biome-ignore lint/correctness/noUnknownFunction: biome does not know progress(), which chromium ships. */
   --type-fluid: progress(min(100vi, 100svb * 16 / 9), 22.5rem, 80rem);
 
@@ -38,7 +40,7 @@
   --text-s: 0.8889rem; /* step -1 */
   --text-m: 1rem; /* step 0 */
 
-  /* The fluid steps, as calc(MIN + (MAX - MIN) * progress): MIN is 1rem × 1.125^n, MAX
+  /* The fluid steps, as calc(MIN + (MAX - MIN) * expansion): MIN is 1rem × 1.125^n, MAX
      1rem × 1.2^n. */
   --text-l: calc(1.125rem + (1.2rem - 1.125rem) * var(--type-fluid)); /* step 1 */
   --text-xl: calc(1.2656rem + (1.44rem - 1.2656rem) * var(--type-fluid)); /* step 2 */

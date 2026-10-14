@@ -2820,6 +2820,196 @@ describe("specimen", () => {
     expect(await page.evaluate(`document.querySelectorAll(".note").length`)).toBe(0);
   });
 
+  test("sets its header close above the first section, with no rule and no meta line beside the title", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const header = await page.evaluate(`(() => {
+      const header = document.querySelector("body > header");
+      const box = header.getBoundingClientRect();
+      return {
+        rule: getComputedStyle(header).borderBottomWidth,
+        // Each of the header's blocks spans it: nothing sits beside the title.
+        spans: [...header.children].map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
+        gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
+      };
+    })()`);
+    expect(header.rule).toBe("0px");
+    expect(new Set(header.spans)).toEqual(new Set([0]));
+    expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
+  });
+
+  test("sets its banners and cell headings at --text-l or larger, and its labels at --text-s", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const sizes = await page.evaluate(`({
+      banners: [...document.querySelectorAll(
+        "main > section > header > h2, main > section > section h3, #tokens .cell > h4")]
+        .map((el) => [el.textContent, Number.parseFloat(getComputedStyle(el).fontSize)]),
+      labels: [...new Set([...document.querySelectorAll(".label")]
+        .map((el) => getComputedStyle(el).fontSize))],
+    })`);
+    expect(sizes.banners.length).toBeGreaterThan(20);
+    const large = await resolveToken(page, "--text-l", "length");
+    for (const [name, size] of sizes.banners) {
+      expect([name, size >= large - 0.01]).toEqual([name, true]);
+    }
+    const small = await resolveToken(page, "--text-s", "length");
+    expect(sizes.labels.map(Number.parseFloat)).toEqual([expect.closeTo(small, 2)]);
+  });
+
+  test("its labels' code takes the label's own color, never the code color", async () => {
+    for (const scheme of SCHEMES) {
+      const page = await open(specimen, { scheme });
+      const unlike = await page.evaluate(`[...document.querySelectorAll(".label code")]
+        .filter((code) => getComputedStyle(code).color
+          !== getComputedStyle(code.closest(".label")).color)
+        .map((code) => code.textContent)`);
+      expect([scheme, unlike]).toEqual([scheme, []]);
+    }
+  });
+
+  test("lets text span its panel: no paragraph carries a measure, and each intro fills its column", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const text = await page.evaluate(`({
+      measured: [...document.querySelectorAll("p")]
+        .filter((p) => getComputedStyle(p).maxWidth !== "none")
+        .map((p) => p.textContent.trim().slice(0, 40)),
+      // An intro's width less its column's content width: the header's, a section header's, or
+      // a subsection banner's.
+      intros: [...document.querySelectorAll(
+        "body > header > p, main > section > header > p, main > section > section > header > p")]
+        .map((p) => {
+          const column = p.parentElement;
+          const style = getComputedStyle(column);
+          const content = column.clientWidth - Number.parseFloat(style.paddingLeft)
+            - Number.parseFloat(style.paddingRight);
+          return [p.textContent.trim().slice(0, 40), Math.round(p.offsetWidth - content)];
+        }),
+    })`);
+    expect(text.measured).toEqual([]);
+    expect(text.intros.length).toBeGreaterThan(8);
+    for (const [intro, short] of text.intros) expect([intro, short]).toEqual([intro, 0]);
+  });
+
+  test("tops its tier and hue tables on one edge, and sets text above a sample a --space-s apart", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const tops = await page.evaluate(`[...document.querySelectorAll("#color .tokens")]
+      .map((table) => Math.round(table.getBoundingClientRect().top))`);
+    expect(tops.length).toBe(2);
+    expect(tops[1]).toBe(tops[0]);
+    // Every paragraph in a cell that a sample follows stands apart from it.
+    const gaps = await page.evaluate(`[...document.querySelectorAll(".cell > p")]
+      .filter((p) => p.nextElementSibling?.matches("div, table"))
+      .map((p) => [p.textContent.trim().slice(0, 40),
+        p.nextElementSibling.getBoundingClientRect().top - p.getBoundingClientRect().bottom])`);
+    expect(gaps.length).toBeGreaterThan(0);
+    const space = await resolveToken(page, "--space-s", "length");
+    for (const [text, gap] of gaps) expect([text, gap >= space - 0.5]).toEqual([text, true]);
+  });
+
+  // scale resolves the rows of the token scale whose .specimen holds first: each row's token
+  // name and the text of its notes.
+  const scale = (page, first) =>
+    page.evaluate(`[...[...document.querySelectorAll("#tokens .specimen > code")]
+      .find((code) => code.textContent === "${first}").parentElement.children]
+      .filter((el) => el.localName === "code")
+      .map((code) => [code.textContent,
+        [...code.nextElementSibling.querySelectorAll("small")].map((note) => note.textContent)])`);
+
+  test("heads each fluid scale with its fluid expansion, as the share of the display range filled", async () => {
+    for (const viewport of [DESKTOP, PHONE]) {
+      const page = await open(specimen, { scheme: "light", viewport });
+      const expansion = fluid([0, 1], viewport) / 16;
+      const fills = await page.evaluate(`[...document.querySelectorAll(".fluid-fill")]
+        .map((fill) => [fill.closest(".fluid-sample").previousElementSibling.textContent,
+          fill.getBoundingClientRect().width / fill.parentElement.clientWidth])`);
+      expect(fills.map(([name]) => name)).toEqual(["--space-fluid", "--type-fluid"]);
+      for (const [name, share] of fills) {
+        expect([name, share]).toEqual([name, expect.closeTo(expansion, 2)]);
+      }
+    }
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    // The space scale opens on its expansion, then the base each step multiplies, then the
+    // steps; the type scale opens on its expansion, then the steps.
+    const space = await scale(page, "--space-fluid");
+    expect(space.map(([name]) => name)).toEqual([
+      "--space-fluid",
+      "--space-base",
+      ...Object.keys(SPACE_STEPS),
+    ]);
+    const type = await scale(page, "--type-fluid");
+    expect(type.map(([name]) => name)).toEqual(["--type-fluid", ...Object.keys(TEXT_STEPS)]);
+  });
+
+  test("notes each scale step's multiple, or its size's range, as the facets state them", async () => {
+    const page = await open(specimen, { scheme: "light" });
+    const numbers = (note) => [...note.matchAll(/\d+(\.\d+)?/g)].map((m) => Number(m[0]));
+    const space = Object.fromEntries(
+      (await scale(page, "--space-fluid")).slice(1).map(([name, [note]]) => [name, numbers(note)]),
+    );
+    expect(space).toEqual({
+      "--space-base": SPACE_BASE,
+      ...Object.fromEntries(Object.entries(SPACE_STEPS).map(([name, k]) => [name, [k]])),
+    });
+    const type = Object.fromEntries(
+      (await scale(page, "--type-fluid")).slice(1).map(([name, [note]]) => [name, numbers(note)]),
+    );
+    expect(type).toEqual(
+      Object.fromEntries(
+        Object.keys(TEXT_STEPS).map((name) => [
+          name,
+          name in TEXT_FIXED ? [TEXT_FIXED[name]] : FLUID[name],
+        ]),
+      ),
+    );
+  });
+
+  test("its tables example fills its panel, its caption as wide as the table", async () => {
+    const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
+    const table = await page.evaluate(`(() => {
+      const table = document.querySelector("#tables table");
+      const cell = table.closest(".cell");
+      const style = getComputedStyle(cell);
+      const content = cell.clientWidth - Number.parseFloat(style.paddingLeft)
+        - Number.parseFloat(style.paddingRight);
+      return {
+        columns: table.tHead.rows[0].cells.length,
+        short: Math.round(table.offsetWidth - content),
+        caption: Math.round(table.caption.offsetWidth - table.offsetWidth),
+      };
+    })()`);
+    expect(table.columns).toBeGreaterThanOrEqual(5);
+    expect(table).toEqual({ columns: table.columns, short: 0, caption: 0 });
+  });
+
+  test("tiles its embedded samples evenly: equal tiles, samples on one bottom edge, names on one line", async () => {
+    for (const viewport of [DESKTOP, PHONE]) {
+      const page = await open(specimen, { scheme: "light", viewport });
+      // Per row of tiles: each tile's height, its sample's bottom edge, and its name's top.
+      const rows = await page.evaluate(`[...document.querySelectorAll("#embedded .tiles")]
+        .flatMap((tiles) => {
+          const rows = new Map();
+          for (const tile of tiles.children) {
+            const box = tile.getBoundingClientRect();
+            const top = Math.round(box.top);
+            if (!rows.has(top)) rows.set(top, []);
+            rows.get(top).push([
+              Math.round(box.height),
+              Math.round(tile.querySelector(".tile-sample > *").getBoundingClientRect().bottom),
+              Math.round(tile.querySelector(".tile-name").getBoundingClientRect().top),
+            ]);
+          }
+          return [...rows.values()];
+        })`);
+      expect(rows.length).toBeGreaterThan(3);
+      for (const row of rows) {
+        for (const index of [0, 1, 2]) {
+          expect(new Set(row.map((tile) => tile[index])).size).toBe(1);
+        }
+      }
+      // Every tile's sample area is one height, so rows match from cell to cell.
+      expect(new Set(rows.map((row) => row[0][0])).size).toBe(1);
+    }
+  });
+
   test("opens each section on a full-width banner on the element surface, and each subsection on one on the pane", async () => {
     const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
     const banners = await page.evaluate(`[

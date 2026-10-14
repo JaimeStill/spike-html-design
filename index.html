@@ -8,9 +8,10 @@
          page must also render from file://. -->
     <link rel="stylesheet" href="./baseline.css" />
     <style>
-      /* The specimen's own composition, a console: a compact header over a rule, each section
-         under a full-width banner, and its samples in panels, a gapless grid of cells sharing
-         their borders, two columns wide on a wide display and one on a narrow one. It sits in
+      /* The specimen's own composition, a console: a compact header, each section under a
+         full-width banner, and its samples in panels, a gapless grid of cells sharing their
+         borders, two columns wide on a wide display and one on a narrow one. Text spans its
+         panel; only the page column is capped. It sits in
          its own layer, specimen, declared after the baseline's package layer, as an artifact's
          own layers would be. The arrangement is composition: the banners, the panels, the cells
          and their quiet labels, the token tables, the forms' grids, and the preview cards' frame
@@ -39,35 +40,29 @@
           padding-block-end: var(--space-2xl);
         }
 
-        /* The header: the title, its meta at the far end, then the intro, over a rule. */
+        /* The header: the title, then the intro, close above the first section. Text spans
+           the column: a reading measure belongs to a prose layout, and this page is a console. */
         body > header {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: baseline;
-          justify-content: space-between;
-          gap: var(--space-2xs) var(--space-m);
-          padding-block: var(--space-l) var(--space-s);
-          border-block-end: var(--line-m) solid var(--fg);
+          padding-block-start: var(--space-l);
 
           & > * {
             margin: 0;
           }
 
-          & > p:last-child {
-            flex-basis: 100%;
-            max-inline-size: 72ch;
+          & > p {
+            margin-block-start: var(--space-2xs);
             color: var(--fg-2);
           }
         }
 
-        .meta {
-          color: var(--fg-3);
-        }
-
         /* A section opens on a banner: a small-caps label on a strip of the element surface,
-           full width, then its intro. */
+           full width, then its intro. The first section sits close under the page's header. */
         main > section {
           margin-block-start: var(--space-xl);
+        }
+
+        main > section:first-child {
+          margin-block-start: var(--space-m);
         }
 
         main > section > header > h2 {
@@ -75,14 +70,14 @@
           padding: var(--space-3xs) var(--space-xs);
           border: var(--line-s) solid var(--border);
           background: var(--bg-2);
-          font-size: var(--text-s);
+          font-size: var(--text-2xl);
+          line-height: var(--leading-ui);
           font-variant-caps: all-small-caps;
           letter-spacing: 0.08em;
           color: var(--fg-2);
         }
 
         main > section > header > :is(p, dl) {
-          max-inline-size: 80ch;
           margin-block: var(--space-xs) 0;
           color: var(--fg-2);
         }
@@ -100,7 +95,7 @@
           border: var(--line-s) solid var(--border);
           border-block-end: 0;
           background: var(--bg-0);
-          font-size: var(--text-s);
+          font-size: var(--text-xl);
           line-height: var(--leading-ui);
           font-variant-caps: all-small-caps;
           letter-spacing: 0.08em;
@@ -155,18 +150,23 @@
           & > .label + * {
             margin-block-start: 0;
           }
+
+          /* Text above a sample stands apart from it. */
+          & > p + :is(div, table) {
+            margin-block-start: var(--space-s);
+          }
         }
 
-        /* A label: quiet, in the code font, its element names plain text, not code chips. */
+        /* A label: quiet, in the code font, naming the layer, rule or elements its cell shows. */
         .label {
           margin-block-end: var(--space-xs);
           font-family: var(--font-code);
-          font-size: var(--text-xs);
+          font-size: var(--text-s);
           color: var(--fg-3);
         }
 
-        /* Names in the composition, a label's, a row's or a token table's, are code without the
-           chip: chips belong to the content. */
+        /* Names in the composition, a label's, a row's or a token table's, take the text color
+           around them: code's color belongs to the content. */
         .label code,
         .specimen > code,
         .rows > code,
@@ -179,8 +179,8 @@
         /* A token cell: its heading in small caps, its note quiet. */
         #tokens .cell {
           & > h4 {
-            margin-block-end: var(--space-3xs);
-            font-size: var(--text-s);
+            margin-block-end: var(--space-2xs);
+            font-size: var(--text-l);
             font-variant-caps: all-small-caps;
             letter-spacing: 0.08em;
           }
@@ -190,6 +190,18 @@
             font-size: var(--text-s);
             color: var(--fg-2);
           }
+        }
+
+        /* A table's scroll wrapper reserves no gutter, so the table reaches its panel's edge:
+           .scroll-x's stable gutter also reserves a vertical scrollbar's width at the end. */
+        .cell > .scroll-x:has(> table) {
+          scrollbar-gutter: auto;
+        }
+
+        /* The tables example: each head and body cell on one line, so a narrow display scrolls
+           the table in its wrapper rather than wrapping its dates; its foot may wrap. */
+        #tables :is(thead, tbody) :is(th, td) {
+          white-space: nowrap;
         }
 
         /* A token table: the token, a swatch of its value now, then its light and dark values,
@@ -259,11 +271,57 @@
           font-family: var(--sample);
         }
 
-        /* A fluid token's progress, 0 to 1, as a share of the bar's track. */
+        /* A fluid token: how far the display is through the range, 0 at 22.5rem and 1 at
+           80rem, as the filled share of a track, read out as a whole percent, with the range's
+           ends under it. */
         .fluid-sample {
+          display: grid;
+          grid-template-columns: max-content minmax(0, 1fr) max-content;
+          gap: var(--space-3xs) var(--space-2xs);
+          align-items: center;
+          font-size: var(--text-xs);
+          color: var(--fg-3);
+          counter-reset: fluid round(var(--sample) * 100);
+
+          & > * {
+            margin: 0;
+          }
+
+          & > :last-child {
+            grid-column: 1 / -1;
+          }
+        }
+
+        .fluid-track {
+          block-size: var(--space-xs);
+          overflow: hidden;
+          border: var(--line-s) solid var(--border-2);
+          border-radius: var(--radius-sm);
+          background: var(--bg-0);
+        }
+
+        .fluid-fill {
           inline-size: calc(var(--sample) * 100%);
-          block-size: var(--space-s);
+          block-size: 100%;
           background: var(--blue);
+        }
+
+        .fluid-readout::after {
+          content: counter(fluid) "%";
+        }
+
+        /* A row of a sample and its note: the step's multiple, or its size's range. */
+        .scale-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: var(--space-3xs) var(--space-s);
+
+          & > small {
+            font-family: var(--font-code);
+            font-size: var(--text-xs);
+            color: var(--fg-3);
+          }
         }
 
         .space-sample {
@@ -352,7 +410,70 @@
           margin-block-start: var(--space-xs);
         }
 
-        /* Embedded: media side by side, the frame and the canvas filling their width. */
+        /* Embedded: each sample in an equal tile, three to a row on a wide display and two on a
+           phone, its element named under it. Every tile's sample area is one height and holds
+           its sample on the area's bottom edge, so samples and names line up across a row. A
+           wide tile spans two columns, a full one the row. The frame fills its cell. */
+        .tiles {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-xs);
+
+          @media (width >= 30rem) {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+
+        .tile {
+          display: grid;
+          grid-template-rows: 7rem auto;
+          gap: var(--space-3xs);
+          min-inline-size: 0;
+          padding: var(--space-2xs);
+          border: var(--line-s) solid var(--border);
+          background: var(--bg-0);
+
+          &.tile-wide {
+            grid-column: span 2;
+          }
+
+          &.tile-full {
+            grid-column: 1 / -1;
+          }
+        }
+
+        .tile-sample {
+          display: grid;
+          place-items: end center;
+          min-inline-size: 0;
+
+          & > :is(img, picture, svg, canvas, video, object, embed) {
+            max-inline-size: 100%;
+            block-size: auto;
+          }
+
+          & > picture > img {
+            display: block;
+            max-inline-size: 100%;
+            block-size: auto;
+          }
+
+          & > :is(audio, math) {
+            inline-size: 100%;
+          }
+
+          & > math {
+            margin: 0;
+          }
+        }
+
+        .tile-name {
+          font-family: var(--font-code);
+          font-size: var(--text-xs);
+          text-align: center;
+          color: var(--fg-3);
+        }
+
         #embedded {
           & iframe {
             inline-size: 100%;
@@ -360,7 +481,7 @@
 
           & canvas {
             border: var(--line-s) solid var(--border-2);
-            background: var(--bg-0);
+            background: var(--bg);
           }
         }
 
@@ -443,13 +564,11 @@
   <body>
     <header>
       <h1>spike-html-design</h1>
-      <p class="meta"><small>Specimen · five color profiles, light and dark</small></p>
       <p>
-        The baseline's tokens, every element its elements layer styles, and its tools, rendered
-        by <code>baseline.css</code> alone. It follows the system scheme; a
-        <code>data-scheme</code> of <code>light</code> or <code>dark</code> on any element forces
-        one for its subtree, and a <code>data-palette</code> applies a color profile to its
-        subtree.
+        Every token, element and tool class in the baseline, rendered by
+        <code>baseline.css</code> alone. The page follows the system color scheme; set
+        <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
+        apply a color profile to its subtree.
       </p>
     </header>
 
@@ -458,25 +577,23 @@
         <header>
           <h2>Tokens</h2>
           <p>
-            Each token shows a sample that reads it. The fluid samples move between their
-            smallest value below a 22.5rem display and their largest above 80rem: resize the
-            window, or emulate a display.
+            Each token is shown with a sample that uses it. Fluid values grow from a 22.5rem
+            display to an 80rem one; resize the window to watch them change.
           </p>
         </header>
 
         <section id="color">
           <header>
             <h3>Color</h3>
-            <p>Each color token shows its swatch now, in the current scheme and profile, then Flexoki's light and dark values.</p>
+            <p>
+              The Now column shows each token in the current scheme and profile. The Light and
+              Dark columns give Flexoki's values.
+            </p>
           </header>
           <div class="cells">
             <section class="cell">
               <div class="label"><code>tokens.color</code></div>
               <h4>Tiers</h4>
-              <p>
-                Surfaces, from the pane up through the page and the element surface to the border
-                and the control boundary, then text, from the strongest down.
-              </p>
               <div class="scroll-x">
                 <table class="tokens">
                   <thead>
@@ -543,7 +660,6 @@
             <section class="cell">
               <div class="label"><code>tokens.color</code></div>
               <h4>Hues</h4>
-              <p>Named for their color; they carry no meaning.</p>
               <div class="scroll-x">
                 <table class="tokens">
                   <thead>
@@ -611,9 +727,8 @@
               <div class="label"><code>data-scheme</code>, <code>data-palette</code></div>
               <h4>Scopes</h4>
               <p>
-                Each container forces a scheme on its subtree, whatever the page's; the one that
-                differs from the page shows it. A scope paints its own surface and text, as the
-                root does.
+                Each box forces a scheme on its subtree and paints its own surface and text, as
+                the page root does.
               </p>
               <div class="scope-sample" data-scheme="dark" data-palette="flexoki">
                 <p>
@@ -636,45 +751,73 @@
         <section id="space">
           <header>
             <h3>Space</h3>
-            <p>A fluid scale of nine steps from one base, two fixed line widths, and the radii.</p>
+            <p>
+              Nine spacing steps, each a multiple of one fluid base, then two fixed line widths
+              and the radii.
+            </p>
           </header>
           <div class="cells">
             <section class="cell">
               <div class="label"><code>tokens.space</code></div>
-              <h4>Progress and base</h4>
-              <p>
-                The facet's progress through the display range, as a share of the bar, and the fluid
-                base every step multiplies.
-              </p>
-              <div class="specimen">
-                <code>--space-fluid</code>
-                <div class="fluid-sample" style="--sample: var(--space-fluid)"></div>
-                <code>--space-base</code>
-                <div class="space-sample" style="--sample: var(--space-base)"></div>
-              </div>
-            </section>
-            <section class="cell">
-              <div class="label"><code>tokens.space</code></div>
               <h4>Scale</h4>
               <div class="specimen">
+                <code>--space-fluid</code>
+                <div class="fluid-sample" style="--sample: var(--space-fluid)">
+                  <span>22.5rem</span>
+                  <div class="fluid-track"><div class="fluid-fill"></div></div>
+                  <span>80rem</span>
+                  <p>Fluid expansion, from the narrowest display to the widest: <span class="fluid-readout"></span></p>
+                </div>
+                <code>--space-base</code>
+                <div class="scale-row" style="--sample: var(--space-base)">
+                  <div class="space-sample"></div>
+                  <small>1 → 1.125rem, the unit every step multiplies</small>
+                </div>
                 <code>--space-3xs</code>
-                <div class="space-sample" style="--sample: var(--space-3xs)"></div>
+                <div class="scale-row" style="--sample: var(--space-3xs)">
+                  <div class="space-sample"></div>
+                  <small>× 0.25</small>
+                </div>
                 <code>--space-2xs</code>
-                <div class="space-sample" style="--sample: var(--space-2xs)"></div>
+                <div class="scale-row" style="--sample: var(--space-2xs)">
+                  <div class="space-sample"></div>
+                  <small>× 0.5</small>
+                </div>
                 <code>--space-xs</code>
-                <div class="space-sample" style="--sample: var(--space-xs)"></div>
+                <div class="scale-row" style="--sample: var(--space-xs)">
+                  <div class="space-sample"></div>
+                  <small>× 0.75</small>
+                </div>
                 <code>--space-s</code>
-                <div class="space-sample" style="--sample: var(--space-s)"></div>
+                <div class="scale-row" style="--sample: var(--space-s)">
+                  <div class="space-sample"></div>
+                  <small>× 1</small>
+                </div>
                 <code>--space-m</code>
-                <div class="space-sample" style="--sample: var(--space-m)"></div>
+                <div class="scale-row" style="--sample: var(--space-m)">
+                  <div class="space-sample"></div>
+                  <small>× 1.5</small>
+                </div>
                 <code>--space-l</code>
-                <div class="space-sample" style="--sample: var(--space-l)"></div>
+                <div class="scale-row" style="--sample: var(--space-l)">
+                  <div class="space-sample"></div>
+                  <small>× 2</small>
+                </div>
                 <code>--space-xl</code>
-                <div class="space-sample" style="--sample: var(--space-xl)"></div>
+                <div class="scale-row" style="--sample: var(--space-xl)">
+                  <div class="space-sample"></div>
+                  <small>× 3</small>
+                </div>
                 <code>--space-2xl</code>
-                <div class="space-sample" style="--sample: var(--space-2xl)"></div>
+                <div class="scale-row" style="--sample: var(--space-2xl)">
+                  <div class="space-sample"></div>
+                  <small>× 4</small>
+                </div>
                 <code>--space-3xl</code>
-                <div class="space-sample" style="--sample: var(--space-3xl)"></div>
+                <div class="scale-row" style="--sample: var(--space-3xl)">
+                  <div class="space-sample"></div>
+                  <small>× 6</small>
+                </div>
               </div>
             </section>
             <section class="cell">
@@ -710,39 +853,62 @@
           <header>
             <h3>Type</h3>
             <p>
-              A text scale whose body and small steps stay fixed while the steps above them grow,
-              then role fonts and leadings.
+              Body and smaller text keep a fixed size; the larger steps grow with the display.
+              Fonts and leadings are named for their role.
             </p>
           </header>
           <div class="cells">
             <section class="cell">
               <div class="label"><code>tokens.type</code></div>
-              <h4>Progress</h4>
-              <div class="specimen">
-                <code>--type-fluid</code>
-                <div class="fluid-sample" style="--sample: var(--type-fluid)"></div>
-              </div>
-            </section>
-            <section class="cell">
-              <div class="label"><code>tokens.type</code></div>
               <h4>Scale</h4>
               <div class="specimen">
+                <code>--type-fluid</code>
+                <div class="fluid-sample" style="--sample: var(--type-fluid)">
+                  <span>22.5rem</span>
+                  <div class="fluid-track"><div class="fluid-fill"></div></div>
+                  <span>80rem</span>
+                  <p>Fluid expansion, from the narrowest display to the widest: <span class="fluid-readout"></span></p>
+                </div>
                 <code>--text-xs</code>
-                <span class="text-sample" style="--sample: var(--text-xs)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-xs)">
+                  <span class="text-sample">Specimen</span>
+                  <small>0.7901rem, fixed</small>
+                </div>
                 <code>--text-s</code>
-                <span class="text-sample" style="--sample: var(--text-s)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-s)">
+                  <span class="text-sample">Specimen</span>
+                  <small>0.8889rem, fixed</small>
+                </div>
                 <code>--text-m</code>
-                <span class="text-sample" style="--sample: var(--text-m)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-m)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1rem, fixed</small>
+                </div>
                 <code>--text-l</code>
-                <span class="text-sample" style="--sample: var(--text-l)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-l)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.125 → 1.2rem</small>
+                </div>
                 <code>--text-xl</code>
-                <span class="text-sample" style="--sample: var(--text-xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.2656 → 1.44rem</small>
+                </div>
                 <code>--text-2xl</code>
-                <span class="text-sample" style="--sample: var(--text-2xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-2xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.4238 → 1.728rem</small>
+                </div>
                 <code>--text-3xl</code>
-                <span class="text-sample" style="--sample: var(--text-3xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-3xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.6018 → 2.0736rem</small>
+                </div>
                 <code>--text-4xl</code>
-                <span class="text-sample" style="--sample: var(--text-4xl)">Specimen</span>
+                <div class="scale-row" style="--sample: var(--text-4xl)">
+                  <span class="text-sample">Specimen</span>
+                  <small>1.802 → 2.4883rem</small>
+                </div>
               </div>
             </section>
             <section class="cell">
@@ -764,13 +930,13 @@
               <h4>Leading</h4>
               <div class="specimen">
                 <code>--leading-body</code>
-                <span class="leading-sample" style="--sample: var(--leading-body)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-body)">Text that wraps onto a second line.</span>
                 <code>--leading-heading</code>
-                <span class="leading-sample" style="--sample: var(--leading-heading)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-heading)">Text that wraps onto a second line.</span>
                 <code>--leading-ui</code>
-                <span class="leading-sample" style="--sample: var(--leading-ui)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-ui)">Text that wraps onto a second line.</span>
                 <code>--leading-code</code>
-                <span class="leading-sample" style="--sample: var(--leading-code)">Two lines of text, set at the leading the token names, wrap here.</span>
+                <span class="leading-sample" style="--sample: var(--leading-code)">Text that wraps onto a second line.</span>
               </div>
             </section>
           </div>
@@ -781,13 +947,10 @@
         <header>
           <h2>Elements</h2>
           <p>
-            Every rendered element as the elements layer styles it, with no classes: paint, type,
-            borders, radius, margins and paddings only, so each keeps its native layout and
-            behavior. Each cell's label names the elements it shows. A consumer re-colors them
-            through three hooks, set on any element for its subtree:
-            <code>--interaction-color</code> for links, focus, the caret, accents, selection and
-            hover borders, by default <code>--blue</code>; <code>--code-color</code> for inline
-            code; and <code>--kbd-color</code> for keys.
+            Every rendered element, styled by the elements layer without classes; each keeps its
+            native layout and behavior. Three hooks recolor a subtree:
+            <code>--interaction-color</code> for links, focus, selection and hover borders,
+            <code>--code-color</code> for inline code, and <code>--kbd-color</code> for keys.
           </p>
         </header>
 
@@ -816,19 +979,18 @@
                 <a href="#prose">a link to this section</a>, <strong>strong text</strong>,
                 <em>emphasis</em>, inline <code>code</code>, and a key, <kbd>T</kbd>.
               </p>
-              <p>A second paragraph, a block after a block.</p>
+              <p>A second paragraph follows the first.</p>
             </div>
             <div class="cell">
               <div class="label">
                 <code>&lt;a&gt;</code> <code>&lt;code&gt;</code> <code>&lt;kbd&gt;</code>
-                <code>&lt;input&gt;</code> <code>&lt;button&gt;</code>, under a consumer's
-                <code>--interaction-color</code>, <code>--code-color</code> and
-                <code>--kbd-color</code>
+                <code>&lt;input&gt;</code> <code>&lt;button&gt;</code>, recolored by the three
+                hooks
               </div>
               <div class="hook-sample">
                 <p>
-                  <a href="#prose">A link in magenta</a>, <code>code in purple</code>, and a key,
-                  <kbd>Ctrl</kbd> <kbd>K</kbd>, in orange.
+                  <a href="#prose">A magenta link</a>, <code>purple code</code>, and orange keys:
+                  <kbd>Ctrl</kbd> <kbd>K</kbd>.
                 </p>
                 <p>
                   <input type="text" aria-label="A hooked field" placeholder="Hover or type" />
@@ -851,12 +1013,12 @@
             <div class="cell">
               <div class="label"><code>&lt;blockquote&gt;</code></div>
               <blockquote>
-                <p>A blockquote, set off by a rule at its start edge.</p>
+                <p>A quotation, set off by a rule on its leading edge.</p>
               </blockquote>
             </div>
             <div class="cell">
-              <div class="label"><code>&lt;pre&gt;</code>, with the tools layer's <code>.scroll-x</code></div>
-              <pre class="scroll-x"><code>// A preformatted block in the code font, scrolled by the tools layer's .scroll-x.
+              <div class="label"><code>&lt;pre&gt;</code> with <code>.scroll-x</code></div>
+              <pre class="scroll-x"><code>// Preformatted text in the code font. A line too long for its box scrolls.
 const answer = 42;</code></pre>
             </div>
             <div class="cell">
@@ -939,7 +1101,7 @@ const answer = 42;</code></pre>
                 <code>&lt;br&gt;</code>
                 <span>a line<br />break</span>
                 <code>&lt;wbr&gt;</code>
-                <span>a long<wbr />word broken at its wbr</span>
+                <span>a long<wbr />word that may break at its wbr</span>
                 <code>&lt;del&gt;</code>
                 <span><del>removed text</del></span>
                 <code>&lt;ins&gt;</code>
@@ -952,11 +1114,11 @@ const answer = 42;</code></pre>
                 <h4>A heading group</h4>
                 <p>Its subtitle.</p>
               </hgroup>
-              <p>A paragraph after the group.</p>
+              <p>A paragraph follows the group.</p>
             </div>
             <div class="cell">
               <div class="label"><code>&lt;address&gt;</code></div>
-              <address>An address, for the page's contact.</address>
+              <address>Contact details for the page's author.</address>
             </div>
           </div>
         </section>
@@ -985,8 +1147,8 @@ const answer = 42;</code></pre>
                 <code>&lt;figure&gt;</code> <code>&lt;figcaption&gt;</code> <code>&lt;div&gt;</code>
               </div>
               <figure>
-                <div>A div of content in a figure.</div>
-                <figcaption>A figcaption names the figure.</figcaption>
+                <div>The figure's content, in a div.</div>
+                <figcaption>A caption names the figure.</figcaption>
               </figure>
             </div>
             <div class="cell">
@@ -1023,39 +1185,80 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label">
                 <code>&lt;caption&gt;</code> <code>&lt;colgroup&gt;</code> <code>&lt;col&gt;</code>
-                <code>&lt;tfoot&gt;</code>
+                <code>&lt;tfoot&gt;</code>, with <code>.table-full</code>
               </div>
-              <table>
-                <caption>
-                  A caption, then column groups, a head, a body and a foot.
-                </caption>
-                <colgroup>
-                  <col />
-                  <col />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th scope="col">Step</th>
-                    <th scope="col">Size</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>--text-s</code></td>
-                    <td>Small</td>
-                  </tr>
-                  <tr>
-                    <td><code>--text-m</code></td>
-                    <td>Body</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td>Two steps</td>
-                    <td>Of eight</td>
-                  </tr>
-                </tfoot>
-              </table>
+              <div class="scroll-x">
+                <table class="table-full">
+                  <caption>
+                    Recent runs of the check, newest last. Durations are wall-clock time from
+                    start to finish.
+                  </caption>
+                  <colgroup>
+                    <col />
+                    <col span="2" />
+                    <col span="3" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th scope="col">Run</th>
+                      <th scope="col">Branch</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Duration</th>
+                      <th scope="col">Started</th>
+                      <th scope="col">Author</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1201</td>
+                      <td><code>main</code></td>
+                      <td>passed</td>
+                      <td>2m 09s</td>
+                      <td><time datetime="2026-10-12T09:14">Oct 12, 09:14</time></td>
+                      <td>ada</td>
+                    </tr>
+                    <tr>
+                      <td>1202</td>
+                      <td><code>profiles</code></td>
+                      <td>passed</td>
+                      <td>2m 21s</td>
+                      <td><time datetime="2026-10-12T14:02">Oct 12, 14:02</time></td>
+                      <td>grace</td>
+                    </tr>
+                    <tr>
+                      <td>1203</td>
+                      <td><code>profiles</code></td>
+                      <td>failed</td>
+                      <td>48s</td>
+                      <td><time datetime="2026-10-13T08:47">Oct 13, 08:47</time></td>
+                      <td>grace</td>
+                    </tr>
+                    <tr>
+                      <td>1204</td>
+                      <td><code>main</code></td>
+                      <td>passed</td>
+                      <td>2m 14s</td>
+                      <td><time datetime="2026-10-13T11:30">Oct 13, 11:30</time></td>
+                      <td>ada</td>
+                    </tr>
+                    <tr>
+                      <td>1205</td>
+                      <td><code>specimen</code></td>
+                      <td>cancelled</td>
+                      <td>1m 02s</td>
+                      <td><time datetime="2026-10-13T16:55">Oct 13, 16:55</time></td>
+                      <td>linus</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="3">Five runs: three passed, one failed, one cancelled</td>
+                      <td>8m 34s</td>
+                      <td colspan="2">Total duration</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -1066,10 +1269,10 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label">
                 <code>&lt;fieldset&gt;</code> <code>&lt;legend&gt;</code> <code>&lt;label&gt;</code>
-                <code>&lt;input&gt;</code>, by type, and <code>&lt;datalist&gt;</code>
+                <code>&lt;input&gt;</code> <code>&lt;datalist&gt;</code>
               </div>
               <fieldset class="form-grid">
-                <legend>Every input type that takes a value</legend>
+                <legend>Input types that take a value</legend>
                 <label for="form-text">text</label>
                 <input id="form-text" type="text" placeholder="A placeholder" />
                 <label for="form-search">search</label>
@@ -1112,8 +1315,7 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label">
                 <code>&lt;fieldset&gt;</code> <code>&lt;legend&gt;</code> <code>&lt;label&gt;</code>
-                <code>&lt;input&gt;</code>: checkbox and radio, then the button types, and
-                <code>&lt;button&gt;</code> <code>&lt;select&gt;</code> <code>&lt;optgroup&gt;</code>
+                <code>&lt;input&gt;</code> (choices and buttons) <code>&lt;button&gt;</code> <code>&lt;select&gt;</code> <code>&lt;optgroup&gt;</code>
                 <code>&lt;option&gt;</code> <code>&lt;textarea&gt;</code> <code>&lt;output&gt;</code>
                 <code>&lt;progress&gt;</code> <code>&lt;meter&gt;</code>
               </div>
@@ -1172,76 +1374,119 @@ const answer = 42;</code></pre>
         <section id="embedded">
           <header>
             <h3>Embedded</h3>
-            <p>Content from data: URLs, inline markup and a srcdoc, so nothing loads from the network.</p>
+            <p>Every sample is inline or a data: URL; nothing loads from the network.</p>
           </header>
           <div class="cells">
             <div class="cell">
-              <div class="label"><code>&lt;img&gt;</code> <code>&lt;picture&gt;</code> <code>&lt;source&gt;</code></div>
-              <div class="sample-row">
-                <img alt="Hills under a noon sun" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%234385be'/%3E%3Ccircle cx='118' cy='30' r='13' fill='%23d0a215'/%3E%3Cpath d='M0 78 38 48 66 66 104 36 160 72V100H0Z' fill='%2366800b'/%3E%3Cpath d='M0 90 46 70 88 86 128 66 160 82V100H0Z' fill='%23879a39'/%3E%3C/svg%3E" />
-                <picture>
-                  <source type="image/svg+xml" srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%235e409d'/%3E%3Crect y='46' width='160' height='54' fill='%23bc5215'/%3E%3Ccircle cx='80' cy='58' r='18' fill='%23d0a215'/%3E%3Cpath d='M0 72 30 60 62 70 100 54 136 66 160 58V100H0Z' fill='%2324837b'/%3E%3Cpath d='M0 88 52 74 96 90 160 76V100H0Z' fill='%23100f0f' fill-opacity='.6'/%3E%3C/svg%3E" />
-                  <img alt="The sun setting over a lake" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%235e409d'/%3E%3Crect y='46' width='160' height='54' fill='%23bc5215'/%3E%3Ccircle cx='80' cy='58' r='18' fill='%23d0a215'/%3E%3Cpath d='M0 72 30 60 62 70 100 54 136 66 160 58V100H0Z' fill='%2324837b'/%3E%3Cpath d='M0 88 52 74 96 90 160 76V100H0Z' fill='%23100f0f' fill-opacity='.6'/%3E%3C/svg%3E" />
-                </picture>
+              <div class="label">
+                <code>&lt;img&gt;</code> <code>&lt;picture&gt;</code> <code>&lt;source&gt;</code>
+                <code>&lt;svg&gt;</code> <code>&lt;canvas&gt;</code> <code>&lt;math&gt;</code>
               </div>
-            </div>
-            <div class="cell">
-              <div class="label"><code>&lt;svg&gt;</code> <code>&lt;canvas&gt;</code> <code>&lt;math&gt;</code></div>
-              <div class="sample-row">
-                <svg width="160" height="100" viewBox="0 0 160 100" role="img" aria-label="Weekly runs, a bar per day">
-                  <path d="M0 99.5H160" style="stroke: var(--border-2)" />
-                  <g style="fill: var(--blue)">
-                    <rect x="6" y="52" width="16" height="47" />
-                    <rect x="28" y="34" width="16" height="65" />
-                    <rect x="50" y="60" width="16" height="39" />
-                    <rect x="72" y="22" width="16" height="77" />
-                    <rect x="94" y="40" width="16" height="59" />
-                  </g>
-                  <rect x="116" y="70" width="16" height="29" style="fill: var(--red)" />
-                  <rect x="138" y="80" width="16" height="19" style="fill: var(--yellow)" />
-                </svg>
-                <canvas width="160" height="100"></canvas>
+              <div class="tiles">
+                <div class="tile">
+                  <div class="tile-sample">
+                    <img alt="Hills under a noon sun" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%234385be'/%3E%3Ccircle cx='118' cy='30' r='13' fill='%23d0a215'/%3E%3Cpath d='M0 78 38 48 66 66 104 36 160 72V100H0Z' fill='%2366800b'/%3E%3Cpath d='M0 90 46 70 88 86 128 66 160 82V100H0Z' fill='%23879a39'/%3E%3C/svg%3E" />
+                  </div>
+                  <span class="tile-name">img</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <picture>
+                      <source type="image/svg+xml" srcset="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%235e409d'/%3E%3Crect y='46' width='160' height='54' fill='%23bc5215'/%3E%3Ccircle cx='80' cy='58' r='18' fill='%23d0a215'/%3E%3Cpath d='M0 72 30 60 62 70 100 54 136 66 160 58V100H0Z' fill='%2324837b'/%3E%3Cpath d='M0 88 52 74 96 90 160 76V100H0Z' fill='%23100f0f' fill-opacity='.6'/%3E%3C/svg%3E" />
+                      <img alt="The sun setting over a lake" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'%3E%3Crect width='160' height='100' fill='%235e409d'/%3E%3Crect y='46' width='160' height='54' fill='%23bc5215'/%3E%3Ccircle cx='80' cy='58' r='18' fill='%23d0a215'/%3E%3Cpath d='M0 72 30 60 62 70 100 54 136 66 160 58V100H0Z' fill='%2324837b'/%3E%3Cpath d='M0 88 52 74 96 90 160 76V100H0Z' fill='%23100f0f' fill-opacity='.6'/%3E%3C/svg%3E" />
+                    </picture>
+                  </div>
+                  <span class="tile-name">picture, source</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <svg width="160" height="100" viewBox="0 0 160 100" role="img" aria-label="Weekly runs, a bar per day">
+                      <path d="M0 99.5H160" style="stroke: var(--border-2)" />
+                      <g style="fill: var(--blue)">
+                        <rect x="6" y="52" width="16" height="47" />
+                        <rect x="28" y="34" width="16" height="65" />
+                        <rect x="50" y="60" width="16" height="39" />
+                        <rect x="72" y="22" width="16" height="77" />
+                        <rect x="94" y="40" width="16" height="59" />
+                      </g>
+                      <rect x="116" y="70" width="16" height="29" style="fill: var(--red)" />
+                      <rect x="138" y="80" width="16" height="19" style="fill: var(--yellow)" />
+                    </svg>
+                  </div>
+                  <span class="tile-name">svg</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <canvas width="160" height="100"></canvas>
+                  </div>
+                  <span class="tile-name">canvas</span>
+                </div>
+                <div class="tile tile-wide">
+                  <div class="tile-sample">
+                    <math display="block">
+                      <mi>x</mi>
+                      <mo>=</mo>
+                      <mfrac>
+                        <mrow>
+                          <mo>−</mo>
+                          <mi>b</mi>
+                          <mo>±</mo>
+                          <msqrt>
+                            <msup><mi>b</mi><mn>2</mn></msup>
+                            <mo>−</mo>
+                            <mn>4</mn>
+                            <mi>a</mi>
+                            <mi>c</mi>
+                          </msqrt>
+                        </mrow>
+                        <mrow><mn>2</mn><mi>a</mi></mrow>
+                      </mfrac>
+                    </math>
+                  </div>
+                  <span class="tile-name">math</span>
+                </div>
               </div>
-              <math display="block">
-                <mi>x</mi>
-                <mo>=</mo>
-                <mfrac>
-                  <mrow>
-                    <mo>−</mo>
-                    <mi>b</mi>
-                    <mo>±</mo>
-                    <msqrt>
-                      <msup><mi>b</mi><mn>2</mn></msup>
-                      <mo>−</mo>
-                      <mn>4</mn>
-                      <mi>a</mi>
-                      <mi>c</mi>
-                    </msqrt>
-                  </mrow>
-                  <mrow><mn>2</mn><mi>a</mi></mrow>
-                </mfrac>
-              </math>
-            </div>
-            <div class="cell">
-              <div class="label"><code>&lt;iframe&gt;</code></div>
-              <iframe
-                title="A build log, in an iframe"
-                srcdoc="<!doctype html><meta name='color-scheme' content='light dark'><style>body{margin:0;padding:8px 12px;font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText}h1{margin:0 0 4px;font-size:14px}ul{margin:0;padding-left:18px}span{opacity:.7}</style><h1>Build 1206</h1><ul><li>Lint and format <span>· 12s</span></li><li>Browser tests, headless <span>· 2m 14s</span></li><li>Size report <span>· 3s</span></li></ul><p style='margin:6px 0 0'><span>An iframe's own document, following its embedder's scheme.</span></p>"
-              ></iframe>
             </div>
             <div class="cell">
               <div class="label">
                 <code>&lt;video&gt;</code> <code>&lt;track&gt;</code> <code>&lt;audio&gt;</code>
                 <code>&lt;object&gt;</code> <code>&lt;embed&gt;</code>
               </div>
-              <div class="sample-row">
-                <video controls width="160" height="90" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%231c1b1a'/%3E%3Cpath d='M0 66 40 44 70 58 110 34 160 60V90H0Z' fill='%23403e3c'/%3E%3Ccircle cx='80' cy='45' r='16' fill='%23fffcf0' fill-opacity='.85'/%3E%3Cpath d='M75 37v16l13-8Z' fill='%231c1b1a'/%3E%3C/svg%3E"><track kind="captions" /></video>
-                <object title="Pass rate, a line over ten runs" type="image/svg+xml" width="120" height="48" data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' style='color-scheme: light dark'%3E%3Cpath d='M0 47.5H120' stroke='%23878580'/%3E%3Cpolyline points='0,38 15,32 30,35 45,22 60,27 75,15 90,20 105,8 120,12' fill='none' stroke='%234385be' stroke-width='2'/%3E%3C/svg%3E">
-                  A line chart of the pass rate.
-                </object>
-                <embed title="Run times, a bar per run" type="image/svg+xml" width="120" height="48" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' style='color-scheme: light dark'%3E%3Cpath d='M0 47.5H120' stroke='%23878580'/%3E%3Cg fill='%23879a39'%3E%3Crect x='4' y='26' width='12' height='21'/%3E%3Crect x='24' y='18' width='12' height='29'/%3E%3Crect x='44' y='30' width='12' height='17'/%3E%3Crect x='64' y='10' width='12' height='37'/%3E%3Crect x='84' y='22' width='12' height='25'/%3E%3C/g%3E%3Crect x='104' y='34' width='12' height='13' fill='%23d14d41'/%3E%3C/svg%3E" />
+              <div class="tiles">
+                <div class="tile">
+                  <div class="tile-sample">
+                    <video controls width="160" height="90" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%231c1b1a'/%3E%3Cpath d='M0 66 40 44 70 58 110 34 160 60V90H0Z' fill='%23403e3c'/%3E%3Ccircle cx='80' cy='45' r='16' fill='%23fffcf0' fill-opacity='.85'/%3E%3Cpath d='M75 37v16l13-8Z' fill='%231c1b1a'/%3E%3C/svg%3E"><track kind="captions" /></video>
+                  </div>
+                  <span class="tile-name">video, track</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <object title="Pass rate, a line over ten runs" type="image/svg+xml" width="120" height="48" data="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' style='color-scheme: light dark'%3E%3Cpath d='M0 47.5H120' stroke='%23878580'/%3E%3Cpolyline points='0,38 15,32 30,35 45,22 60,27 75,15 90,20 105,8 120,12' fill='none' stroke='%234385be' stroke-width='2'/%3E%3C/svg%3E">
+                      A line chart of the pass rate.
+                    </object>
+                  </div>
+                  <span class="tile-name">object</span>
+                </div>
+                <div class="tile">
+                  <div class="tile-sample">
+                    <embed title="Run times, a bar per run" type="image/svg+xml" width="120" height="48" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' style='color-scheme: light dark'%3E%3Cpath d='M0 47.5H120' stroke='%23878580'/%3E%3Cg fill='%23879a39'%3E%3Crect x='4' y='26' width='12' height='21'/%3E%3Crect x='24' y='18' width='12' height='29'/%3E%3Crect x='44' y='30' width='12' height='17'/%3E%3Crect x='64' y='10' width='12' height='37'/%3E%3Crect x='84' y='22' width='12' height='25'/%3E%3C/g%3E%3Crect x='104' y='34' width='12' height='13' fill='%23d14d41'/%3E%3C/svg%3E" />
+                  </div>
+                  <span class="tile-name">embed</span>
+                </div>
+                <div class="tile tile-full">
+                  <div class="tile-sample">
+                    <audio controls><track kind="captions" /></audio>
+                  </div>
+                  <span class="tile-name">audio, track</span>
+                </div>
               </div>
-              <audio controls><track kind="captions" /></audio>
+            </div>
+            <div class="cell">
+              <div class="label"><code>&lt;iframe&gt;</code></div>
+              <iframe
+                title="A build log, in an iframe"
+                srcdoc="<!doctype html><meta name='color-scheme' content='light dark'><style>body{margin:0;padding:8px 12px;font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText}h1{margin:0 0 4px;font-size:14px}ul{margin:0;padding-left:18px}span{opacity:.7}</style><h1>Build 1206</h1><ul><li>Lint and format <span>· 12s</span></li><li>Browser tests, headless <span>· 2m 14s</span></li><li>Size report <span>· 3s</span></li></ul><p style='margin:6px 0 0'><span>The frame's own document, in the page's color scheme.</span></p>"
+              ></iframe>
             </div>
           </div>
         </section>
@@ -1252,12 +1497,12 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label"><code>&lt;details&gt;</code> <code>&lt;summary&gt;</code></div>
               <details open>
-                <summary>An open details</summary>
-                <p>Its content, shown.</p>
+                <summary>Open by default</summary>
+                <p>Its content shows.</p>
               </details>
               <details>
-                <summary>A closed details</summary>
-                <p>Its content, hidden until opened.</p>
+                <summary>Closed by default</summary>
+                <p>Its content shows once opened.</p>
               </details>
             </div>
             <div class="cell">
@@ -1271,7 +1516,7 @@ const answer = 42;</code></pre>
                 </button>
               </p>
               <dialog id="specimen-dialog">
-                <p>A modal dialog, centered over the page's backdrop.</p>
+                <p>A modal dialog, centered over a dimmed page.</p>
                 <form method="dialog">
                   <button type="submit">Close</button>
                 </form>
@@ -1285,11 +1530,8 @@ const answer = 42;</code></pre>
         <header>
           <h2>Tools</h2>
           <p>
-            Opt-in classes, each labeled with its class. A consumer extends buttons and tables
-            by setting their hooks in its own layer: <code>--button-color</code> for buttons,
-            <code>--table-stripe</code> for tables. Scroll and forms have no hook; a consumer's
-            own layer restates their classes. The neutral <code>.button</code> takes the elements
-            layer's <code>--interaction-color</code> for its hover border.
+            Opt-in classes, each cell labeled with its class. A consumer recolors buttons with
+            <code>--button-color</code> and table stripes with <code>--table-stripe</code>.
           </p>
         </header>
 
@@ -1298,7 +1540,7 @@ const answer = 42;</code></pre>
           <div class="cells">
             <div class="cell">
               <div class="label">
-                <code>.button</code> on <code>&lt;a&gt;</code>, beside a native
+                <code>.button</code> on <code>&lt;a&gt;</code>, next to a native
                 <code>&lt;button&gt;</code>
               </div>
               <div class="sample-row">
@@ -1343,7 +1585,7 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label"><code>.scroll-y</code></div>
               <div class="scroll-sample scroll-y">
-                <p>.scroll-y scrolls its overflow vertically, with a stable gutter.</p>
+                <p>.scroll-y scrolls overflow vertically, with a stable gutter.</p>
                 <p>A second paragraph.</p>
                 <p>A third paragraph.</p>
                 <p>A fourth paragraph.</p>
@@ -1353,8 +1595,8 @@ const answer = 42;</code></pre>
             <div class="cell">
               <div class="label"><code>.scroll-x</code></div>
               <div class="scroll-sample scroll-x">
-                .scroll-x scrolls its overflow horizontally, with a stable gutter, so a line that
-                will not wrap stays readable to its end in a box narrower than itself.
+                .scroll-x scrolls overflow horizontally, with a stable gutter, so a line that
+                cannot wrap stays readable to its end.
               </div>
             </div>
           </div>
@@ -1368,7 +1610,7 @@ const answer = 42;</code></pre>
               <div class="field">
                 <label for="tools-field">A label</label>
                 <input id="tools-field" type="text" placeholder="Its control" />
-                <small>An optional hint, under its control.</small>
+                <small>An optional hint, below the control.</small>
               </div>
             </div>
             <div class="cell">
@@ -1381,7 +1623,7 @@ const answer = 42;</code></pre>
                   type="text"
                   value="It grows as you type"
                 />
-                <small>Its width follows its content, from a few characters wide.</small>
+                <small>The field widens to fit its content.</small>
               </div>
             </div>
           </div>
@@ -1402,7 +1644,7 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <td><code>.table-full</code></td>
-                    <td>Takes the full inline size.</td>
+                    <td>Fills its container's width.</td>
                   </tr>
                 </tbody>
               </table>
@@ -1444,9 +1686,8 @@ const answer = 42;</code></pre>
         <header>
           <h2>Profiles</h2>
           <p>
-            Every color profile in each scheme, side by side: a row per profile, light then dark,
-            each card in its own preview container, an element with <code>data-palette</code> and
-            <code>data-scheme</code>. The cards are the preview fixture's, unchanged.
+            Each color profile in light and dark, one row per profile. Each card sets
+            <code>data-palette</code> and <code>data-scheme</code> on its own container.
           </p>
         </header>
         <div class="cells">
@@ -2067,13 +2308,9 @@ const answer = 42;</code></pre>
         <header>
           <h2>Contrast</h2>
           <p>
-            Contrast is graded where legibility matters: text over a color. Each color profile
-            records it in each scheme, in a matrix that grades every text token and hue, its rows,
-            over every surface and border, its columns, by the WCAG 2 ratio from relative
-            luminance. Each matrix sits in a container that names its profile and forces its
-            scheme. Each mark is judged on the unrounded ratio, so a 4.50 can still be AA-L and a
-            3.00 can still fail. Surfaces and borders get no ratio of their own. Failures are
-            recorded here, not corrected.
+            The WCAG 2 contrast ratio of each text token and hue over each surface and border,
+            per profile and scheme. Marks are judged on the unrounded ratio; failures are
+            recorded, not corrected.
           </p>
           <dl id="contrast-legend">
             <dt>AA</dt>
