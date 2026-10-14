@@ -2885,7 +2885,7 @@ describe("specimen", () => {
     expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
   });
 
-  test("sets its banners and cell headings at --text-l or larger, and its labels at --text-s", async () => {
+  test("sets its headings, banners and cell headings at --text-l or larger, and its labels at --text-s", async () => {
     const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
     const sizes = await page.evaluate(`({
       banners: [...document.querySelectorAll(
@@ -2962,7 +2962,7 @@ describe("specimen", () => {
       .map((code) => [code.textContent,
         [...code.nextElementSibling.querySelectorAll("small")].map((note) => note.textContent)])`);
 
-  test("heads each fluid scale with its fluid expansion, as the share of the display range filled", async () => {
+  test("foots each fluid scale with its fluid expansion, as the share of the display range filled", async () => {
     for (const viewport of [DESKTOP, PHONE]) {
       const page = await open(specimen, { scheme: "light", viewport });
       const expansion = fluid([0, 1], viewport) / 16;
@@ -2975,30 +2975,34 @@ describe("specimen", () => {
       }
     }
     const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
-    // The space scale opens on its expansion, then the base each step multiplies, then the
-    // steps; the type scale opens on its expansion, then the steps.
+    // The space scale opens on the base each step multiplies, then the steps, and ends on its
+    // expansion; the type scale runs its steps, then ends on its expansion.
     const space = await scale(page, "--space-fluid");
     expect(space.map(([name]) => name)).toEqual([
-      "--space-fluid",
       "--space-base",
       ...Object.keys(SPACE_STEPS),
+      "--space-fluid",
     ]);
     const type = await scale(page, "--type-fluid");
-    expect(type.map(([name]) => name)).toEqual(["--type-fluid", ...Object.keys(TEXT_STEPS)]);
+    expect(type.map(([name]) => name)).toEqual([...Object.keys(TEXT_STEPS), "--type-fluid"]);
   });
 
   test("notes each scale step's multiple, or its size's range, as the facets state them", async () => {
     const page = await open(specimen, { scheme: "light" });
     const numbers = (note) => [...note.matchAll(/\d+(\.\d+)?/g)].map((m) => Number(m[0]));
     const space = Object.fromEntries(
-      (await scale(page, "--space-fluid")).slice(1).map(([name, [note]]) => [name, numbers(note)]),
+      (await scale(page, "--space-fluid"))
+        .slice(0, -1)
+        .map(([name, [note]]) => [name, numbers(note)]),
     );
     expect(space).toEqual({
       "--space-base": SPACE_BASE,
       ...Object.fromEntries(Object.entries(SPACE_STEPS).map(([name, k]) => [name, [k]])),
     });
     const type = Object.fromEntries(
-      (await scale(page, "--type-fluid")).slice(1).map(([name, [note]]) => [name, numbers(note)]),
+      (await scale(page, "--type-fluid"))
+        .slice(0, -1)
+        .map(([name, [note]]) => [name, numbers(note)]),
     );
     expect(type).toEqual(
       Object.fromEntries(
@@ -3008,6 +3012,37 @@ describe("specimen", () => {
         ]),
       ),
     );
+  });
+
+  test("draws each line sample as a rule exactly its token's width, in --fg, across its column", async () => {
+    for (const [scheme, index] of SCHEMES.map((scheme, index) => [scheme, index])) {
+      for (const viewport of [DESKTOP, PHONE]) {
+        const page = await open(specimen, { scheme, viewport });
+        // Each sample's token, the thickness it renders at, its rule's width and color, and how
+        // long it runs.
+        const lines = await page.evaluate(`[...document.querySelectorAll(".line-sample")]
+          .map((line) => {
+            const style = getComputedStyle(line);
+            return [line.previousElementSibling.textContent, line.getBoundingClientRect().height,
+              Number.parseFloat(style.borderTopWidth), style.borderTopColor,
+              line.getBoundingClientRect().width];
+          })`);
+        expect(lines.map(([name]) => name)).toEqual(["--line-s", "--line-m"]);
+        const length = await resolveToken(page, "--space-2xl", "length");
+        for (const [name, thickness, width, color, run] of lines) {
+          const token = await resolveToken(page, name, "length");
+          expect([scheme, name, thickness, width, color, run >= length]).toEqual([
+            scheme,
+            name,
+            token,
+            token,
+            COLORS["--fg"][index],
+            true,
+          ]);
+        }
+        expect(lines[1][1]).toBeGreaterThan(lines[0][1]);
+      }
+    }
   });
 
   test("its tables example fills its panel, its caption as wide as the table", async () => {
@@ -3089,22 +3124,45 @@ describe("specimen", () => {
     }
   });
 
-  test("opens each section on a full-width banner on the element surface, and each subsection on one on the pane", async () => {
+  test("opens each section on a plain h2, and each subsection on a full-width banner on the pane", async () => {
+    for (const scheme of SCHEMES) {
+      const page = await open(specimen, { scheme, viewport: DESKTOP });
+      // Every computed property of each section's heading that differs from a plain h2's, one
+      // the elements layer alone styles, opening a header in a section outside main as the
+      // specimen's do inside it. Only the properties a box's size resolves are left out.
+      const unlike = await page.evaluate(`(() => {
+        const plain = document.createElement("section");
+        plain.innerHTML = "<header><h2>Heading</h2></header>";
+        document.body.append(plain);
+        const reference = getComputedStyle(plain.querySelector("h2"));
+        const sized = new Set(["width", "height", "inline-size", "block-size",
+          "perspective-origin", "transform-origin"]);
+        const unlike = [...document.querySelectorAll("main > section > header > h2")]
+          .map((h2) => {
+            const style = getComputedStyle(h2);
+            return [h2.textContent, [...reference]
+              .filter((name) => !sized.has(name)
+                && style.getPropertyValue(name) !== reference.getPropertyValue(name))];
+          });
+        plain.remove();
+        return unlike;
+      })()`);
+      expect(unlike.length).toBe(5);
+      for (const [name, properties] of unlike) {
+        expect([scheme, name, properties]).toEqual([scheme, name, []]);
+      }
+    }
     const page = await open(specimen, { scheme: "light", viewport: DESKTOP });
-    const banners = await page.evaluate(`[
-      ...[...document.querySelectorAll("main > section")]
-        .map((section) => [section, section.querySelector(":scope > header > h2")]),
-      ...[...document.querySelectorAll("main > section > section")]
-        .map((section) => [section, section.querySelector(":scope > h3, :scope > header > h3")]),
-    ].map(([section, heading]) => {
-      const [outer, inner] = [section.getBoundingClientRect(), heading.getBoundingClientRect()];
-      return [section.id, heading.localName, Math.round(outer.width - inner.width),
-        getComputedStyle(heading).backgroundColor];
-    })`);
+    const banners = await page.evaluate(`[...document.querySelectorAll("main > section > section")]
+      .map((section) => [section, section.querySelector(":scope > h3, :scope > header > h3")])
+      .map(([section, heading]) => {
+        const [outer, inner] = [section.getBoundingClientRect(), heading.getBoundingClientRect()];
+        return [section.id, Math.round(outer.width - inner.width),
+          getComputedStyle(heading).backgroundColor];
+      })`);
     expect(banners.length).toBeGreaterThan(10);
-    for (const [id, level, short, fill] of banners) {
-      const surface = level === "h2" ? "--bg-2" : "--bg-0";
-      expect([id, short, fill]).toEqual([id, 0, COLORS[surface][0]]);
+    for (const [id, short, fill] of banners) {
+      expect([id, short, fill]).toEqual([id, 0, COLORS["--bg-0"][0]]);
     }
   });
 

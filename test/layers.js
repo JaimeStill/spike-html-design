@@ -82,10 +82,9 @@ export const PROBES = {
   "v0.4.0": [
     [":root", "color-scheme", "light dark"],
     [":root", "--bg", "light-dark(#fffcf0, #1c1b1a)"],
-    ['[data-palette="tokyo-night"]', "--bg", "light-dark(#e1e2e7, #1a1b26)"],
+    ['[data-palette="primer"]', "--bg", "light-dark(#ffffff, #22272e)"],
     ['[data-palette="catppuccin"]', "--bg", "light-dark(#eff1f5, #1e1e2e)"],
     ['[data-palette="everforest"]', "--bg", "light-dark(#fffbef, #272e33)"],
-    ['[data-palette="primer"]', "--bg", "light-dark(#ffffff, #22272e)"],
     [":root", "--line-s", "1px"],
     [":root", "--text-m", "1rem"],
     ["body", "box-sizing", "border-box"],

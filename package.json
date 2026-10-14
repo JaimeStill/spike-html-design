@@ -7,9 +7,8 @@
     ".": "./baseline.css",
     "./full": "./full.css",
     "./profiles/flexoki": "./layers/tokens/color/flexoki.css",
-    "./profiles/tokyo-night": "./layers/tokens/color/tokyo-night.css",
+    "./profiles/primer": "./layers/tokens/color/primer.css",
     "./profiles/catppuccin": "./layers/tokens/color/catppuccin.css",
-    "./profiles/everforest": "./layers/tokens/color/everforest.css",
-    "./profiles/primer": "./layers/tokens/color/primer.css"
+    "./profiles/everforest": "./layers/tokens/color/everforest.css"
   }
 }

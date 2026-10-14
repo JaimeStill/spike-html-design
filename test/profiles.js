@@ -10,7 +10,8 @@ export const SCHEMES = ["light", "dark"];
 // variants, tokens }: its display name; its upstream's URL, its license, and the version its
 // values are read at (null for Flexoki, the default, whose file credits it without one); the
 // upstream variants it takes for light and dark; and per token, in the facet's order, the
-// [swatch name, hex] pair it takes in light, then in dark. Flexoki comes first, the default.
+// [swatch name, hex] pair it takes in light, then in dark. They run in the order every list of
+// them follows: Flexoki first, the default, then Primer, Catppuccin, and Everforest.
 export const COLOR_PROFILES = {
   flexoki: {
     title: "Flexoki",
@@ -87,76 +88,76 @@ export const COLOR_PROFILES = {
       ],
     },
   },
-  "tokyo-night": {
-    title: "Tokyo Night",
-    source: "https://github.com/folke/tokyonight.nvim",
-    license: "Apache-2.0",
-    version: "v4.14.1",
-    variants: ["day", "night"],
+  primer: {
+    title: "Primer",
+    source: "https://github.com/primer/github-vscode-theme",
+    license: "MIT",
+    version: "v6.3.5",
+    variants: ["GitHub Light Default", "GitHub Dark Dimmed"],
     tokens: {
       "--bg-0": [
-        ["bg_dark", "#d0d5e3"],
-        ["bg_dark", "#16161e"],
+        ["canvas.inset", "#f6f8fa"],
+        ["canvas.inset", "#1c2128"],
       ],
       "--bg": [
-        ["bg", "#e1e2e7"],
-        ["bg", "#1a1b26"],
+        ["canvas.default", "#ffffff"],
+        ["canvas.default", "#22272e"],
       ],
       "--bg-2": [
-        ["bg_highlight", "#c4c8da"],
-        ["bg_highlight", "#292e42"],
+        ["scale.gray[1]", "#eaeef2"],
+        ["canvas.subtle", "#2d333b"],
       ],
       "--border": [
-        ["fg_gutter", "#a8aecb"],
-        ["fg_gutter", "#3b4261"],
+        ["border.muted", "#d8dee4"],
+        ["border.muted", "#373e47"],
       ],
       "--border-2": [
-        ["dark3", "#8990b3"],
-        ["dark3", "#545c7e"],
+        ["border.default", "#d0d7de"],
+        ["border.default", "#444c56"],
       ],
       "--fg": [
-        ["fg", "#3760bf"],
-        ["fg", "#c0caf5"],
+        ["fg.default", "#1f2328"],
+        ["fg.default", "#adbac7"],
       ],
       "--fg-2": [
-        ["fg_dark", "#6172b0"],
-        ["fg_dark", "#a9b1d6"],
+        ["fg.muted", "#656d76"],
+        ["fg.muted", "#768390"],
       ],
       "--fg-3": [
-        ["comment", "#848cb5"],
-        ["comment", "#565f89"],
+        ["fg.subtle", "#6e7781"],
+        ["fg.subtle", "#636e7b"],
       ],
       "--red": [
-        ["red", "#f52a65"],
-        ["red", "#f7768e"],
+        ["danger.fg", "#cf222e"],
+        ["danger.fg", "#e5534b"],
       ],
       "--orange": [
-        ["orange", "#b15c00"],
-        ["orange", "#ff9e64"],
+        ["severe.fg", "#bc4c00"],
+        ["severe.fg", "#cc6b2c"],
       ],
       "--yellow": [
-        ["yellow", "#8c6c3e"],
-        ["yellow", "#e0af68"],
+        ["attention.fg", "#9a6700"],
+        ["attention.fg", "#c69026"],
       ],
       "--green": [
-        ["green", "#587539"],
-        ["green", "#9ece6a"],
+        ["success.fg", "#1a7f37"],
+        ["success.fg", "#57ab5a"],
       ],
       "--cyan": [
-        ["cyan", "#007197"],
-        ["cyan", "#7dcfff"],
+        ["ansi.cyan", "#1b7c83"],
+        ["ansi.cyan", "#39c5cf"],
       ],
       "--blue": [
-        ["blue", "#2e7de9"],
-        ["blue", "#7aa2f7"],
+        ["accent.fg", "#0969da"],
+        ["accent.fg", "#539bf5"],
       ],
       "--purple": [
-        ["purple", "#7847bd"],
-        ["purple", "#9d7cd8"],
+        ["done.fg", "#8250df"],
+        ["done.fg", "#986ee2"],
       ],
       "--magenta": [
-        ["magenta2", "#d20065"],
-        ["magenta2", "#ff007c"],
+        ["sponsors.fg", "#bf3989"],
+        ["sponsors.fg", "#c96198"],
       ],
     },
   },
@@ -303,79 +304,6 @@ export const COLOR_PROFILES = {
       "--magenta": [
         ["purple", "#df69ba"],
         ["purple", "#d699b6"],
-      ],
-    },
-  },
-  primer: {
-    title: "Primer",
-    source: "https://github.com/primer/github-vscode-theme",
-    license: "MIT",
-    version: "v6.3.5",
-    variants: ["GitHub Light Default", "GitHub Dark Dimmed"],
-    tokens: {
-      "--bg-0": [
-        ["canvas.inset", "#f6f8fa"],
-        ["canvas.inset", "#1c2128"],
-      ],
-      "--bg": [
-        ["canvas.default", "#ffffff"],
-        ["canvas.default", "#22272e"],
-      ],
-      "--bg-2": [
-        ["scale.gray[1]", "#eaeef2"],
-        ["canvas.subtle", "#2d333b"],
-      ],
-      "--border": [
-        ["border.muted", "#d8dee4"],
-        ["border.muted", "#373e47"],
-      ],
-      "--border-2": [
-        ["border.default", "#d0d7de"],
-        ["border.default", "#444c56"],
-      ],
-      "--fg": [
-        ["fg.default", "#1f2328"],
-        ["fg.default", "#adbac7"],
-      ],
-      "--fg-2": [
-        ["fg.muted", "#656d76"],
-        ["fg.muted", "#768390"],
-      ],
-      "--fg-3": [
-        ["fg.subtle", "#6e7781"],
-        ["fg.subtle", "#636e7b"],
-      ],
-      "--red": [
-        ["danger.fg", "#cf222e"],
-        ["danger.fg", "#e5534b"],
-      ],
-      "--orange": [
-        ["severe.fg", "#bc4c00"],
-        ["severe.fg", "#cc6b2c"],
-      ],
-      "--yellow": [
-        ["attention.fg", "#9a6700"],
-        ["attention.fg", "#c69026"],
-      ],
-      "--green": [
-        ["success.fg", "#1a7f37"],
-        ["success.fg", "#57ab5a"],
-      ],
-      "--cyan": [
-        ["ansi.cyan", "#1b7c83"],
-        ["ansi.cyan", "#39c5cf"],
-      ],
-      "--blue": [
-        ["accent.fg", "#0969da"],
-        ["accent.fg", "#539bf5"],
-      ],
-      "--purple": [
-        ["done.fg", "#8250df"],
-        ["done.fg", "#986ee2"],
-      ],
-      "--magenta": [
-        ["sponsors.fg", "#bf3989"],
-        ["sponsors.fg", "#c96198"],
       ],
     },
   },

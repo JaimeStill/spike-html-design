@@ -2,9 +2,9 @@
  * full.css: the package's full entry, every color profile in one link.
  *
  * The lean entry, baseline.css, holds the foundation and the default color profile, Flexoki. This
- * entry holds everything the lean entry holds plus the other four profiles, Tokyo Night,
- * Catppuccin, Everforest, and Primer. A page links this entry to select any profile with
- * data-palette, or the lean entry to fetch less.
+ * entry holds everything the lean entry holds plus the other three profiles, Primer, Catppuccin,
+ * and Everforest. A page links this entry to select any profile with data-palette, or the lean
+ * entry to fetch less.
  *
  * It is self-contained, not an add-on to the lean entry: it declares the same package layer
  * statement and imports every file the lean entry imports, in the same order, each directly into
@@ -24,10 +24,9 @@
 
 @import url(./layers/tokens/color.css) layer(spike-html-design.tokens.color);
 @import url(./layers/tokens/color/flexoki.css) layer(spike-html-design.tokens.color);
-@import url(./layers/tokens/color/tokyo-night.css) layer(spike-html-design.tokens.color);
+@import url(./layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
 @import url(./layers/tokens/color/catppuccin.css) layer(spike-html-design.tokens.color);
 @import url(./layers/tokens/color/everforest.css) layer(spike-html-design.tokens.color);
-@import url(./layers/tokens/color/primer.css) layer(spike-html-design.tokens.color);
 @import url(./layers/tokens/space.css) layer(spike-html-design.tokens.space);
 @import url(./layers/tokens/type.css) layer(spike-html-design.tokens.type);
 @import url(./layers/reset.css) layer(spike-html-design.reset);

@@ -47,9 +47,9 @@ Its packaging, a git-tag package that other packages extend, is also an input to
 2. Color, space, and type are token interfaces with a new contract: fluid scales, radius from
    one base, and fonts keyed by role. Swapping one facet's profile changes only that facet's
    tokens.
-3. Color profiles Flexoki, Tokyo Night, Catppuccin, Everforest, and Primer, each light and
-   dark. With nothing stored, the scheme follows the system setting, live. Contrast is recorded
-   per profile, not corrected.
+3. Color profiles Flexoki, Primer, Catppuccin, and Everforest, each light and dark. With nothing
+   stored, the scheme follows the system setting, live. Contrast is recorded per profile, not
+   corrected.
 4. The elements layer changes no native element's behavior, which a test proves against
    chromium's defaults. The tools layer's classes are opt-in, and each states what it changes.
 5. A preview container with profile attributes renders its subtree as that profile renders at
@@ -109,12 +109,12 @@ the interface a page uses now.
   steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
   their unset values.
 - **Profiles** (profiles): the color interface is sixteen tokens, with a pane surface,
-  `--bg-0`, and two border steps. Five profiles fill it, Flexoki, Tokyo Night, Catppuccin,
-  Everforest, and Primer, each light and dark in its own file, with a contrast record per
-  profile and scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any
-  element's subtree, so a preview container renders as its profile renders at the root. The
-  elements layer reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`,
-  and styles `kbd` as an outlined key, the baseline's only key-hint styling.
+  `--bg-0`, and two border steps. Four profiles fill it, Flexoki, Primer, Catppuccin, and
+  Everforest, each light and dark in its own file, with a contrast record per profile and
+  scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any element's
+  subtree, so a preview container renders as its profile renders at the root. The elements layer
+  reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd`
+  as an outlined key, the baseline's only key-hint styling.
 - **Elements** (facets): class-free, zero-specificity styling of every rendered native element,
   limited to paint, type, border (with a table's `border-collapse` and `border-spacing`), radius,
   margin, and padding, with `::file-selector-button`, `::marker`, `::placeholder`, and
@@ -189,10 +189,9 @@ in the specimen and not corrected.
 | `data-palette` | Light / dark | Source | License | Version |
 | --- | --- | --- | --- | --- |
 | `flexoki` (default) | light / dark | [Flexoki](https://stephango.com/flexoki), Steph Ango | MIT | unversioned |
-| `tokyo-night` | day / night | [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim) | Apache-2.0 | v4.14.1 |
+| `primer` | GitHub Light Default / GitHub Dark Dimmed | [primer/github-vscode-theme](https://github.com/primer/github-vscode-theme) | MIT | v6.3.5 |
 | `catppuccin` | latte / mocha | [catppuccin/palette](https://github.com/catppuccin/palette) | MIT | v1.8.0 |
 | `everforest` | hard light / hard dark | [sainnhe/everforest](https://github.com/sainnhe/everforest) | MIT | v0.3.0 |
-| `primer` | GitHub Light Default / GitHub Dark Dimmed | [primer/github-vscode-theme](https://github.com/primer/github-vscode-theme) | MIT | v6.3.5 |
 
 Flexoki's green is the one departure from an upstream: its green-600 and green-400 keep their
 OKLCH lightness and chroma but rotate from a hue near yellow to 142°, sRGB green's, as
@@ -235,7 +234,7 @@ only key-hint styling. The planned keys module binds keys and styles nothing.
 | --- | --- | --- |
 | `.` | `baseline.css` | The lean entry: the foundation and Flexoki. |
 | `./full` | `full.css` | The full entry: everything the lean entry holds, plus every other profile. |
-| `./profiles/<name>` | `layers/tokens/color/<name>.css` | One profile, for `flexoki`, `tokyo-night`, `catppuccin`, `everforest`, and `primer`. |
+| `./profiles/<name>` | `layers/tokens/color/<name>.css` | One profile, for `flexoki`, `primer`, `catppuccin`, and `everforest`. |
 
 A page links one entry, never both. A page that needs one profile beyond Flexoki links the lean
 entry and imports that profile into the color sub-layer, after the entry:
@@ -283,11 +282,11 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
    contrast table, the components layer removed, `package.json`, the lean entry point with its
    size measured and reported, the specimen's section per layer and facet, `mise run serve`,
    and a visual review after the tokens and elements render; v0.3.0 (evidence 1, 2, 4).
-4. `profiles`: the sixteen-token color interface, Tokyo Night, Catppuccin, Everforest, and
-   Primer beside Flexoki, the interaction, code, and kbd hooks, preview containers, the
-   specimen's grid of every profile and scheme with the workbench layout reworked, the full
-   entry point, the enforced size budget, contrast per profile, and a visual review after the
-   grid renders; v0.4.0 (evidence 3, 5).
+4. `profiles`: the sixteen-token color interface, Primer, Catppuccin, and Everforest beside
+   Flexoki, the interaction, code, and kbd hooks, preview containers, the specimen's grid of
+   every profile and scheme with the workbench layout reworked, the full entry point, the
+   enforced size budget, contrast per profile, and a visual review after the grid renders;
+   v0.4.0 (evidence 3, 5).
 5. `preferences`: the profile registry, the T theming menu, persistence, and the flash
    measurement; v0.5.0 (evidence 6).
 6. `keys`: `keys.js` and the ? dialog; v0.6.0 (evidence 7).
