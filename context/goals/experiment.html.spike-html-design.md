@@ -176,7 +176,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 4c+5 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a); 6–7 to go · review stop 1 done · review stop 2 done · standards — · spec — · editor —
+slices 1–6 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a); 7 to go · review stop 1 done · review stop 2 done · standards — · spec — · editor —
 
 ## Decisions
 
