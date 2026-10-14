@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** building
+- **State:** brief ready
 - **Task:** profiles
 - **Branch:** profiles
 
@@ -176,7 +176,7 @@ Release       v0.4.0
 
 ## Progress
 
-slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor done · brief redirect → fixes
+slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad3b69a, be3891a, 37f4e86, 83e73aa) · review stop 1 done · review stop 2 done · standards done (e094764, 33da5b2) · spec: no gaps · editor done · brief redirect fixed (b22b6de, d1fd51a, 61e3788; standards and spec re-run: no gaps)
 
 ## Decisions
 
@@ -648,6 +648,10 @@ slices 1–7 committed (2b21e96, f1bd346, 2ac62e0, 0c7c043, 0cd4b9c, 26b085e, ad
   the Flexoki green rotation is the one exception. The fluid-expansion rows sit at the foot of
   their scales; section h2s take the standard h2 style with no banner block; the line samples
   must show --line-s and --line-m distinctly.
+- profiles session brief redirect (architect): the line tokens stay 1px and 2px; the samples
+  render correctly and now draw in --fg. Rejected 0.5px for --line-s: it renders as 1px on 1x
+  displays and thins every control boundary to a hairline on HiDPI. The fluid rows sit a
+  --space-m below their scales.
 
 ## Pending edits
 
