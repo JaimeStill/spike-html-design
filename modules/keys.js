@@ -38,11 +38,46 @@
 //   {
 //     registered: { keys, label, handler }[],  register()'s bindings, in registration order:
 //                                              keys as written, label a string, and handler.
-//     wait: number,                            the sequence wait in ms, 1500; read at each press.
+//     wait: number,                            the package's sequence wait in ms, 1500, read at
+//                                              each press; the reader's stored wait wins over it.
 //     listening: boolean,                      whether a copy has installed the listener.
 //   }
 //
 // A copy that finds a store already there uses it as it is.
+//
+// Modes: a bare binding (keys-grammar's isBare, one character press with no modifier but Shift)
+// is pressed as written in raw mode, after the leader in leader mode ("t" as "g t"), and with
+// the activator held in activator mode ("t" as "Alt+t"). A binding that spells out a sequence or
+// a combination is used as written in every mode. A page sets its default mode with
+// data-keys-mode="raw|leader|activator" on <html>, any other value meaning raw; a mode the reader
+// chose overrides it.
+//
+// The reader's settings are stored per origin as JSON under localStorage key
+// "spike-html-design.keys", holding only the settings the reader changed:
+//
+//   {
+//     enabled?: boolean,                       the off switch; true, the default, is on.
+//     mode?: "raw" | "leader" | "activator",   the reader's mode, over the page's.
+//     leader?: "g" | "," | "\\" | "Space",      the leader, "g" by default.
+//     activator?: "Alt" | "Control" | "Meta" | "Alt+Shift",
+//                                              the activator, "Alt" (Option) by default.
+//     wait?: 1000 | 1500 | 3000 | 5000,        the sequence wait in ms, over the store's.
+//   }
+//
+// An unknown or invalid value reads as its default, and unparseable JSON, or storage that
+// throws, as all defaults. keys reads them at each press, so another tab's change applies at
+// once. With the off switch off (enabled false), a binding whose presses are all character keys
+// with no Control, Alt, or Meta, as raw bare keys and leader chords are, doesn't fire, while a
+// combination with Control, Alt, or Meta still does (WCAG 2.1.4).
+//
+// aria-keyshortcuts: keys owns the attribute on every element carrying data-keys and writes it
+// from the binding in effect, its single-press alternatives as keys-grammar's keyshortcuts()
+// declares them ("T", "Alt+T", "Shift+/"). A sequence, as a bare key is in leader mode, declares
+// nothing, nor does an alternative the off switch covers, and the attribute is removed when
+// nothing is left, or when an element's data-keys is removed. keys rewrites it on load, when
+// another tab changes the settings (a storage event), when this page changes them through
+// changeSettings(), and when an element's data-keys or <html>'s data-keys-mode changes or an
+// element is added. It touches no element that never carried data-keys.
 //
 // The extension events, their names and details public API frozen with v0.6.0:
 //
@@ -68,7 +103,28 @@
 //                                   keys-fire event. It throws a TypeError on a malformed keys,
 //                                   a label that isn't a string, or a handler that isn't a
 //                                   function.
-import { matches, normalize, problem, stringify, wrap } from "./keys-grammar.js";
+//   settings()                      the settings in effect: { enabled, mode, leader, activator,
+//                                   wait }, the reader's where stored and valid, else the
+//                                   page's mode and the defaults, the wait the store's.
+//   changeSettings(change)          stores the reader's change, an object of some of
+//                                   settings()'s names, and returns settings(). A value of null
+//                                   removes that setting, and so does a default (enabled true,
+//                                   leader "g", activator "Alt", wait the store's); a mode is
+//                                   kept as chosen, raw included, since it overrides the page's,
+//                                   until null removes it. Nothing left removes the storage key.
+//                                   It throws a TypeError on an unknown name or invalid value.
+import {
+  ACTIVATORS,
+  DEFAULTS,
+  keyshortcuts,
+  LEADERS,
+  MODES,
+  matches,
+  normalize,
+  problem,
+  stringify,
+  wrap,
+} from "./keys-grammar.js";
 
 const KEY = Symbol.for("spike-html-design.keys");
 
@@ -95,15 +151,99 @@ export function register(keys, label, handler) {
   };
 }
 
-// mode is the mode bindings are pressed in. Raw until modes land; the one place that reads it.
-function mode() {
-  return "raw";
+// STORAGE is the localStorage key the reader's settings are stored under, per origin.
+const STORAGE = "spike-html-design.keys";
+
+// VALID holds, for each setting, whether a value is one the reader can choose.
+const VALID = {
+  enabled: (value) => typeof value === "boolean",
+  mode: (value) => MODES.includes(value),
+  leader: (value) => LEADERS.includes(value),
+  activator: (value) => ACTIVATORS.includes(value),
+  wait: (value) => [1000, 1500, 3000, 5000].includes(value),
+};
+
+// defaults are the settings in effect with none stored; the mode is the page's.
+function defaults() {
+  const page = document.documentElement.getAttribute("data-keys-mode");
+  return {
+    enabled: true,
+    mode: MODES.includes(page) ? page : DEFAULTS.mode,
+    leader: DEFAULTS.leader,
+    activator: DEFAULTS.activator,
+    wait: store.wait,
+  };
 }
 
-// effective returns binding as pressed now, parsed: the one place a binding's written form
-// becomes the form keys matches, so modes and settings change it here alone.
-function effective(binding) {
-  return wrap(binding, mode(), {}, { mac });
+// stored returns the reader's valid stored settings, {} when storage is empty, unparseable, or
+// throws, as it does with site data blocked.
+function stored() {
+  let saved;
+  try {
+    saved = JSON.parse(localStorage.getItem(STORAGE));
+  } catch {
+    return {};
+  }
+  if (!saved || typeof saved !== "object") return {};
+  return Object.fromEntries(
+    Object.keys(VALID)
+      .filter((name) => VALID[name](saved[name]))
+      .map((name) => [name, saved[name]]),
+  );
+}
+
+export function settings() {
+  return { ...defaults(), ...stored() };
+}
+
+export function changeSettings(change) {
+  const next = stored();
+  const fallback = defaults();
+  for (const [name, value] of Object.entries(change)) {
+    if (!(name in VALID)) throw new TypeError(`keys: "${name}" is not a setting`);
+    if (value !== null && !VALID[name](value)) {
+      throw new TypeError(`keys: ${JSON.stringify(value)} is not a ${name} the reader can choose`);
+    }
+    if (value === null || (name !== "mode" && value === fallback[name])) delete next[name];
+    else next[name] = value;
+  }
+  try {
+    if (Object.keys(next).length === 0) localStorage.removeItem(STORAGE);
+    else localStorage.setItem(STORAGE, JSON.stringify(next));
+  } catch {
+    // Storage blocked: the change is lost, and the settings stay as they were.
+  }
+  declare();
+  return settings();
+}
+
+// isCharacter reports whether press is a character key with no Control, Alt, or Meta: the
+// presses the off switch covers. Space counts, so a Space leader's chords are covered.
+const isCharacter = (press) =>
+  !press.control && !press.alt && !press.meta && [...press.key].length === 1;
+
+// effective returns binding as pressed now under current, settings(), parsed: the one place a
+// binding's written form becomes the form keys matches. With the off switch off it leaves out
+// the alternatives it covers, so a binding may have none; null when the binding is malformed.
+function effective(binding, current) {
+  const alternatives = wrap(binding, current.mode, current, { mac });
+  if (!alternatives || current.enabled) return alternatives;
+  return alternatives.filter((sequence) => !sequence.every(isCharacter));
+}
+
+// declare writes aria-keyshortcuts on every element carrying data-keys from the binding in
+// effect, and removes it where that declares nothing.
+function declare() {
+  const current = settings();
+  for (const el of document.querySelectorAll("[data-keys]")) {
+    const alternatives = effective(el.getAttribute("data-keys"), current);
+    const value = alternatives && keyshortcuts(alternatives);
+    if (value) {
+      if (el.getAttribute("aria-keyshortcuts") !== value) {
+        el.setAttribute("aria-keyshortcuts", value);
+      }
+    } else el.removeAttribute("aria-keyshortcuts");
+  }
 }
 
 // isField reports whether el types text, so a key pressed in it is text, not a shortcut.
@@ -117,10 +257,10 @@ function isField(el) {
 // warned holds each element's malformed data-keys values already warned about.
 const warned = new WeakMap();
 
-// elementBinding reads el's data-keys as a binding, or warns once and returns null.
-function elementBinding(el) {
+// elementBinding reads el's data-keys as a binding under current, or warns once and returns null.
+function elementBinding(el, current) {
   const keys = el.getAttribute("data-keys");
-  const alternatives = effective(keys);
+  const alternatives = effective(keys, current);
   if (alternatives) return { el, keys, alternatives };
   const seen = warned.get(el) ?? new Set();
   if (!seen.has(keys)) {
@@ -132,18 +272,18 @@ function elementBinding(el) {
 
 // active returns the bindings in effect, in the order the first wins: elements in document
 // order, then register()'s in registration order. A modal dialog narrows them to its elements.
-function active() {
+function active(current) {
   const modal = document.querySelector(":modal");
   const elements = [...document.querySelectorAll("[data-keys]")]
     .filter((el) => !modal || modal.contains(el))
     .filter((el) => !el.matches(":disabled") && !el.closest("[inert]") && el.checkVisibility())
-    .map(elementBinding)
+    .map((el) => elementBinding(el, current))
     .filter(Boolean);
   if (modal) return elements;
   const registered = store.registered.map((entry) => ({
     entry,
     keys: entry.keys,
-    alternatives: effective(entry.keys),
+    alternatives: effective(entry.keys, current),
   }));
   return [...elements, ...registered];
 }
@@ -195,13 +335,13 @@ function end(reason) {
   sequenceEvent("end", strings, reason);
 }
 
-// fire dispatches keys-fire for a binding's matched sequence and, unless it is cancelled, acts:
-// it clicks or focuses the element, or calls register()'s handler.
-function fire({ binding, sequence }) {
+// fire dispatches keys-fire for a binding's matched sequence, in the mode it matched in, and,
+// unless it is cancelled, acts: it clicks or focuses the element, or calls register()'s handler.
+function fire({ binding, sequence, mode }) {
   const detail = {
     binding: normalize(binding.keys, { mac }),
     keys: sequence.map(stringify),
-    mode: mode(),
+    mode,
   };
   if (binding.entry) detail.label = binding.entry.label;
   const target = binding.el ?? document;
@@ -212,22 +352,23 @@ function fire({ binding, sequence }) {
   else binding.el.click();
 }
 
-// onkey reads the bindings in effect and matches the press against them, after the presses
-// pending. A complete match with no longer one waiting fires at once; a longer one waiting
+// onkey reads the settings and the bindings in effect and matches the press against them, after
+// the presses pending. A complete match with no longer one waiting fires at once; a longer one waiting
 // starts or continues the sequence; nothing matching drops the sequence in progress.
 function onkey(event) {
   if (silent(event)) return;
   const presses = [...(pending?.presses ?? []), snapshot(event)];
   const n = presses.length;
+  const current = settings();
   let complete = null;
   let longer = null;
-  for (const binding of active()) {
+  for (const binding of active(current)) {
     for (const sequence of binding.alternatives) {
       if (sequence.length < n || !presses.every((press, i) => matches(sequence[i], press))) {
         continue;
       }
-      if (sequence.length === n) complete ??= { binding, sequence };
-      else longer ??= { binding, sequence };
+      if (sequence.length === n) complete ??= { binding, sequence, mode: current.mode };
+      else longer ??= { binding, sequence, mode: current.mode };
     }
   }
   if (!complete && !longer) {
@@ -251,11 +392,33 @@ function onkey(event) {
     const held = pending.complete;
     end(held ? "fired" : "timeout");
     if (held) fire(held);
-  }, store.wait);
+  }, current.wait);
   sequenceEvent(started ? "start" : "continue", strings);
 }
 
+// The copy that listens also keeps aria-keyshortcuts current: now, on another tab's change to
+// the settings (a storage event, key null when storage is cleared), and on a change to an
+// element's data-keys, an element added, or <html>'s data-keys-mode. An element whose data-keys
+// is removed loses the aria-keyshortcuts keys wrote on it.
 if (!store.listening) {
   store.listening = true;
   document.addEventListener("keydown", onkey);
+  declare();
+  addEventListener("storage", (event) => {
+    if (event.key === STORAGE || event.key === null) declare();
+  });
+  new MutationObserver((records) => {
+    for (const { target, attributeName, oldValue } of records) {
+      if (attributeName === "data-keys" && oldValue !== null && !target.hasAttribute("data-keys")) {
+        target.removeAttribute("aria-keyshortcuts");
+      }
+    }
+    declare();
+  }).observe(document, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: ["data-keys", "data-keys-mode"],
+  });
 }

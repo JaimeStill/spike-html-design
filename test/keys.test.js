@@ -9,8 +9,13 @@ const server = serve(root);
 const fixture = (name) => `${server.url}test/fixtures/${name}`;
 const pages = [];
 
-afterEach(() => {
-  for (const page of pages.splice(0)) page.close();
+// Every fixture shares the server's origin, and so the reader's stored settings: each test
+// clears them before its pages close.
+afterEach(async () => {
+  for (const page of pages.splice(0)) {
+    await page.evaluate("localStorage.clear()");
+    page.close();
+  }
 });
 afterAll(() => server.stop());
 
@@ -358,5 +363,326 @@ describe("keys: extension and the store", () => {
         ["b", "from b"],
       ],
     });
+  });
+});
+
+// MODES_FIXTURE is the modes fixture, one set of bindings pressed in every mode.
+const MODES_FIXTURE = "keys-modes.html";
+
+// declared resolves to each bound button's aria-keyshortcuts, by its data-log, null when absent.
+const declared = (page) =>
+  page.evaluate(`Object.fromEntries([...document.querySelectorAll("[data-log]")]
+    .map((el) => [el.dataset.log, el.getAttribute("aria-keyshortcuts")]))`);
+
+// store writes the reader's settings to storage as another tab would, value a string or an object
+// written as JSON, and dispatches the storage event that tab's write sends here.
+const store = (page, value) => {
+  const json = typeof value === "string" ? value : JSON.stringify(value);
+  return page.evaluate(`(() => {
+    const oldValue = localStorage.getItem("spike-html-design.keys");
+    localStorage.setItem("spike-html-design.keys", ${JSON.stringify(json)});
+    dispatchEvent(new StorageEvent("storage", { key: "spike-html-design.keys", oldValue,
+      newValue: ${JSON.stringify(json)}, storageArea: localStorage, url: location.href }));
+  })()`);
+};
+
+// saved resolves to the reader's stored settings, parsed, or null when none are stored.
+const saved = (page) => page.evaluate(`JSON.parse(localStorage.getItem("spike-html-design.keys"))`);
+
+// pressAll presses T and ? as mode would have them pressed, then g c, Control+K, and Escape,
+// which are as written in every mode.
+async function pressAll(page, mode) {
+  if (mode === "raw") {
+    await press(page, "t");
+    await press(page, "?", { code: "Slash", shift: true });
+  } else if (mode === "leader") {
+    await press(page, "g");
+    await press(page, "t");
+    await press(page, "g");
+    await press(page, "?", { code: "Slash", shift: true });
+  } else {
+    // Option changes the character on macOS, so Alt matches a letter by event.code.
+    await press(page, "†", { code: "KeyT", alt: true });
+    await press(page, "?", { code: "Slash", alt: true, shift: true });
+  }
+  await press(page, "g");
+  await press(page, "c");
+  await press(page, "k", { ctrl: true });
+  await press(page, "Escape", { code: "Escape" });
+}
+
+const ALL = ["t", "?", "g c", "Control+k", "Escape"];
+
+// DECLARED is each mode's aria-keyshortcuts for the fixture's buttons.
+const DECLARED = {
+  raw: { t: "T", "?": "Shift+/", "g c": null, "Control+k": "Control+K", Escape: "Escape" },
+  leader: { t: null, "?": null, "g c": null, "Control+k": "Control+K", Escape: "Escape" },
+  activator: {
+    t: "Alt+T",
+    "?": "Alt+Shift+/",
+    "g c": null,
+    "Control+k": "Control+K",
+    Escape: "Escape",
+  },
+};
+
+describe("keys: modes", () => {
+  for (const mode of ["raw", "leader", "activator"]) {
+    test(`the page's ${mode} mode: the fixture's bindings fire as ${mode} presses them, and aria-keyshortcuts follows`, async () => {
+      const page = await open(`${MODES_FIXTURE}?mode=${mode}`);
+      expect(await declared(page)).toEqual(DECLARED[mode]);
+      await pressAll(page, mode);
+      expect(await log(page)).toEqual(ALL);
+      const fired = await page.evaluate("window.fired");
+      expect(fired.map((detail) => detail.mode)).toEqual(ALL.map(() => mode));
+      if (mode !== "raw") {
+        // The raw presses of the bare bindings do nothing in this mode.
+        await press(page, "t");
+        await sleep(page, WAIT + 100);
+        expect(await log(page)).toEqual(ALL);
+      }
+    });
+  }
+
+  test("the reader's mode overrides the page's, in all three, and raw is a choice too", async () => {
+    const page = await open(`${MODES_FIXTURE}?mode=leader`);
+    for (const mode of ["activator", "raw", "leader"]) {
+      await call(page, `keys.changeSettings({ mode: ${JSON.stringify(mode)} })`);
+      expect(await declared(page)).toEqual(DECLARED[mode]);
+      await page.evaluate("window.log = []");
+      await pressAll(page, mode);
+      expect(await log(page)).toEqual(ALL);
+    }
+    expect(await saved(page)).toEqual({ mode: "leader" });
+    // Removing the reader's mode returns to the page's.
+    await call(page, `keys.changeSettings({ mode: null })`);
+    expect(await saved(page)).toBeNull();
+    expect(await call(page, "keys.settings().mode")).toBe("leader");
+  });
+
+  test("an invalid data-keys-mode means raw; changing it on <html> rewrites aria-keyshortcuts", async () => {
+    const page = await open(`${MODES_FIXTURE}?mode=chords`);
+    expect(await call(page, "keys.settings().mode")).toBe("raw");
+    expect(await declared(page)).toEqual(DECLARED.raw);
+    await page.evaluate(`document.documentElement.dataset.keysMode = "activator"`);
+    expect(await declared(page)).toEqual(DECLARED.activator);
+    await page.evaluate(`document.documentElement.removeAttribute("data-keys-mode")`);
+    expect(await declared(page)).toEqual(DECLARED.raw);
+  });
+
+  test("the leader can be g, comma, backslash, or Space", async () => {
+    const page = await open(`${MODES_FIXTURE}?mode=leader`);
+    const leaders = [
+      ["g", "g", "KeyG"],
+      [",", ",", "Comma"],
+      ["\\", "\\", "Backslash"],
+      ["Space", " ", "Space"],
+    ];
+    for (const [leader, key, code] of leaders) {
+      await call(page, `keys.changeSettings({ leader: ${JSON.stringify(leader)} })`);
+      await press(page, key, { code });
+      await press(page, "t");
+    }
+    expect(await log(page)).toEqual(["t", "t", "t", "t"]);
+    // With the comma leader, g alone no longer leads.
+    await call(page, `keys.changeSettings({ leader: "," })`);
+    await press(page, "g");
+    await press(page, "t");
+    await sleep(page, WAIT + 100);
+    expect(await log(page)).toEqual(["t", "t", "t", "t"]);
+  });
+
+  test("the activator can be Alt, Control, Meta, or Alt+Shift; Alt matches a letter by code", async () => {
+    const page = await open(`${MODES_FIXTURE}?mode=activator`);
+    const activators = [
+      ["Alt", "†", { alt: true }, "Alt+T"],
+      ["Control", "t", { ctrl: true }, "Control+T"],
+      ["Meta", "t", { meta: true }, "Meta+T"],
+      ["Alt+Shift", "ˇ", { alt: true, shift: true }, "Alt+Shift+T"],
+    ];
+    for (const [activator, key, held, shortcut] of activators) {
+      await call(page, `keys.changeSettings({ activator: ${JSON.stringify(activator)} })`);
+      expect((await declared(page)).t).toBe(shortcut);
+      await press(page, key, { code: "KeyT", ...held });
+      // The other activators don't fire it.
+      if (activator !== "Alt") await press(page, "†", { code: "KeyT", alt: true });
+      if (activator !== "Control") await press(page, "t", { ctrl: true });
+    }
+    expect(await log(page)).toEqual(["t", "t", "t", "t"]);
+    expect((await page.evaluate("window.fired")).map((detail) => detail.keys)).toEqual([
+      ["Alt+t"],
+      ["Control+t"],
+      ["Meta+t"],
+      ["Alt+Shift+T"],
+    ]);
+  });
+});
+
+describe("keys: the reader's settings", () => {
+  test("the stored wait wins over the store's", async () => {
+    const page = await open(MODES_FIXTURE);
+    await call(page, `keys.register("w e", "we", () => window.log.push("w e"))`);
+    // The store's wait, WAIT, has passed.
+    await press(page, "w");
+    await sleep(page, WAIT + 250);
+    await press(page, "e");
+    expect(await log(page)).toEqual([]);
+    await call(page, "keys.changeSettings({ wait: 1000 })");
+    expect(await call(page, "keys.settings().wait")).toBe(1000);
+    await press(page, "w");
+    await sleep(page, WAIT + 250);
+    await press(page, "e");
+    expect(await log(page)).toEqual(["w e"]);
+  });
+
+  test("invalid stored values read as defaults, and unparseable JSON as all defaults", async () => {
+    const page = await open(`${MODES_FIXTURE}?mode=activator`);
+    const defaults = {
+      enabled: true,
+      mode: "activator",
+      leader: "g",
+      activator: "Alt",
+      wait: WAIT,
+    };
+    await store(page, {
+      enabled: "no",
+      mode: "chords",
+      leader: "x",
+      activator: "Shift",
+      wait: 20,
+      extra: 1,
+    });
+    expect(await call(page, "keys.settings()")).toEqual(defaults);
+    await store(page, { mode: "leader", wait: 7 });
+    expect(await call(page, "keys.settings()")).toEqual({ ...defaults, mode: "leader" });
+    for (const value of ["{", "[]", "null", '"leader"']) {
+      await store(page, value);
+      expect(await call(page, "keys.settings()")).toEqual(defaults);
+    }
+    // keys still fires as the defaults have it.
+    await press(page, "†", { code: "KeyT", alt: true });
+    expect(await log(page)).toEqual(["t"]);
+  });
+
+  test("changeSettings() stores only changed settings; a default or null removes one", async () => {
+    const page = await open(MODES_FIXTURE);
+    await call(page, `keys.changeSettings({ leader: ",", wait: 3000 })`);
+    expect(await saved(page)).toEqual({ leader: ",", wait: 3000 });
+    await call(page, `keys.changeSettings({ leader: "g", enabled: false })`);
+    expect(await saved(page)).toEqual({ wait: 3000, enabled: false });
+    await call(page, `keys.changeSettings({ wait: null, enabled: true })`);
+    expect(await saved(page)).toBeNull();
+    // Invalid values already stored are dropped when the reader next changes something.
+    await store(page, { leader: "x", mode: "activator" });
+    await call(page, `keys.changeSettings({ wait: 5000 })`);
+    expect(await saved(page)).toEqual({ mode: "activator", wait: 5000 });
+    const thrown = (change) =>
+      call(
+        page,
+        `{ try { keys.changeSettings(${change}); return null; }
+           catch (error) { return error.constructor.name; } }`,
+      );
+    expect(await thrown(`{ leader: "x" }`)).toBe("TypeError");
+    expect(await thrown(`{ colour: "red" }`)).toBe("TypeError");
+    expect(await saved(page)).toEqual({ mode: "activator", wait: 5000 });
+  });
+
+  test("the off switch turns character-key shortcuts off and leaves combinations on", async () => {
+    const page = await open(MODES_FIXTURE);
+    await call(page, `keys.register("j", "j", () => window.log.push("j"))`);
+    await call(page, `keys.register("Alt+j", "Alt+j", () => window.log.push("Alt+j"))`);
+    await call(page, "keys.changeSettings({ enabled: false })");
+    expect(await declared(page)).toEqual({
+      t: null,
+      "?": null,
+      "g c": null,
+      "Control+k": "Control+K",
+      Escape: "Escape",
+    });
+    await pressAll(page, "raw");
+    await press(page, "j");
+    await press(page, "∆", { code: "KeyJ", alt: true });
+    expect(await log(page)).toEqual(["Control+k", "Escape", "Alt+j"]);
+    // Leader chords are character keys too; activator combinations stay on.
+    await page.evaluate("window.log = []");
+    await call(page, `keys.changeSettings({ mode: "leader" })`);
+    await pressAll(page, "leader");
+    expect(await log(page)).toEqual(["Control+k", "Escape"]);
+    await page.evaluate("window.log = []");
+    await call(page, `keys.changeSettings({ mode: "activator" })`);
+    expect(await declared(page)).toEqual(DECLARED.activator);
+    await pressAll(page, "activator");
+    expect(await log(page)).toEqual(["t", "?", "Control+k", "Escape"]);
+    // Turned back on, they all fire.
+    await page.evaluate("window.log = []");
+    await call(page, `keys.changeSettings({ enabled: true, mode: null })`);
+    await pressAll(page, "raw");
+    expect(await log(page)).toEqual(ALL);
+  });
+});
+
+describe("keys: aria-keyshortcuts", () => {
+  test("another tab's change to the settings applies at once, to presses and the attribute", async () => {
+    const page = await open(MODES_FIXTURE);
+    await store(page, { mode: "activator" });
+    expect(await declared(page)).toEqual(DECLARED.activator);
+    await pressAll(page, "activator");
+    expect(await log(page)).toEqual(ALL);
+    await store(page, { enabled: false });
+    expect((await declared(page)).t).toBeNull();
+    // Storage cleared in another tab: key null.
+    await page.evaluate(`(localStorage.clear(),
+      dispatchEvent(new StorageEvent("storage", { key: null, storageArea: localStorage })))`);
+    expect(await declared(page)).toEqual(DECLARED.raw);
+  });
+
+  test("two tabs on one origin: a change in one rewrites the other's attribute", async () => {
+    const one = await open(MODES_FIXTURE);
+    const two = await open(MODES_FIXTURE);
+    await call(one, `keys.changeSettings({ mode: "activator" })`);
+    // The other tab's storage event arrives as a task; wait for it.
+    await sleep(two, 50);
+    expect(await declared(two)).toEqual(DECLARED.activator);
+    await press(two, "†", { code: "KeyT", alt: true });
+    expect(await log(two)).toEqual(["t"]);
+  });
+
+  test("stored settings apply on load", async () => {
+    const page = await open(MODES_FIXTURE);
+    await page.evaluate(
+      `localStorage.setItem("spike-html-design.keys", JSON.stringify({ mode: "activator", activator: "Meta" }))`,
+    );
+    await page.goto(fixture(MODES_FIXTURE));
+    expect((await declared(page)).t).toBe("Meta+T");
+  });
+
+  test("follows added elements and data-keys changes, and leaves unbound elements alone", async () => {
+    const page = await open(MODES_FIXTURE);
+    const shortcut = (id) =>
+      page.evaluate(
+        `document.getElementById(${JSON.stringify(id)}).getAttribute("aria-keyshortcuts")`,
+      );
+    await page.evaluate(`(() => {
+      const button = document.createElement("button");
+      button.id = "added";
+      button.dataset.keys = "n";
+      document.body.append(button);
+    })()`);
+    expect(await shortcut("added")).toBe("N");
+    await page.evaluate(`document.getElementById("added").dataset.keys = "Alt+n, ?"`);
+    expect(await shortcut("added")).toBe("Alt+N Shift+/");
+    // A sequence declares nothing; nor does a malformed binding.
+    await page.evaluate(`document.getElementById("added").dataset.keys = "n m"`);
+    expect(await shortcut("added")).toBeNull();
+    await page.evaluate(`document.getElementById("added").dataset.keys = "Control+"`);
+    expect(await shortcut("added")).toBeNull();
+    // data-keys removed: the attribute keys wrote goes with it.
+    await page.evaluate(`document.getElementById("added").dataset.keys = "n"`);
+    expect(await shortcut("added")).toBe("N");
+    await page.evaluate(`document.getElementById("added").removeAttribute("data-keys")`);
+    expect(await shortcut("added")).toBeNull();
+    // An element that never carried data-keys keeps its own.
+    await call(page, `keys.changeSettings({ mode: "activator" })`);
+    expect(await shortcut("unbound")).toBe("Alt+U");
   });
 });

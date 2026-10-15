@@ -37,7 +37,7 @@ export const BUDGETS = {
   "modules/theme-menu.js": 8_500,
   "modules/register.js": 1_450,
   "modules/register-full.js": 1_550,
-  "modules/keys.js": 8_300,
+  "modules/keys.js": 10_550,
   "modules/keys-grammar.js": 4_250,
 };
 
