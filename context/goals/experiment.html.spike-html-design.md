@@ -116,7 +116,7 @@ Release       v0.7.0
 
 ## Progress
 
-slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards ✓ (e2b827a, 23dcecd) · spec ✓ (gaps closed b1833a7) · editor —
+slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards ✓ (e2b827a, 23dcecd) · spec ✓ (gaps closed b1833a7) · editor ✓
 
 ## Decisions
 
@@ -925,6 +925,43 @@ slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards 
   experiment.html intake.
 - plan validate: the git-tag install is proven by a no-build page only; bun build's rewrite of
   light-dark() into --buncss-* variables is recorded as a fact for spike-html-apps.
+- validate BUILD: the conformance API is `check(facet, name)`, mirroring the registry's
+  `register(facet, name)` so space and type checks can join under the same name; only color has
+  a check, and space, type, an unknown facet, or an empty name reject with a TypeError. It is
+  async, waiting for the load event, and resolves to a list of { rule, message }, each rule
+  failing at most once, in the order of `RULES.color`: tokens, color-only, layer, specificity,
+  paints, surfaces, registered (c4ada3d).
+- validate BUILD: the layer rule tests the profile against the package's next sub-layer, which
+  must beat it; specificity is judged only when layer passes, since an unlayered block beats
+  every layered rule whatever its selector (c4ada3d).
+- validate BUILD: each rule but paints has a broken fixture under test/fixtures/conformance/,
+  color-only included, beyond the brief's five; paints has no CSS fixture, and its test breaks
+  it with a consumer rule that repaints the scope (c4ada3d, e2b827a).
+- validate BUILD: the conformance.js budget is 4,000 B brotli, its 3,542 B total with about 13%
+  headroom, pending the architect's approval at the session brief (c4ada3d).
+- validate BUILD: the extension fixture's profile, Harbor, is an original palette, not an
+  upstream's. The fixture depends on v0.6.0, the newest tag, as a consumer writes it; since
+  v0.6.0 ships no ./conformance, its test imports the working tree's conformance.js into the
+  page (7d6e288).
+- validate BUILD: the offline install rewrites the fixture's github: dependency to
+  git+file://<repo>#<tag> in a scratch copy and runs bun install with its proxies on a closed
+  port and its own cache: bun fetches a github: dependency as a tarball, which no git insteadOf
+  can redirect offline (7d6e288).
+- validate BUILD: "renders as the pinned page" compares the root tokens and the styles of the
+  shared header's elements, light and dark; margins, sizes, and the intro paragraph are left
+  out, since the specimen's own layer sets them (7d6e288).
+- validate BUILD: mise run pin's live install runs only for a tag holding every file the
+  fixture's page loads, v0.6.0 on; earlier tags skip it with the reason (v0.5.0 lacks keys.js)
+  (017dd43).
+- validate BUILD: a hop is one import level below the entry, so keys.js → keys-grammar.js is 2
+  files and 1 hop; the brief's "keys.js's second hop" is that one hop (017dd43).
+- validate BUILD: the size report's one-file and no-comment figures are estimates, never
+  budgeted: the CSS inlines each @import in its layer block, and the JS strip is conservative,
+  dropping only line-leading block and whole-line comments so no string, regex, or template is
+  cut (356aa35).
+- validate BUILD: v0.7.0's live pin runs at its release and its result is recorded at SHIP; the
+  README states that it runs at release, rather than the brief's v0.1.0 through v0.7.0 run
+  before SHIP (68b64a5, b1833a7).
 
 ## Pending edits
 
@@ -938,7 +975,8 @@ slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards 
   --bg-2 step toward the text (lightest to darkest in light, darkest to lightest in dark), and
   dialogs sit on --bg-1.
 - coordinator · roadmap.toml, preferences summary: gains a second space and a second type
-  profile, and the data-space and data-type scopes (plan profiles).
+  profile, and the data-space and data-type scopes (plan profiles) (superseded by the plan
+  preferences edit below).
 - coordinator · roadmap.toml, keys summary: drop "plus key-hint styling"; keys is the
   shortcuts API alone (plan profiles).
 - coordinator · html-artifacts.md, "Keyboard": key-hint styling ships with the baseline's
@@ -965,6 +1003,9 @@ slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards 
   <theme-menu> binds T with no way to turn it off, failing WCAG 2.1.4 (Level A); the tag is
   immutable, and v0.6.0 moves T to keys, whose off switch covers it (keys) (superseded by the
   validate answer section below, which carries it).
+- coordinator · html-artifacts.md, "Style baseline": the rewrite also covers the ./conformance
+  export, `check(facet, name)`, and the seven-rule color contract it enforces, `RULES.color`,
+  which an extension package's color profile must pass (validate).
 - coordinator · html-artifacts.md, "Answers · experiment.html": add the section below (validate).
 
       ### Answer · experiment.html.spike-html-design

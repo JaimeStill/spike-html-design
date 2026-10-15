@@ -77,13 +77,13 @@ Its packaging, a git-tag package that other packages extend, is also an input to
 ## Scope
 
 - **No build.** Hand-written CSS, HTML, and ES modules with custom elements and no framework.
-  Tools are pinned in mise. validate measured the cost of the @import chain from the CDN and of
-  the comments, and leaves a release build to the experiment.html intake ("The answer").
+  Tools are pinned in mise. "The answer" gives the measured cost of the @import chain from the
+  CDN and of the comments, and leaves a release build to the experiment.html intake.
 - **Packaging.** From facets on, a `package.json` names and versions the package and exports
   its CSS entry points, and from preferences on its JS modules, with no dependencies. A
-  consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which
-  validate proves. The lean entry point holds the foundation and the default profiles, and the
-  full one every profile; "Entries and exports", below, lists v0.7.0's exports. Each entry's
+  consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, as
+  "Extending with a package" shows. The lean entry point holds the foundation and the default
+  profiles, and the full one every profile; "Entries and exports", below, lists v0.7.0's exports. Each entry's
   size, raw and brotli, is reported from facets on, and its brotli size is held to a budget from
   profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
@@ -694,8 +694,8 @@ is public: setting it rescales every space step.
 
 ## Path
 
-The tasks, in the order they run. Each open task cites the evidence it proves; layers and
-themes proved the earlier evidence list, which v0.2.0's README holds.
+The tasks, in the order they run. From facets on, each task cites the evidence it proves; layers
+and themes proved the earlier evidence list, which v0.2.0's README holds.
 
 1. `layers`: the layered stylesheet, a specimen page, the check's headless chromium harness, the
    Pages workflow, and tag v0.1.0 linked by its pinned URL from Pages.
@@ -796,8 +796,8 @@ most of it comments, left to the intake.
 
 ### Size and the import chain
 
-`mise run size`, in brotli bytes, per file as served, as one file, and as one file without
-comments:
+`mise run size` reports each entry in brotli bytes per file as served, as one file, and as one
+file without comments. The last two are estimates of a release build ("Size budgets"):
 
 | Entry | Per file (budget) | One file | One file, no comments |
 | --- | --- | --- | --- |
