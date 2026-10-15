@@ -120,6 +120,8 @@
 // The copy that listens loads keys-help.js, beside itself, the first time such a dialog fires
 // beforetoggle to open, however it opens (a show-modal invoker, showModal(), or show()), and
 // from then on has it fill the dialog's marked elements at each open, before the dialog shows.
+// A load that fails is warned of on the console and tried again at the next open; until one
+// succeeds, the dialog opens as the page wrote it.
 import { keyshortcuts, matches, normalize, parse, problem, stringify } from "./keys-grammar.js";
 
 const KEY = Symbol.for("spike-html-design.keys");
@@ -160,8 +162,8 @@ const VALID = {
 const defaults = () => ({ enabled: true, wait: store.wait });
 
 // stored returns the reader's valid stored settings, {} when storage is empty, unparseable, or
-// throws, as it does with site data blocked. A name it doesn't know, as an earlier build's mode,
-// is left out, and so dropped on the next write.
+// throws, as it does with site data blocked. A name it doesn't know is left out, and so dropped
+// on the next write.
 function stored() {
   let saved;
   try {
@@ -367,7 +369,8 @@ export function bindings(dialog) {
   return listed;
 }
 
-// help is keys-help.js once loaded, and loading the promise of it; see "The help dialog".
+// help is keys-help.js once loaded, and loading the promise of it, or of null when the load
+// fails; see "The help dialog".
 let help = null;
 let loading = null;
 
@@ -381,11 +384,20 @@ function onbeforetoggle(event) {
     help.fill(dialog);
     return;
   }
-  loading ??= import(new URL("./keys-help.js", import.meta.url).href).then((module) => {
-    help = module;
-    return module;
-  });
-  loading.then((module) => module.fill(dialog));
+  loading ??= import(new URL("./keys-help.js", import.meta.url).href).then(
+    (module) => {
+      help = module;
+      return module;
+    },
+    (error) => {
+      // A failed load is forgotten, so the next open tries again; this open shows the dialog as
+      // the page wrote it, its own Close still working.
+      loading = null;
+      console.warn("keys: the help module failed to load", error);
+      return null;
+    },
+  );
+  loading.then((module) => module?.fill(dialog));
 }
 
 // onkey reads the settings and the bindings in effect and matches the press against them, after

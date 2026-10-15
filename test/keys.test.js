@@ -25,9 +25,10 @@ const KEYS = "/modules/keys.js";
 const WAIT = 150;
 
 // open opens a keys fixture with the wait set to WAIT and every keys-fire and keys-sequence
-// detail recorded, in window.fired and window.sequences, and closes it after the test.
-async function open(name = "keys.html") {
-  const page = await openPage(fixture(name));
+// detail recorded, in window.fired and window.sequences, and closes it after the test. options
+// pass to openPage.
+async function open(name = "keys.html", options) {
+  const page = await openPage(fixture(name), options);
   pages.push(page);
   await page.evaluate(`(() => {
     window.defaultWait = globalThis[Symbol.for("spike-html-design.keys")].wait;
@@ -109,6 +110,14 @@ describe("keys: element bindings", () => {
     expect(await page.evaluate("window.fired")).toEqual([{ binding: "t", keys: ["t"] }]);
     // A single press that fires at once is no sequence.
     expect(await page.evaluate("window.sequences")).toEqual([]);
+  });
+
+  test("on a layout such as Russian, the key on T's code runs the T binding", async () => {
+    const page = await open();
+    // Cyrillic е, not Latin e.
+    await press(page, "\u0435", { code: "KeyT" });
+    expect(await log(page)).toEqual(["command --theme"]);
+    expect(await page.evaluate("window.fired")).toEqual([{ binding: "t", keys: ["t"] }]);
   });
 
   test("a field's binding focuses it", async () => {
@@ -485,12 +494,12 @@ describe("keys: the reader's settings", () => {
   test("invalid or unknown stored values read as defaults, and unparseable JSON as all defaults", async () => {
     const page = await open(SETTINGS_FIXTURE);
     const defaults = { enabled: true, wait: WAIT };
-    // An earlier build's mode, leader, and activator are ignored.
-    await store(page, { enabled: "no", mode: "leader", leader: ",", activator: "Meta", wait: 20 });
+    // A name keys doesn't know is ignored.
+    await store(page, { enabled: "no", foo: 1, wait: 20 });
     expect(await call(page, "keys.settings()")).toEqual(defaults);
-    await store(page, { mode: "activator", wait: 3000 });
+    await store(page, { foo: 1, wait: 3000 });
     expect(await call(page, "keys.settings()")).toEqual({ ...defaults, wait: 3000 });
-    for (const value of ["{", "[]", "null", '"leader"']) {
+    for (const value of ["{", "[]", "null", '"foo"']) {
       await store(page, value);
       expect(await call(page, "keys.settings()")).toEqual(defaults);
     }
@@ -507,8 +516,8 @@ describe("keys: the reader's settings", () => {
     expect(await saved(page)).toEqual({ wait: 3000, enabled: false });
     await call(page, `keys.changeSettings({ wait: null, enabled: true })`);
     expect(await saved(page)).toBeNull();
-    // Invalid values and stale mode keys already stored are dropped on the next change.
-    await store(page, { enabled: 1, mode: "activator", leader: "g", activator: "Alt" });
+    // Invalid values and unknown names already stored are dropped on the next change.
+    await store(page, { enabled: 1, foo: 1 });
     await call(page, `keys.changeSettings({ wait: 5000 })`);
     expect(await saved(page)).toEqual({ wait: 5000 });
     const thrown = (change) =>
@@ -517,13 +526,7 @@ describe("keys: the reader's settings", () => {
         `{ try { keys.changeSettings(${change}); return null; }
            catch (error) { return error.constructor.name; } }`,
       );
-    for (const change of [
-      `{ mode: "leader" }`,
-      `{ leader: "g" }`,
-      `{ activator: "Alt" }`,
-      `{ wait: 20 }`,
-      `{ colour: "red" }`,
-    ]) {
+    for (const change of [`{ foo: 1 }`, `{ wait: 20 }`, `{ colour: "red" }`]) {
       expect([change, await thrown(change)]).toEqual([change, "TypeError"]);
     }
     expect(await saved(page)).toEqual({ wait: 5000 });
@@ -771,6 +774,50 @@ describe("keys: the help dialog", () => {
     expect(await rows(page)).toEqual(ROWS.slice(0, -1));
   });
 
+  test("a failed load leaves the dialog usable, warns, and imports again at the next open", async () => {
+    // No such file: the harness answers keys-help.js with a 404.
+    const page = await open(HELP, {
+      intercept: {
+        [`${server.url}modules/keys-help.js`]: join(root, "test/fixtures/no-such-file"),
+      },
+    });
+    await page.evaluate(`(() => {
+      window.unhandled = [];
+      window.warned = [];
+      addEventListener("unhandledrejection", (event) => window.unhandled.push(String(event.reason)));
+      const warn = console.warn;
+      console.warn = (...args) => (window.warned.push(String(args[0])), warn(...args));
+    })()`);
+    // requests counts the fetches of keys-help.js the harness answered.
+    let requests = 0;
+    page.view.addEventListener("Fetch.requestPaused", () => requests++);
+    const attempt = async () => {
+      await page.evaluate(`document.querySelector("button[command=show-modal]").click()`);
+      await sleep(page, 200);
+      expect(await page.evaluate(`document.getElementById("help").matches(":modal")`)).toBe(true);
+      // The dialog shows as the page wrote it, and its own Close closes it.
+      expect(
+        await page.evaluate(`document.querySelector("#help [data-keys-list]").childElementCount`),
+      ).toBe(0);
+      await page.evaluate(`document.querySelector("#help [command=close]").click()`);
+      expect(await page.evaluate(`document.getElementById("help").open`)).toBe(false);
+    };
+    await attempt();
+    await attempt();
+    // Each open imports keys-help.js again, and each failure warns. Chromium keeps a failed
+    // module fetch in the document's module map, so the second import fails without a request;
+    // a document loaded later fetches it afresh.
+    expect(await page.evaluate("window.warned")).toEqual([
+      "keys: the help module failed to load",
+      "keys: the help module failed to load",
+    ]);
+    expect(requests).toBe(1);
+    expect(await page.evaluate("window.unhandled")).toEqual([]);
+    await page.goto(fixture(HELP));
+    await attempt();
+    expect(requests).toBe(2);
+  });
+
   test("showModal() from script, or the ? key, opens and fills it too", async () => {
     const page = await open(HELP);
     await page.evaluate(`document.getElementById("help").showModal()`);
@@ -893,7 +940,6 @@ describe("keys: the help dialog", () => {
       `document.querySelector("#help [data-keys-note]").textContent`,
     );
     for (const text of ["NVDA+F2", "JAWS+3", "Narrator+3", "VO+Tab"]) expect(note).toContain(text);
-    expect(note).not.toContain("activator");
   });
 
   test("another tab's change shows in the dialog on the next open, and changes what fires", async () => {
