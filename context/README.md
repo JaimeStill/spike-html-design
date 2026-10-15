@@ -54,11 +54,17 @@ Its packaging, a git-tag package that other packages extend, is also an input to
    chromium's defaults. The tools layer's classes are opt-in, and each states what it changes.
 5. A preview container with profile attributes renders its subtree as that profile renders at
    the root.
-6. Preferences: T opens a theming menu with each facet's profile and the scheme. Choices persist
-   across reloads and pages, and the flash of the default profile before a stored one applies is
-   measured. Profiles come from a JS registry that extension packages add to.
-7. `keys.js`: one registry; T, ?, j, k, g; silent in fields and with modifiers;
-   aria-keyshortcuts; the ? dialog lists the baseline's keys and an artifact's own.
+6. Preferences: a theming menu with each facet's profile and the scheme, which the page's T
+   opens. Choices persist across reloads and pages, and the flash of the default profile before
+   a stored one applies is measured. Profiles come from a JS registry that extension packages
+   add to.
+7. Keys: a shortcut library of three modules (grammar, runtime, help) that binds no shortcut
+   itself. A page binds its own, in one store per page. Keys runs no binding in fields, on
+   repeats, or while an input method composes, and Escape releases a field. It writes
+   aria-keyshortcuts, has an off switch, and fills the page's ? help dialog with the page's
+   bindings. The specimen binds T, ?, j, k, and g through it. One convention holds: every
+   binding is pressed as written, with chords and combinations spelled out. The keys review
+   stop tried leader and activator modes on the specimen and found this convention enough.
 8. Consumption by version, two ways:
    - an install by git tag with bun, with CSS imported from node_modules;
    - a pinned jsDelivr URL, rendering the same from `file://`, a local server, and Pages.
@@ -77,7 +83,7 @@ Its packaging, a git-tag package that other packages extend, is also an input to
   its CSS entry points, and from preferences on its JS modules, with no dependencies. A
   consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which
   validate proves. The lean entry point holds the foundation and the default profiles, and the
-  full one every profile; "Entries and exports", below, lists v0.5.0's exports. Each entry's
+  full one every profile; "Entries and exports", below, lists v0.6.0's exports. Each entry's
   size, raw and brotli, is reported from facets on, and its brotli size is held to a budget from
   profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
@@ -93,8 +99,10 @@ Its packaging, a git-tag package that other packages extend, is also an input to
 
 Each entry names the task that builds it. Each tag keeps its own names on its own pinned page:
 v0.1.0 and v0.2.0 have flat layers, Primer-derived themes with the `data-theme` hook, role
-tokens, and component classes; v0.3.0 has `--border-3`; and v0.4.0 has flat profile export
-keys, `./profiles/<name>`. "Using v0.5.0", below, describes the interface a page uses now.
+tokens, and component classes; v0.3.0 has `--border-3`; v0.4.0 has flat profile export keys,
+`./profiles/<name>`; v0.4.0 and v0.5.0 have a pane surface, `--bg-0`, darker than the page in
+both schemes; and v0.5.0's `<theme-menu>` binds its own T, Shift included. "Using v0.6.0",
+below, describes the interface a page uses now.
 
 - **Layers** (facets): one top-level layer named for the package holds tokens, with color,
   space, and type sub-layers, then reset, elements, and tools.
@@ -108,14 +116,16 @@ keys, `./profiles/<name>`. "Using v0.5.0", below, describes the interface a page
   older than Firefox 155 and Safari 26, lose fluid sizing: the space tokens and the fluid text
   steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
   their unset values.
-- **Profiles** (profiles, preferences): the color interface is sixteen tokens, with a pane surface,
-  `--bg-0`, and two border steps. Four profiles fill it, Flexoki, Primer, Catppuccin, and
-  Everforest, each light and dark in its own file, with a contrast record per profile and
+- **Profiles** (profiles, preferences, keys): the color interface is sixteen tokens, with three
+  surfaces and two border steps (profiles); the surfaces step from `--bg` toward the text, as
+  "The color interface" describes (keys). Four profiles fill it, Flexoki, Primer, Catppuccin,
+  and Everforest, each light and dark in its own file, with a contrast record per profile and
   scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any element's
   subtree, so a preview container renders as its profile renders at the root. Space has two
   profiles, regular and compact, and type two, mono and sans, which `data-space` and `data-type`
-  apply the same way (preferences). The elements layer reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd`
-  as an outlined key, the baseline's only key-hint styling.
+  apply the same way (preferences). The elements layer reads three hooks,
+  `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd` as an outlined key,
+  the baseline's only key-hint styling.
 - **Elements** (facets): class-free, zero-specificity styling of every rendered native element,
   limited to paint, type, border (with a table's `border-collapse` and `border-spacing`), radius,
   margin, and padding, with `::file-selector-button`, `::marker`, `::placeholder`, and
@@ -129,59 +139,77 @@ keys, `./profiles/<name>`. "Using v0.5.0", below, describes the interface a page
 - **JS modules** (preferences, keys): one registry per page lists each facet's profiles, and the
   package and each extension package register into it. The preferences module applies the
   reader's stored choice before first paint, and T or the page's own button opens a theming menu
-  with a row per facet and the scheme (preferences). `keys.js` binds keys and opens the ? help
-  dialog (keys, planned).
+  with a row per facet and the scheme (preferences). Keys is three modules, a grammar, a runtime,
+  and a help module: the page binds its own shortcuts with `data-keys` or `register()`, and keys
+  fills the page's ? help dialog with them and the reader's settings (keys).
 - **Package** (facets, profiles, preferences, validate): `package.json` and the lean entry point,
   with each entry's size reported by `mise run size` and the check (facets); the full entry point
   and the enforced size budget (profiles); the JS exports, each with its own budget
   (preferences); the git-tag install and an extension fixture that passes the
   exported conformance test (validate).
 - **Publishing:** the specimen page, `index.html`, on Pages, with a section per layer and facet
-  from facets on, a grid of preview containers for every profile and scheme from profiles on, and
-  a Theme button that opens the menu from preferences on; `mise run serve` (facets), which serves
-  a branch on localhost; a page per tag under `pinned/` that links the tag's jsDelivr URLs, for
-  its modules too from v0.5.0; `mise run pin <tag>`, which checks a published tag's stylesheets
-  and modules live.
+  from facets on, a grid of preview containers for every profile and scheme from profiles on, a
+  Theme button that opens the menu from preferences on, and from keys on a Help button and
+  dialog, with T, ?, j, k, and g bound; `mise run serve` (facets), which serves a branch on
+  localhost; a page per tag under `pinned/` that links the tag's jsDelivr URLs, for its modules
+  too from v0.5.0, and for the specimen's own `specimen.js` from v0.6.0; `mise run pin <tag>`,
+  which checks a published tag's stylesheets, modules, and page scripts live.
 
-## Using v0.5.0
+## Using v0.6.0
 
 ### Wiring a page
 
 A page links one CSS entry and loads two modules from the same tag, both render-blocking: the
 registration module that matches the entry, then the preferences module. It preloads the
-registry, which both import, and places one `<theme-menu>`, here opened by its own button:
+registry, which both import, and places one `<theme-menu>`, here opened by its own button. To
+bind shortcuts it loads keys as a plain module script and marks each bound control with
+`data-keys`; here the Theme button carries T and the Help button ?, which opens the page's help
+dialog:
 
 ```html
 <html lang="en">
   <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/full.css" />
-    <link rel="modulepreload" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/registry.js" />
-    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/register-full.js"></script>
-    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/preferences.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/full.css" />
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/registry.js" />
+    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/register-full.js"></script>
+    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/preferences.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/keys.js"></script>
   </head>
   <body>
-    <button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">
+    <button type="button" commandfor="theme" command="--open" data-keys="t">
       Theme <kbd>T</kbd>
+    </button>
+    <button type="button" commandfor="help" command="show-modal" data-keys="?">
+      Help <kbd>?</kbd>
     </button>
     ...
     <theme-menu id="theme"></theme-menu>
+    <dialog id="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard shortcuts</h2>
+      <div data-keys-list></div>
+      <button type="button" commandfor="help" command="close" data-keys="?">
+        Close <kbd>?</kbd>
+      </button>
+    </dialog>
   </body>
 </html>
 ```
 
 A page without the modules renders the default profiles, or the profiles its own attributes
-select.
+select. A page without keys has no shortcuts, and its buttons still work.
 
 ### The color interface
 
 The color facet is sixteen tokens. Each holds a light and a dark value, and resolves to the
-scheme of the element that reads it.
+scheme of the element that reads it. The three surfaces step from `--bg` toward the text, each
+raised over the one before: lightest to darkest in light schemes, darkest to lightest in dark,
+in every profile. `--bg-0` is gone since v0.6.0, with no alias.
 
 | Token | Role |
 | --- | --- |
-| `--bg-0` | The pane: a side or tool pane, darker than the page in both schemes. |
-| `--bg` | The page. |
-| `--bg-2` | The element surface, one step from the page toward the text: table headers. |
+| `--bg` | The base background: the page, and the fill of fields. |
+| `--bg-1` | The first elevated surface, one step toward the text: dialogs and panels. |
+| `--bg-2` | The element surface, one more step toward the text: table headers. |
 | `--border` | Dividers, containers, and hover fills. |
 | `--border-2` | Control boundaries: text fields, selects, buttons, dialogs, and `kbd`. |
 | `--fg` | Text, the strongest. |
@@ -218,8 +246,10 @@ specificity: a consumer's later layer beats every profile.
 ### The color profiles
 
 Each color profile is its own file under `layers/tokens/color/`, whose heading comment credits its
-source. Its contrast in each scheme, every text token and hue over every surface, is recorded
-in the specimen and not corrected.
+source. Its contrast in each scheme, every text token and hue over `--bg`, `--bg-1`, `--bg-2`,
+`--border`, and `--border-2`, is recorded in the specimen and not corrected. A profile whose
+upstream swatches don't fall in the surfaces' order takes them in lightness order: Everforest
+light's `--bg`, `--bg-1`, and `--bg-2` are bg0, bg1, and bg_dim.
 
 | `data-palette` | Light / dark | Source | License | Version |
 | --- | --- | --- | --- | --- |
@@ -278,7 +308,7 @@ The elements layer sets `caret-color` and `accent-color` on every element from
 `accent-color` set on an ancestor therefore doesn't reach its descendants: set the hook instead.
 
 The elements layer styles `kbd` as an outlined key with a heavier bottom edge, the baseline's
-only key-hint styling. The planned keys module binds keys and styles nothing.
+only key-hint styling. Keys binds keys and styles nothing.
 
 ### The registry
 
@@ -303,7 +333,7 @@ links. A page or extension that imports a profile beyond its entry registers tha
 in a module loaded before the preferences module:
 
 ```js
-import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/modules/registry.js";
+import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/registry.js";
 
 register("color", "catppuccin");
 ```
@@ -342,11 +372,12 @@ That is recorded from its feature support, not measured.
 ### The theming menu
 
 `<theme-menu>`, which the preferences module defines, holds the menu. A page places it once,
-with an id, and opens it with its own button, `commandfor="<id>" command="--open"`, or with T
-pressed outside a text field. T counts with or without Shift, so caps lock doesn't block it; with
-Ctrl, Alt, or Meta held, the key stays the browser's. The element fetches `theme-menu.js` the
-first time it opens, never before first paint, from the URL and tag its own module came from.
-`keys.js` is planned to take over T in v0.6.0.
+with an id, and opens it with its own button, `commandfor="<id>" command="--open"`. From v0.6.0
+`<theme-menu>` listens for no key to open: a page that wants T gives that button
+`data-keys="t"` and loads keys, as the specimen does. T then opens the menu with Shift up, so
+caps lock doesn't block it; Shift+T doesn't open it. v0.5.0's menu keeps its own T, which Shift+T
+also opened. The element fetches `theme-menu.js` the first time it opens, never before first paint,
+from the URL and tag its own module came from.
 
 The menu is a modal native `<dialog>` in light DOM, so the elements layer styles it, and it is
 built again on each open. It has one row per section, in order: color profile, scheme, space,
@@ -360,7 +391,7 @@ a neutral and a hue button, a text field, and a striped table.
 | ↑ ↓, k j | Moves between rows, stopping at the first and last. |
 | ← →, h l | Cycles the row's values, wrapping. |
 | Tab | Moves one stop per row. |
-| T, Save | Stores the selection once and closes the menu. |
+| T, Save | Stores the selection once and closes the menu. T here is the open menu's own key, not keys'. |
 | Esc, Cancel | Restores what applied when the menu opened, stores nothing, and closes the menu. |
 
 Every change applies at once to the preview and the page. Each key the menu handles stops at the
@@ -371,6 +402,151 @@ choice, and Cancel restores it.
 The menu styles itself with one constructed stylesheet that the element adopts onto the
 document, in the layer `spike-html-design.theme-menu`. The layer falls after the baseline's tools
 and under every consumer layer and unlayered CSS, and its rules read only the baseline's tokens.
+
+### Keys
+
+Keys is the page's shortcut library, three modules from v0.6.0: the grammar, `keys-grammar.js`,
+which parses and formats a binding and touches no DOM; the runtime, `keys.js`, which listens and
+binds; and the help module, `keys-help.js`, which fills the help dialog. Keys binds no shortcut
+itself. A page binds its own, and the specimen's T, ?, j, k, and g are the specimen's: T and ?
+on its Theme and Help buttons, and j, k, and g through `register()` in its own `specimen.js`.
+A page loads the runtime as a plain module script, not render-blocking, since no shortcut is
+pressed before first paint; the runtime imports the grammar and loads the help module itself.
+
+An element carrying `data-keys` is a binding. When its keys are pressed, keys clicks it, so its
+native action or invoker command runs, or focuses it when it is a field. A script binds a
+handler with no element:
+
+```js
+import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/keys.js";
+
+const remove = register("g c", "Go to the contents", () =>
+  document.getElementById("contents").focus(),
+);
+```
+
+`register(keys, label, handler)` returns a function that removes exactly that binding, even when
+another shares its keys. The handler receives the `keys-fire` event. It throws a `TypeError` on
+a malformed binding, a label that isn't a string, or a handler that isn't a function; a
+malformed `data-keys` binds nothing and logs one console warning.
+
+One store serves the page, a plain object at
+`globalThis[Symbol.for("spike-html-design.keys")]`, shaped
+`{ registered: { keys, label, handler }[], wait: 1500, listening: boolean }`. Every copy of the
+runtime shares it, whatever URL or tag it loads from, and the first installs the one document
+listener, so a key never fires twice. Its shape is public API, frozen with v0.6.0.
+
+### The binding grammar
+
+A binding is a string in [@github/hotkey](https://github.com/github/hotkey)'s grammar, the
+precedent. A "," separates alternatives, a space separates the presses of a sequence, and "+"
+joins a combination of Control, Alt, Meta, Shift, or Mod with one key. Mod is Meta on macOS and
+Control elsewhere, and "Plus" and "Space" name those keys. A named key is a UI Events key value,
+as in "Escape" or "ArrowUp". A malformed string binds nothing, and since "," always separates,
+the comma key can't be bound.
+
+| Binding | Pressed as |
+| --- | --- |
+| `t` | T with Shift up, either case, so caps lock doesn't defeat it. |
+| `Shift+T` | T with Shift held. |
+| `?` | The key that types ?, Shift ignored. |
+| `g c` | G, then C within the wait. |
+| `Mod+k` | Meta+K on macOS, Control+K elsewhere. |
+| `?, Shift+/` | Either alternative. |
+
+Keys differs from @github/hotkey in these ways:
+
+- The attribute is `data-keys`, not `data-hotkey`, since the matching below differs, and a
+  shared name would promise compatibility that isn't there.
+- A letter written without Shift matches either case while Shift is up; `Shift+T` requires
+  Shift.
+- A symbol is written as the character typed, `?`, never `Shift+?`, and Shift is ignored for it.
+- With Alt held, a letter or digit matches by `event.code`, since Option and AltGr change the
+  character; @github/hotkey's table of Option symbols isn't used.
+- A letter outside ASCII falls back to `event.code`, so on a Russian layout KeyJ is j.
+- When a shorter binding prefixes a longer one, the shorter still runs once the wait ends, where
+  in @github/hotkey the longer replaces it (see below).
+
+The grammar module's exports are `parse`, `problem`, `stringify`, `normalize`, `matches`,
+`labels`, and `keyshortcuts`; its heading comment documents each. An outside module imports it
+to format a binding as keys does.
+
+### Matching, sequences, and scope
+
+A press matches by `event.key`, with Control, Alt, and Meta exact: a bare binding doesn't match
+with one of them held. Keys runs no binding while focus is in a field (input, textarea, select,
+or contenteditable), even a combination; while an input method composes (`isComposing`, or
+`keyCode` 229); on "Dead" and "Process"; with AltGraph held; on a repeat; on an event already
+handled; and on a modifier pressed alone. A press keys acts on, or that starts or continues a
+sequence, is marked handled.
+
+Escape releases a field. Outside an open modal, an Escape pressed in a field blurs the field, so
+the page's shortcuts work again, unless another listener handled it, an input method is
+composing, or it is a repeat. Keys doesn't mark it handled, so the field's own Escape still
+runs: a search field clears. Inside an open modal the dialog keeps Escape. The release is no
+binding: the off switch doesn't cover it, it fires no `keys-fire`, and it ends no sequence.
+
+In a sequence, each press must follow the last within the wait, 1500 ms by default. A press that
+doesn't continue the sequence ends it and is dropped, not tried as a new start. When one binding
+is a prefix of another, as `g` of `g c`, keys waits for the next press: one that continues runs
+the longer, and when the wait ends the shorter runs.
+
+While a modal dialog is open, only element bindings inside it are active, and `register()`
+bindings pause. Otherwise an element binding is active unless it is disabled, inside `[inert]`,
+or not visible. Keys reads the page at each press, so adding or removing an element or its
+`data-keys` adds or removes its binding. When two active bindings share keys, the first wins:
+elements in document order, then `register()` bindings in registration order.
+
+Keys owns `aria-keyshortcuts` on every element carrying `data-keys` and writes it from the
+binding, each single-press alternative as WAI-ARIA names physical keys: `T`, `Alt+T`, and `?` as
+its US key, `Shift+/`. A sequence declares nothing, nor does a binding while the off switch
+covers it. Keys rewrites the attribute when `data-keys` or the settings change, removes it when
+`data-keys` is removed, and touches no element that never carried `data-keys`.
+
+### Extending keys
+
+Keys grows by outside modules rather than by features of its own. The runtime dispatches two
+events, their names and details public API frozen with v0.6.0:
+
+| Event | Dispatched | `detail` |
+| --- | --- | --- |
+| `keys-fire` | Cancelable and bubbling, on the bound element, or on `document` for a `register()` binding, before keys acts. Cancelling it stops the action. | `{ binding, keys, label? }`: the binding's normal string, the presses that fired it, and a `register()` binding's label. |
+| `keys-sequence` | On `document`, as a sequence starts, continues, and ends. | `{ state, presses, reason? }`: `start`, `continue`, or `end`; the presses so far; and on end `fired`, `timeout`, or `dropped`. |
+
+A test fixture builds a pending-sequence indicator from these and the grammar alone; the
+indicator doesn't ship.
+
+### The help dialog and the reader's settings
+
+The page places a native `<dialog>` holding an element marked `data-keys-list`, and opens it with
+a visible button through `command="show-modal"`, as "Wiring a page" shows. Keys loads the help
+module the first time the dialog opens, however it opens. On that first open the dialog shows
+with the page's own text in the marked element, and the module replaces it once it loads; on
+every later open the module fills the element before the dialog shows. It fills it with:
+
+- a table of the bindings active with the dialog closed, one row each: its keys drawn as sibling
+  `kbd` elements, "+" within a combination and "then" between presses, and its action, a button
+  that closes the dialog and runs the binding, so every binding has a visible control. The
+  action's label is the bound element's `aria-label`, else its text without its `kbd`, else a
+  field's `<label>`, else `register()`'s label. The last row is fixed: `Esc`, "Leave a field",
+  for the Escape that releases a field. Its action is plain text, not a button, since it has
+  nothing to run from the dialog, and it is never marked off. The table always has this row, so
+  it is never empty.
+- the reader's settings: an off switch, on by default, and the sequence wait, 1000, 1500, 3000, or
+  5000 ms.
+- a note on passing a key through a screen reader: NVDA+F2, JAWS+3, Narrator+3, or VO+Tab.
+
+The off switch turns off character-key shortcuts, single characters and chords of them, as
+WCAG 2.1.4 requires, while combinations with Control, Alt, or Meta stay on. Their rows stay
+listed, marked off, and their buttons still work. Only changed settings are stored, as JSON
+under the localStorage key `spike-html-design.keys`, per origin, shaped `{ enabled?, wait? }`.
+Keys reads them at each press, so another tab's change applies at once. The help module adds no
+CSS: the elements layer styles the table, the controls, and `kbd`.
+
+When the help module fails to load, keys logs a console warning at each open, and the dialog
+keeps the page's own text, its Close button still working. Keys imports the module again at the
+next open, but chromium keeps the failed module for the life of the document, so only a reload
+loads it.
 
 ### Entries and exports
 
@@ -384,15 +560,18 @@ and under every consumer layer and unlayered CSS, and its rules read only the ba
 | `./register/full` | `modules/register-full.js` | The full registration: every built-in profile. |
 | `./preferences` | `modules/preferences.js` | The stored preferences and `<theme-menu>`. |
 | `./theme-menu` | `modules/theme-menu.js` | The menu, which `<theme-menu>` loads on first open. |
+| `./keys` | `modules/keys.js` | The keys runtime: `register`, `settings`, `changeSettings`, and `bindings`. |
+| `./keys/grammar` | `modules/keys-grammar.js` | The binding grammar, with no DOM: `parse`, `problem`, `stringify`, `normalize`, `matches`, `labels`, and `keyshortcuts`. |
+| `./keys/help` | `modules/keys-help.js` | The help dialog's contents, `fill`, which keys loads on the dialog's first open. |
 
 A page links one entry, never both. A page that needs a profile beyond the lean entry's links
 the lean entry, imports that profile into its facet's sub-layer after the entry, and registers
 its name (see "The registry"):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/baseline.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/baseline.css" />
 <style>
-  @import url(https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.5.0/layers/tokens/color/catppuccin.css)
+  @import url(https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/layers/tokens/color/catppuccin.css)
     layer(spike-html-design.tokens.color);
 </style>
 ```
@@ -405,7 +584,9 @@ Each entry's size is the sum of its files' brotli-11 sizes: the entry and every 
 statically imports, each counted once. A stylesheet's files are its `@import` chain; a module's
 are its `import` and `export … from` statements, followed through every module they reach. A
 dynamic `import()` counts toward the module it loads, so `theme-menu.js`, which the preferences
-module loads on first open, is its own entry and not part of `preferences.js`'s size. A profile
+module loads on first open, is its own entry and not part of `preferences.js`'s size, as
+`keys-help.js` is not part of `keys.js`'s. `keys.js`'s size includes the grammar, which it
+imports, and `keys-help.js`'s both the runtime and the grammar. A profile
 export is not an entry; its size counts in the entry that imports it.
 
 | Entry | Budget (brotli bytes) |
@@ -417,6 +598,14 @@ export is not an entry; its size counts in the entry that imports it.
 | `modules/theme-menu.js` | 8,500 |
 | `modules/register.js` | 1,450 |
 | `modules/register-full.js` | 1,550 |
+| `modules/keys.js` | 10,300 |
+| `modules/keys-grammar.js` | 3,500 |
+| `modules/keys-help.js` | 13,200 |
+
+v0.6.0's keys entries total 9,661, 3,066, and 12,351 bytes, leaving 639, 434, and 849 bytes of
+headroom. `keys.js` is about three times @github/hotkey's 2,872 bytes, the precedent's
+runtime; comments are 53–56% of the keys modules' brotli size, left as written for validate's
+holistic size strategy.
 
 The check fails when an entry exceeds its budget or has none. The budgets live in `BUDGETS` in
 `scripts/size.js`, and raising one is the architect's decision. Raw sizes are reported, not
@@ -427,9 +616,11 @@ and the headroom.
 
 A page's CSS renders the same from `file://`, but chromium won't run a relative module script
 there: a `file://` page's origin is opaque, so the module fetch fails the CORS check. The
-working-tree specimen therefore has no menu from `file://` and renders its defaults. A pinned
-page loads its modules from jsDelivr, which answers with `Access-Control-Allow-Origin: *`, so its
-menu works from `file://` as it does served.
+working-tree specimen therefore has no menu and no keys from `file://`, and renders its
+defaults; its Help button, a native show-modal command, still opens the help dialog, which then
+says why it lists nothing. A pinned page loads its modules, and from v0.6.0 the specimen's own
+`specimen.js`, from jsDelivr, which answers with `Access-Control-Allow-Origin: *`, so its menu,
+keys, and help dialog work from `file://` as they do served.
 
 ### Reading measure
 
@@ -464,7 +655,9 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
 5. `preferences`: the compact space and sans type profiles with their scopes, the profile
    registry, persistence, the T theming menu, the flash measurement, and the JS exports with their
    budgets; v0.5.0 (evidence 2, 6).
-6. `keys`: `keys.js` and the ? dialog; v0.6.0 (evidence 7).
+6. `keys`: the keys grammar, runtime, and help modules, T moved off `<theme-menu>`, the
+   specimen's help dialog and bindings, and a review stop that kept one convention, keys as
+   written; v0.6.0 (evidence 7).
 7. `validate`: the git-tag install, the extension fixture, pin stability, sizes against the
    budget, the cost of the CDN's import chain, and the answer (evidence 8–11).
 

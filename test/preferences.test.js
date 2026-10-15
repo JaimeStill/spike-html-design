@@ -87,13 +87,6 @@ function fetchedMenu(page) {
     .find(({ name }) => name.endsWith("/modules/theme-menu.js"))?.startTime ?? null`);
 }
 
-// press dispatches a keydown of key on the element matching selector, or on the document, with
-// the modifiers given.
-function press(page, key, { selector, ...modifiers } = {}) {
-  return page.evaluate(`(${selector ? `document.querySelector(${JSON.stringify(selector)})` : "document"})
-    .dispatchEvent(new KeyboardEvent("keydown", ${JSON.stringify({ key, bubbles: true, cancelable: true, ...modifiers })}))`);
-}
-
 describe("preferences: apply and storage", () => {
   test("applies the stored choice to the root, under one namespaced key", async () => {
     await seed(CHOICE);
@@ -319,43 +312,18 @@ describe("preferences: <theme-menu>", () => {
     expect(await call(page, "preferences.isOpen()")).toBe(true);
   });
 
-  test("T opens the menu outside fields, with no modifier; T while open goes to the menu", async () => {
+  test("binds no key: with the Theme button's data-keys removed, T opens nothing", async () => {
+    // T is keys.js's (keys.test.js, "keys: T and the theme menu"); <theme-menu> listens for no
+    // key itself, so a page that binds none has no T.
     await seed(null);
     const page = await open(fixture("preferences.html"));
-    const isOpen = () => call(page, "preferences.isOpen()");
-    const settle = () => page.evaluate("new Promise((resolve) => setTimeout(resolve, 100))");
-
-    for (const selector of ["input", "textarea", "select", "[contenteditable]"]) {
-      await press(page, "t", { selector });
-    }
-    for (const modifier of ["ctrlKey", "altKey", "metaKey"]) {
-      await press(page, "t", { [modifier]: true });
-    }
-    await press(page, "y");
-    await settle();
-    expect(await isOpen()).toBe(false);
+    await page.evaluate(
+      `document.querySelector("button[commandfor=theme]").removeAttribute("data-keys")`,
+    );
+    await page.view.press("t");
+    await page.evaluate("new Promise((resolve) => setTimeout(resolve, 100))");
+    expect(await call(page, "preferences.isOpen()")).toBe(false);
     expect(await fetchedMenu(page)).toBeNull();
-
-    await press(page, "t");
-    await waitFor(page, `document.querySelector("theme-menu").hasAttribute("data-open")`);
-    expect(await isOpen()).toBe(true);
-
-    // T while open, outside the dialog: the element hands it to the menu, which saves what it
-    // shows, the defaults here, and closes.
-    await press(page, "t", { selector: "h1" });
-    await waitFor(page, `!document.querySelector("theme-menu").hasAttribute("data-open")`);
-    expect(await isOpen()).toBe(false);
-    expect(await stored(page)).toEqual({
-      color: "flexoki",
-      space: "regular",
-      type: "mono",
-      scheme: "system",
-    });
-
-    // Shift is allowed: T opens it as t does.
-    await press(page, "T", { shiftKey: true });
-    await waitFor(page, `document.querySelector("theme-menu").hasAttribute("data-open")`);
-    expect(await isOpen()).toBe(true);
   });
 });
 
@@ -766,6 +734,7 @@ describe("preferences: the specimen", () => {
         tag: button.localName,
         text: button.textContent.replace(/\\s+/g, " ").trim(),
         kbd: button.querySelector("kbd")?.textContent,
+        keys: button.getAttribute("data-keys"),
         shortcut: button.getAttribute("aria-keyshortcuts"),
         command: button.getAttribute("command"),
         target: document.getElementById(button.getAttribute("commandfor"))?.localName,
@@ -776,6 +745,7 @@ describe("preferences: the specimen", () => {
       tag: "button",
       text: "Theme T",
       kbd: "T",
+      keys: "t",
       shortcut: "T",
       command: "--open",
       target: "theme-menu",

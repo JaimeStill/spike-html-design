@@ -443,11 +443,12 @@
   margin-block-end: var(--space-2xs);
 }
 
+/* A dialog is raised over the page, so it sits on the first elevated surface, --bg-1. */
 :where(dialog) {
   padding: var(--space-s);
   border: var(--line-s) solid var(--border-2);
   border-radius: var(--radius-md);
-  background-color: var(--bg);
+  background-color: var(--bg-1);
   color: var(--fg);
 }
 

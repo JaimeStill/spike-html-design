@@ -27,9 +27,10 @@
  */
 
 :where([data-palette="primer"]) {
-  /* Surfaces: the pane, the page, the element surface, the border and the control boundary. */
-  --bg-0: light-dark(#f6f8fa, #1c2128); /* canvas.inset */
-  --bg: light-dark(#ffffff, #22272e); /* canvas.default */
+  /* Surfaces: the base, the first elevated surface, the element surface, the border and the
+     control boundary. */
+  --bg: light-dark(#ffffff, #1c2128); /* canvas.default / canvas.inset */
+  --bg-1: light-dark(#f6f8fa, #22272e); /* canvas.inset / canvas.default */
   --bg-2: light-dark(#eaeef2, #2d333b); /* scale.gray[1] / canvas.subtle */
   --border: light-dark(#d8dee4, #373e47); /* border.muted */
   --border-2: light-dark(#d0d7de, #444c56); /* border.default */

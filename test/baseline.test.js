@@ -158,8 +158,8 @@ const FLEXOKI = Object.entries(COLOR_PROFILES.flexoki.tokens).map(([name, [light
 ]);
 
 // TIERS are the surface, border and text tokens, name to Flexoki's [light, dark] values: the
-// pane, the page, the element surface, the border and the control boundary, on Flexoki's ladder
-// shifted one step from v0.3.0's, then the text weights, unchanged.
+// base, the first elevated surface, the element surface, the border and the control boundary,
+// then the text weights.
 const TIERS = Object.fromEntries(FLEXOKI.slice(0, 8));
 
 // HUES are the hue tokens, each named for its color, name to Flexoki's [light, dark] values: its
@@ -167,7 +167,7 @@ const TIERS = Object.fromEntries(FLEXOKI.slice(0, 8));
 const HUES = Object.fromEntries(FLEXOKI.slice(8));
 
 // SURFACES are the color tokens text sits over, the contrast matrices' columns, in order.
-const SURFACES = ["--bg-0", "--bg", "--bg-2", "--border", "--border-2"];
+const SURFACES = ["--bg", "--bg-1", "--bg-2", "--border", "--border-2"];
 
 // TEXT are the color tokens drawn as text, the contrast matrices' rows, in order: the text tiers,
 // then the hues.
@@ -191,13 +191,13 @@ const FACETS = {
 // TOKENS are every token the baseline declares, name to kind.
 const TOKENS = Object.assign({}, ...Object.values(FACETS));
 
-// RETIRED are the token names the facets dropped: from v0.1.0 and v0.2.0, the color tiers, the
-// role tokens, and herald's text tiers; herald's numbered space steps, its font stacks, and the
-// text steps the type facet renamed; and --measure, since line length is layout's. None may be
-// declared or read anywhere in the working tree. The kept text names (--text-xs, --text-xl,
-// --text-2xl to --text-4xl) are not among them.
+// RETIRED are the token names the facets dropped: from v0.1.0 and v0.2.0, the color tiers but
+// --bg-1, which v0.6.0 takes back as the first elevated surface, the role tokens, and herald's
+// text tiers; herald's numbered space steps, its font stacks, and the text steps the type facet
+// renamed; and --measure, since line length is layout's. None may be declared or read anywhere
+// in the working tree. The kept text names (--text-xs, --text-xl, --text-2xl to --text-4xl) are
+// not among them.
 const RETIRED = [
-  "--bg-1",
   "--divider",
   "--fg-1",
   "--color",
@@ -223,6 +223,14 @@ const RENAMED = ["--border-3"];
 
 // PINNED_V030 is the v0.3.0 pinned page, the one source RENAMED's names may remain in.
 const PINNED_V030 = "pinned/v0.3.0.html";
+
+// DROPPED are the color names v0.6.0 dropped, with no alias: --bg-0, the pane, whose readers now
+// read --bg-1. The v0.4.0 pinned page still reads it, since it renders against its own tag, so the
+// name is held out of every other source.
+const DROPPED = ["--bg-0"];
+
+// PINNED_V040 is the v0.4.0 pinned page, the one source DROPPED's names may remain in.
+const PINNED_V040 = "pinned/v0.4.0.html";
 
 // SOURCES are the working tree's CSS: the stylesheet, its layer files, the profile files, the
 // specimen and its pinned pages since v0.3.0, whose style elements read the tokens too, and the
@@ -612,6 +620,17 @@ describe("tokens", () => {
     expect(RENAMED.filter((name) => pinned.includes(`var(${name})`))).toEqual(RENAMED);
   });
 
+  test("no name v0.6.0 dropped remains outside the v0.4.0 pinned page", async () => {
+    for (const path of SOURCES.filter((path) => path !== PINNED_V040)) {
+      const text = await Bun.file(join(root, path)).text();
+      const found = DROPPED.filter((name) => new RegExp(`${name}(?![\\w-])`).test(text));
+      expect([path, found]).toEqual([path, []]);
+    }
+    // The pin still reads them, so the filter above holds out a page that needs it.
+    const pinned = await Bun.file(join(root, PINNED_V040)).text();
+    expect(DROPPED.filter((name) => pinned.includes(`var(${name})`))).toEqual(DROPPED);
+  });
+
   test("a hue's app layer override reaches only that hue", async () => {
     const page = await open(specimen, { scheme: "light" });
     await addAppStyle(page, "@layer app { :root { --blue: rgb(1, 2, 3); } }");
@@ -742,7 +761,7 @@ describe("color interface", () => {
       .filter((name) => name.startsWith("--"));
     expect([...new Set(names)].sort()).toEqual(
       [
-        ...["--bg-0", "--bg", "--bg-2", "--border", "--border-2", "--fg", "--fg-2", "--fg-3"],
+        ...["--bg", "--bg-1", "--bg-2", "--border", "--border-2", "--fg", "--fg-2", "--fg-3"],
         ...["--red", "--orange", "--yellow", "--green", "--cyan", "--blue", "--purple"],
         "--magenta",
       ].sort(),
@@ -750,18 +769,20 @@ describe("color interface", () => {
     expect(await page.style(":root", "--border-3")).toBe("");
   });
 
-  for (const scheme of SCHEMES) {
-    test(`in every profile, the pane is darker than the page, and the element surface one step from the page toward the text, in ${scheme}`, async () => {
+  // Behavior 19: --bg is the base and --bg-1 and --bg-2 step toward the text, each raised over
+  // the one before, so their luminance falls in light and rises in dark, strictly, and --bg-2
+  // stops short of the text. Read from the colors chromium resolves in each profile's card.
+  for (const [index, scheme] of SCHEMES.entries()) {
+    test(`in every profile, --bg, --bg-1 and --bg-2 step toward the text, ${index ? "darkest to lightest" : "lightest to darkest"} in ${scheme}`, async () => {
       const page = await open(previewFixture, { scheme });
       for (const name of Object.keys(COLOR_PROFILES)) {
         const colors = await resolveColors(page, card(name, scheme));
-        const [pane, bg, surface, fg] = ["--bg-0", "--bg", "--bg-2", "--fg"].map((token) =>
+        const [bg, bg1, bg2, fg] = ["--bg", "--bg-1", "--bg-2", "--fg"].map((token) =>
           luminance(colors[token]),
         );
-        expect([name, pane < bg]).toEqual([name, true]);
-        // Toward the text: between the page and the text, so lighter in dark and darker in light.
-        expect([name, Math.sign(surface - bg)]).toEqual([name, Math.sign(fg - bg)]);
-        expect([name, Math.abs(surface - bg) < Math.abs(fg - bg)]).toEqual([name, true]);
+        const steps = index ? [bg < bg1, bg1 < bg2] : [bg > bg1, bg1 > bg2];
+        expect([name, steps]).toEqual([name, [true, true]]);
+        expect([name, Math.sign(fg - bg2)]).toEqual([name, Math.sign(bg2 - bg)]);
       }
     });
   }
@@ -3257,22 +3278,25 @@ describe("specimen", () => {
       const box = header.getBoundingClientRect();
       return {
         rule: getComputedStyle(header).borderBottomWidth,
-        // Each of the header's blocks spans it, but the Theme button, which sits on a line of
-        // its own beneath the title and above the intro: nothing sits beside the title.
+        // Each of the header's blocks spans it, but the Theme and Help buttons, which sit side
+        // by side on a line of their own beneath the title and above the intro: nothing sits
+        // beside the title.
         spans: [...header.children].filter((el) => el.localName !== "button")
           .map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
         order: [...header.children].map((el) => el.localName),
-        button: (() => {
-          const [title, button, intro] = [...header.children].map((el) => el.getBoundingClientRect());
-          return button.top >= title.bottom && intro.top >= button.bottom;
+        buttons: (() => {
+          const [title, theme, help, intro] = [...header.children]
+            .map((el) => el.getBoundingClientRect());
+          return theme.top >= title.bottom && intro.top >= theme.bottom &&
+            help.top === theme.top && help.left >= theme.right;
         })(),
         gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
       };
     })()`);
     expect(header.rule).toBe("0px");
     expect(new Set(header.spans)).toEqual(new Set([0]));
-    expect(header.order).toEqual(["h1", "button", "p"]);
-    expect(header.button).toBe(true);
+    expect(header.order).toEqual(["h1", "button", "button", "p"]);
+    expect(header.buttons).toBe(true);
     expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
   });
 
@@ -3539,7 +3563,7 @@ describe("specimen", () => {
     }
   });
 
-  test("opens each section on a plain h2, and each subsection on a full-width banner on the pane", async () => {
+  test("opens each section on a plain h2, and each subsection on a full-width banner on the first elevated surface", async () => {
     for (const scheme of SCHEMES) {
       const page = await open(specimen, { scheme, viewport: DESKTOP });
       // Every computed property of each section's heading that differs from a plain h2's, one
@@ -3577,7 +3601,7 @@ describe("specimen", () => {
       })`);
     expect(banners.length).toBeGreaterThan(10);
     for (const [id, short, fill] of banners) {
-      expect([id, short, fill]).toEqual([id, 0, COLORS["--bg-0"][0]]);
+      expect([id, short, fill]).toEqual([id, 0, COLORS["--bg-1"][0]]);
     }
   });
 

@@ -11,10 +11,15 @@
          choice applies before first paint. Both import the registry, which the modulepreload
          fetches beside them rather than after them, so first paint waits one round trip, not
          two. Relative module scripts run served and on Pages; from file://, chromium blocks
-         them, and the page renders its defaults with no menu. -->
+         them, and the page renders its defaults with no menu. keys follows as a plain module
+         script, since no shortcut is pressed before first paint; it binds the Theme button's T
+         and the Help button's ?. The specimen's own script, specimen.js, follows it and
+         registers the page's j, k, and g. -->
     <link rel="modulepreload" href="./modules/registry.js" />
     <script type="module" blocking="render" src="./modules/register-full.js"></script>
     <script type="module" blocking="render" src="./modules/preferences.js"></script>
+    <script type="module" src="./modules/keys.js"></script>
+    <script type="module" src="./specimen.js"></script>
     <style>
       /* The specimen layer arranges this page as a console: a compact header, each section
          under its heading, a full-width banner over each subsection, and the samples in panels,
@@ -43,9 +48,10 @@
           padding-block-end: var(--space-2xl);
         }
 
-        /* The header: the title, then the Theme button on a line of its own beneath it, then
-           the intro, close above the first section. Nothing sits beside the title. Text spans
-           the column: a reading measure belongs to a prose layout, and this page is a console. */
+        /* The header: the title, then the Theme and Help buttons on a line of their own beneath
+           it, then the intro, close above the first section. Nothing sits beside the title. Text
+           spans the column: a reading measure belongs to a prose layout, and this page is a
+           console. */
         body > header {
           padding-block-start: var(--space-l);
 
@@ -73,13 +79,26 @@
           margin-block-start: var(--space-m);
         }
 
+        /* j and k move focus from section to section, and g to the title (specimen.js): each
+           section with an id, and the title, take focus from script and, so focused, open the
+           view a --space-s below its top edge, the elements layer's focus outline set off around
+           them. */
+        section[id],
+        body > header > h1 {
+          scroll-margin-block-start: var(--space-s);
+        }
+
+        section[id]:focus-visible {
+          outline-offset: var(--space-2xs);
+        }
+
         main > section > header > :is(p, dl) {
           margin-block: var(--space-xs) 0;
           color: var(--fg-2);
         }
 
-        /* A subsection opens on a lighter banner, on the pane, that its panels hang from; its
-           intro, if any, sits boxed between them. */
+        /* A subsection opens on a banner, on the first elevated surface, that its panels hang
+           from; its intro, if any, sits boxed between them. */
         main > section > section {
           margin-block-start: var(--space-l);
         }
@@ -90,7 +109,7 @@
           padding: var(--space-3xs) var(--space-xs);
           border: var(--line-s) solid var(--border);
           border-block-end: 0;
-          background: var(--bg-0);
+          background: var(--bg-1);
           font-size: var(--text-xl);
           line-height: var(--leading-ui);
           font-variant-caps: all-small-caps;
@@ -287,7 +306,7 @@
           overflow: hidden;
           border: var(--line-s) solid var(--border-2);
           border-radius: var(--radius-sm);
-          background: var(--bg-0);
+          background: var(--bg-1);
         }
 
         .fluid-fill {
@@ -472,7 +491,7 @@
           min-inline-size: 0;
           padding: var(--space-2xs);
           border: var(--line-s) solid var(--border);
-          background: var(--bg-0);
+          background: var(--bg-1);
 
           &.tile-wide {
             grid-column: span 2;
@@ -589,6 +608,24 @@
           }
         }
 
+        /* The help dialog, sized and set out as the theme menu is: a column capped inside the
+           viewport's gutters, its heading flush with its top, and Close at the end of its footer.
+           What keys fills it with, the table, the settings, and the note, is the elements
+           layer's. */
+        .help {
+          inline-size: min(100% - 2 * var(--space-s), 40rem);
+          max-block-size: calc(100% - 2 * var(--space-s));
+
+          & > h2 {
+            margin-block: 0 var(--space-s);
+          }
+
+          & > footer {
+            display: flex;
+            justify-content: end;
+          }
+        }
+
         /* The contrast legend: each mark beside its meaning. */
         #contrast-legend {
           display: grid;
@@ -605,9 +642,12 @@
   </head>
   <body>
     <header>
-      <h1>spike-html-design</h1>
-      <button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">
+      <h1 tabindex="-1">spike-html-design</h1>
+      <button type="button" commandfor="theme" command="--open" data-keys="t">
         Theme <kbd>T</kbd>
+      </button>
+      <button type="button" commandfor="help" command="show-modal" data-keys="?">
+        Help <kbd>?</kbd>
       </button>
       <p>
         This page renders every token, element and tool class in the baseline with the full
@@ -615,12 +655,14 @@
         <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
         apply a color profile to its subtree, and <code>data-space</code> or
         <code>data-type</code> to apply a space or type profile. Served, the Theme button or
-        <kbd>T</kbd> opens a menu to choose them for every page on this site.
+        <kbd>T</kbd> opens a menu to choose them for every page on this site, and the Help button
+        or <kbd>?</kbd> lists the page's shortcuts: <kbd>J</kbd> and <kbd>K</kbd> move through
+        its sections and <kbd>G</kbd> goes to the top.
       </p>
     </header>
 
     <main>
-      <section id="tokens">
+      <section id="tokens" tabindex="-1">
         <header>
           <h2>Tokens</h2>
           <p>
@@ -629,7 +671,7 @@
           </p>
         </header>
 
-        <section id="color">
+        <section id="color" tabindex="-1">
           <header>
             <h3>Color</h3>
             <p>
@@ -653,16 +695,16 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <th scope="row"><code>--bg-0</code></th>
-                      <td><div class="swatch" style="--sample: var(--bg-0)"></div></td>
-                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg-0)"></span><span class="hex">#f2f0e5</span></td>
-                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg-0)"></span><span class="hex">#100f0f</span></td>
-                    </tr>
-                    <tr>
                       <th scope="row"><code>--bg</code></th>
                       <td><div class="swatch" style="--sample: var(--bg)"></div></td>
                       <td data-scheme="light"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#fffcf0</span></td>
-                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#1c1b1a</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#100f0f</span></td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--bg-1</code></th>
+                      <td><div class="swatch" style="--sample: var(--bg-1)"></div></td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg-1)"></span><span class="hex">#f2f0e5</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg-1)"></span><span class="hex">#1c1b1a</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--bg-2</code></th>
@@ -795,7 +837,7 @@
           </div>
         </section>
 
-        <section id="space">
+        <section id="space" tabindex="-1">
           <header>
             <h3>Space</h3>
             <p>
@@ -917,7 +959,7 @@
           </div>
         </section>
 
-        <section id="type">
+        <section id="type" tabindex="-1">
           <header>
             <h3>Type</h3>
             <p>
@@ -1043,7 +1085,7 @@
         </section>
       </section>
 
-      <section id="elements">
+      <section id="elements" tabindex="-1">
         <header>
           <h2>Elements</h2>
           <p>
@@ -1054,7 +1096,7 @@
           </p>
         </header>
 
-        <section id="prose">
+        <section id="prose" tabindex="-1">
           <h3>Prose</h3>
           <div class="cells">
             <div class="cell">
@@ -1154,7 +1196,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="text">
+        <section id="text" tabindex="-1">
           <h3>Text-level</h3>
           <div class="cells">
             <div class="cell">
@@ -1223,7 +1265,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="grouping">
+        <section id="grouping" tabindex="-1">
           <h3>Grouping</h3>
           <div class="cells">
             <div class="cell">
@@ -1279,7 +1321,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="tables">
+        <section id="tables" tabindex="-1">
           <h3>Tables</h3>
           <div class="cells">
             <div class="cell">
@@ -1363,7 +1405,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="forms">
+        <section id="forms" tabindex="-1">
           <h3>Forms</h3>
           <form class="cells">
             <div class="cell">
@@ -1471,7 +1513,7 @@ const answer = 42;</code></pre>
           </form>
         </section>
 
-        <section id="embedded">
+        <section id="embedded" tabindex="-1">
           <header>
             <h3>Embedded</h3>
             <p>Every sample is inline or a data: URL; nothing loads from the network.</p>
@@ -1591,7 +1633,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="interactive">
+        <section id="interactive" tabindex="-1">
           <h3>Interactive</h3>
           <div class="cells">
             <div class="cell">
@@ -1626,7 +1668,7 @@ const answer = 42;</code></pre>
         </section>
       </section>
 
-      <section id="tools">
+      <section id="tools" tabindex="-1">
         <header>
           <h2>Tools</h2>
           <p>
@@ -1636,7 +1678,7 @@ const answer = 42;</code></pre>
           </p>
         </header>
 
-        <section id="buttons">
+        <section id="buttons" tabindex="-1">
           <h3>Buttons</h3>
           <div class="cells">
             <div class="cell">
@@ -1680,7 +1722,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="scroll">
+        <section id="scroll" tabindex="-1">
           <h3>Scroll</h3>
           <div class="cells">
             <div class="cell">
@@ -1703,7 +1745,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="fields">
+        <section id="fields" tabindex="-1">
           <h3>Forms</h3>
           <div class="cells">
             <div class="cell">
@@ -1730,7 +1772,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="tables-tools">
+        <section id="tables-tools" tabindex="-1">
           <h3>Tables</h3>
           <div class="cells">
             <div class="cell">
@@ -1783,7 +1825,7 @@ const answer = 42;</code></pre>
         </section>
       </section>
 
-      <section id="profiles">
+      <section id="profiles" tabindex="-1">
         <header>
           <h2>Profiles</h2>
           <p>
@@ -1835,8 +1877,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -1896,8 +1938,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -1957,8 +1999,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2018,8 +2060,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2079,8 +2121,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2140,8 +2182,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2201,8 +2243,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2262,8 +2304,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2283,7 +2325,7 @@ const answer = 42;</code></pre>
         </div>
       </section>
 
-      <section id="contrast">
+      <section id="contrast" tabindex="-1">
         <header>
           <h2>Contrast</h2>
           <p>
@@ -2312,8 +2354,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2322,88 +2364,88 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>16.74 <span>AA</span></td>
                     <td>18.62 <span>AA</span></td>
+                    <td>16.74 <span>AA</span></td>
                     <td>15.00 <span>AA</span></td>
                     <td>13.39 <span>AA</span></td>
                     <td>11.98 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>6.42 <span>AA</span></td>
                     <td>7.14 <span>AA</span></td>
+                    <td>6.42 <span>AA</span></td>
                     <td>5.75 <span>AA</span></td>
                     <td>5.14 <span>AA</span></td>
                     <td>4.59 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>3.22 <span>AA-L</span></td>
                     <td>3.59 <span>AA-L</span></td>
+                    <td>3.22 <span>AA-L</span></td>
                     <td>2.89 <span>fail</span></td>
                     <td>2.58 <span>fail</span></td>
                     <td>2.31 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>5.61 <span>AA</span></td>
                     <td>6.23 <span>AA</span></td>
+                    <td>5.61 <span>AA</span></td>
                     <td>5.02 <span>AA</span></td>
                     <td>4.48 <span>AA-L</span></td>
                     <td>4.01 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>4.22 <span>AA-L</span></td>
                     <td>4.69 <span>AA</span></td>
+                    <td>4.22 <span>AA-L</span></td>
                     <td>3.78 <span>AA-L</span></td>
                     <td>3.37 <span>AA-L</span></td>
                     <td>3.02 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>3.05 <span>AA-L</span></td>
                     <td>3.39 <span>AA-L</span></td>
+                    <td>3.05 <span>AA-L</span></td>
                     <td>2.73 <span>fail</span></td>
                     <td>2.44 <span>fail</span></td>
                     <td>2.18 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>3.87 <span>AA-L</span></td>
                     <td>4.31 <span>AA-L</span></td>
+                    <td>3.87 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
                     <td>3.10 <span>AA-L</span></td>
                     <td>2.77 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>3.99 <span>AA-L</span></td>
                     <td>4.43 <span>AA-L</span></td>
+                    <td>3.99 <span>AA-L</span></td>
                     <td>3.57 <span>AA-L</span></td>
                     <td>3.19 <span>AA-L</span></td>
                     <td>2.85 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>5.72 <span>AA</span></td>
                     <td>6.36 <span>AA</span></td>
+                    <td>5.72 <span>AA</span></td>
                     <td>5.12 <span>AA</span></td>
                     <td>4.57 <span>AA</span></td>
                     <td>4.09 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>6.81 <span>AA</span></td>
                     <td>7.58 <span>AA</span></td>
+                    <td>6.81 <span>AA</span></td>
                     <td>6.11 <span>AA</span></td>
                     <td>5.45 <span>AA</span></td>
                     <td>4.88 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>5.87 <span>AA</span></td>
                     <td>6.53 <span>AA</span></td>
+                    <td>5.87 <span>AA</span></td>
                     <td>5.26 <span>AA</span></td>
                     <td>4.69 <span>AA</span></td>
                     <td>4.20 <span>AA-L</span></td>
@@ -2423,8 +2465,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2534,8 +2576,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2544,88 +2586,88 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>14.84 <span>AA</span></td>
                     <td>15.80 <span>AA</span></td>
+                    <td>14.84 <span>AA</span></td>
                     <td>13.55 <span>AA</span></td>
                     <td>11.65 <span>AA</span></td>
                     <td>10.88 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>4.93 <span>AA</span></td>
                     <td>5.25 <span>AA</span></td>
+                    <td>4.93 <span>AA</span></td>
                     <td>4.50 <span>AA-L</span></td>
                     <td>3.87 <span>AA-L</span></td>
                     <td>3.61 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>4.27 <span>AA-L</span></td>
                     <td>4.55 <span>AA</span></td>
+                    <td>4.27 <span>AA-L</span></td>
                     <td>3.90 <span>AA-L</span></td>
                     <td>3.35 <span>AA-L</span></td>
                     <td>3.13 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>5.03 <span>AA</span></td>
                     <td>5.36 <span>AA</span></td>
+                    <td>5.03 <span>AA</span></td>
                     <td>4.59 <span>AA</span></td>
                     <td>3.95 <span>AA-L</span></td>
                     <td>3.69 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>4.73 <span>AA</span></td>
                     <td>5.03 <span>AA</span></td>
+                    <td>4.73 <span>AA</span></td>
                     <td>4.32 <span>AA-L</span></td>
                     <td>3.71 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>4.57 <span>AA</span></td>
                     <td>4.87 <span>AA</span></td>
+                    <td>4.57 <span>AA</span></td>
                     <td>4.17 <span>AA-L</span></td>
                     <td>3.59 <span>AA-L</span></td>
                     <td>3.35 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>4.77 <span>AA</span></td>
                     <td>5.08 <span>AA</span></td>
+                    <td>4.77 <span>AA</span></td>
                     <td>4.36 <span>AA-L</span></td>
                     <td>3.75 <span>AA-L</span></td>
                     <td>3.50 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>4.63 <span>AA</span></td>
                     <td>4.93 <span>AA</span></td>
+                    <td>4.63 <span>AA</span></td>
                     <td>4.23 <span>AA-L</span></td>
                     <td>3.64 <span>AA-L</span></td>
                     <td>3.40 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>4.88 <span>AA</span></td>
                     <td>5.19 <span>AA</span></td>
+                    <td>4.88 <span>AA</span></td>
                     <td>4.45 <span>AA-L</span></td>
                     <td>3.83 <span>AA-L</span></td>
                     <td>3.57 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>4.74 <span>AA</span></td>
                     <td>5.05 <span>AA</span></td>
+                    <td>4.74 <span>AA</span></td>
                     <td>4.33 <span>AA-L</span></td>
                     <td>3.72 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>4.74 <span>AA</span></td>
                     <td>5.05 <span>AA</span></td>
+                    <td>4.74 <span>AA</span></td>
                     <td>4.33 <span>AA-L</span></td>
                     <td>3.72 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
@@ -2645,8 +2687,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2756,8 +2798,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2766,88 +2808,88 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>6.57 <span>AA</span></td>
                     <td>7.06 <span>AA</span></td>
+                    <td>6.57 <span>AA</span></td>
                     <td>5.17 <span>AA</span></td>
                     <td>4.39 <span>AA-L</span></td>
                     <td>3.07 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>4.06 <span>AA-L</span></td>
                     <td>4.37 <span>AA-L</span></td>
+                    <td>4.06 <span>AA-L</span></td>
                     <td>3.20 <span>AA-L</span></td>
                     <td>2.72 <span>fail</span></td>
                     <td>1.90 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>2.63 <span>fail</span></td>
                     <td>2.83 <span>fail</span></td>
+                    <td>2.63 <span>fail</span></td>
                     <td>2.07 <span>fail</span></td>
                     <td>1.76 <span>fail</span></td>
                     <td>1.23 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>4.46 <span>AA-L</span></td>
                     <td>4.80 <span>AA</span></td>
+                    <td>4.46 <span>AA-L</span></td>
                     <td>3.52 <span>AA-L</span></td>
                     <td>2.99 <span>fail</span></td>
                     <td>2.09 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>2.45 <span>fail</span></td>
                     <td>2.64 <span>fail</span></td>
+                    <td>2.45 <span>fail</span></td>
                     <td>1.93 <span>fail</span></td>
                     <td>1.64 <span>fail</span></td>
                     <td>1.15 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>2.15 <span>fail</span></td>
                     <td>2.31 <span>fail</span></td>
+                    <td>2.15 <span>fail</span></td>
                     <td>1.70 <span>fail</span></td>
                     <td>1.44 <span>fail</span></td>
                     <td>1.01 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>2.75 <span>fail</span></td>
                     <td>2.96 <span>fail</span></td>
+                    <td>2.75 <span>fail</span></td>
                     <td>2.17 <span>fail</span></td>
                     <td>1.84 <span>fail</span></td>
                     <td>1.28 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>3.08 <span>AA-L</span></td>
                     <td>3.31 <span>AA-L</span></td>
+                    <td>3.08 <span>AA-L</span></td>
                     <td>2.43 <span>fail</span></td>
                     <td>2.06 <span>fail</span></td>
                     <td>1.44 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>4.04 <span>AA-L</span></td>
                     <td>4.34 <span>AA-L</span></td>
+                    <td>4.04 <span>AA-L</span></td>
                     <td>3.18 <span>AA-L</span></td>
                     <td>2.70 <span>fail</span></td>
                     <td>1.89 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>4.45 <span>AA-L</span></td>
                     <td>4.79 <span>AA</span></td>
+                    <td>4.45 <span>AA-L</span></td>
                     <td>3.51 <span>AA-L</span></td>
                     <td>2.98 <span>fail</span></td>
                     <td>2.08 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>2.17 <span>fail</span></td>
                     <td>2.34 <span>fail</span></td>
+                    <td>2.17 <span>fail</span></td>
                     <td>1.71 <span>fail</span></td>
                     <td>1.45 <span>fail</span></td>
                     <td>1.01 <span>fail</span></td>
@@ -2867,8 +2909,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2978,8 +3020,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2988,89 +3030,89 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>4.84 <span>AA</span></td>
                     <td>5.40 <span>AA</span></td>
                     <td>5.10 <span>AA</span></td>
+                    <td>4.84 <span>AA</span></td>
                     <td>4.62 <span>AA</span></td>
                     <td>3.14 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>2.88 <span>fail</span></td>
                     <td>3.21 <span>AA-L</span></td>
                     <td>3.04 <span>AA-L</span></td>
+                    <td>2.88 <span>fail</span></td>
                     <td>2.75 <span>fail</span></td>
                     <td>1.87 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>2.39 <span>fail</span></td>
                     <td>2.67 <span>fail</span></td>
                     <td>2.52 <span>fail</span></td>
+                    <td>2.39 <span>fail</span></td>
                     <td>2.28 <span>fail</span></td>
                     <td>1.55 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>2.84 <span>fail</span></td>
                     <td>3.17 <span>AA-L</span></td>
                     <td>2.99 <span>fail</span></td>
+                    <td>2.84 <span>fail</span></td>
                     <td>2.71 <span>fail</span></td>
                     <td>1.84 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>2.32 <span>fail</span></td>
                     <td>2.59 <span>fail</span></td>
                     <td>2.44 <span>fail</span></td>
+                    <td>2.32 <span>fail</span></td>
                     <td>2.22 <span>fail</span></td>
                     <td>1.51 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>1.98 <span>fail</span></td>
                     <td>2.21 <span>fail</span></td>
                     <td>2.09 <span>fail</span></td>
+                    <td>1.98 <span>fail</span></td>
                     <td>1.90 <span>fail</span></td>
                     <td>1.29 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>2.52 <span>fail</span></td>
                     <td>2.81 <span>fail</span></td>
                     <td>2.65 <span>fail</span></td>
+                    <td>2.52 <span>fail</span></td>
                     <td>2.40 <span>fail</span></td>
                     <td>1.63 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>2.61 <span>fail</span></td>
                     <td>2.91 <span>fail</span></td>
                     <td>2.75 <span>fail</span></td>
+                    <td>2.61 <span>fail</span></td>
                     <td>2.49 <span>fail</span></td>
                     <td>1.70 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>2.92 <span>fail</span></td>
                     <td>3.26 <span>AA-L</span></td>
                     <td>3.08 <span>AA-L</span></td>
+                    <td>2.92 <span>fail</span></td>
                     <td>2.79 <span>fail</span></td>
                     <td>1.90 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>2.65 <span>fail</span></td>
                     <td>2.96 <span>fail</span></td>
                     <td>2.79 <span>fail</span></td>
+                    <td>2.65 <span>fail</span></td>
                     <td>2.53 <span>fail</span></td>
                     <td>1.72 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>2.65 <span>fail</span></td>
                     <td>2.96 <span>fail</span></td>
                     <td>2.79 <span>fail</span></td>
+                    <td>2.65 <span>fail</span></td>
                     <td>2.53 <span>fail</span></td>
                     <td>1.72 <span>fail</span></td>
                   </tr>
@@ -3089,8 +3131,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -3193,6 +3235,22 @@ const answer = 42;</code></pre>
       </section>
     </main>
     <theme-menu id="theme"></theme-menu>
+    <!-- The help dialog: keys fills its marked element with the page's shortcuts and the reader's
+         settings when it opens, replacing what the markup holds there. ? opens it from the
+         header and closes it from its Close button; Escape closes it natively. From file://,
+         where keys doesn't run, the Help button still opens it, and it says why it lists
+         nothing. -->
+    <dialog id="help" class="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard shortcuts</h2>
+      <div data-keys-list>
+        <p>Served, this dialog lists the page's shortcuts; opened as a file, the page has none.</p>
+      </div>
+      <footer>
+        <button type="button" commandfor="help" command="close" data-keys="?">
+          Close <kbd>?</kbd>
+        </button>
+      </footer>
+    </dialog>
     <script type="module">
       // The color tables' Light and Dark cells force their scheme and inherit the root's palette,
       // so their dots paint the current profile's values with no script. This specimen-only

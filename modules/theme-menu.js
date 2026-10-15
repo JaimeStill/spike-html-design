@@ -5,7 +5,6 @@
 //
 //   open(element)    opens the menu inside element and marks it open (setOpen), so another
 //                    tab's save waits on the menu's Save or Cancel.
-//   accept(element)  T while open: saves and closes the menu.
 //
 // Each row is a native radio group, a fieldset with a legend and a radio per name the registry
 // lists for that facet (the scheme's are system, light, dark), drawn as ◀ current value ▶: the
@@ -17,7 +16,13 @@
 //
 // Keys, each stopped at the dialog so no page-wide listener sees it: Up/Down and k/j move
 // between rows; Left/Right cycle a row natively, h/l cycle it the same way, wrapping; Tab is one
-// stop per row, as a radio group is; t/T saves; Escape cancels.
+// stop per row, as a radio group is; t/T saves; Escape cancels. A held key repeats a move, as a
+// native arrow does, but never Save or Cancel: a repeated t/T or Escape is stopped and does
+// nothing, so holding the T that opened the menu doesn't save it.
+//
+// T inside the menu is the menu's own key, as Escape is, not a keys.js binding: focus sits on a
+// radio, a field where keys is silent, and the menu stops T at the dialog, so a press saves once.
+// Save's aria-keyshortcuts="T" is written here for the same reason, and Save carries no data-keys.
 //
 // The menu's arrangement is its own CSS, never the baseline's layers: one constructed sheet,
 // adopted onto the document once, in the layer spike-html-design.theme-menu, which falls after
@@ -312,10 +317,10 @@ function onkey(element, event) {
       break;
     case "t":
     case "T":
-      close(element, true);
+      if (!event.repeat) close(element, true);
       break;
     case "Escape":
-      close(element, false);
+      if (!event.repeat) close(element, false);
       break;
     default:
       return;
@@ -360,8 +365,4 @@ export function open(element) {
   element.toggleAttribute("data-open", true);
   dialog.showModal();
   dialog.querySelector(".theme-menu-row :checked")?.focus();
-}
-
-export function accept(element) {
-  close(element, true);
 }

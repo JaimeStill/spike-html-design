@@ -1,9 +1,11 @@
 // pin checks a published tag live: jsDelivr serves every stylesheet file the tag publishes (its
 // entries, baseline.css and from v0.4.0 full.css, each layer file, and each profile file) as an
 // immutable, byte-equal stylesheet, and from v0.5.0 every module in its modules/ as an
-// immutable, byte-equal JavaScript file; and the tag's pinned page renders the same from
-// file://, a local server, and GitHub Pages, in light and in dark, and from v0.5.0 its menu opens
-// and applies a profile from each of them. It reads the network and writes nothing.
+// immutable, byte-equal JavaScript file, and from v0.6.0 the specimen's own scripts at its root,
+// specimen.js, too; and the tag's pinned page renders the same from file://, a local server, and
+// GitHub Pages, in light and in dark, from v0.5.0 its menu opens and applies a profile from each
+// of them, and from v0.6.0 its keys open the menu and the help dialog and move focus from each.
+// It reads the network and writes nothing.
 //
 // Usage: bun scripts/pin.js <tag>   (mise run pin <tag>)
 //
@@ -15,7 +17,8 @@ import { dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "../test/harness.js";
 import { layersLoaded, loaded } from "../test/layers.js";
 import { applyFromMenu } from "../test/menu.js";
-import { git, modules, stylesheets, tagExists } from "../test/tags.js";
+import { driveKeys } from "../test/shortcuts.js";
+import { git, modules, pageScripts, stylesheets, tagExists } from "../test/tags.js";
 
 const REPO = "JaimeStill/spike-html-design";
 const PAGES = "https://jaimestill.github.io/spike-html-design/";
@@ -82,6 +85,14 @@ for (const path of MODULES) {
   await served(path, /^(text|application)\/javascript/, "JavaScript");
 }
 
+// Every page script at its pinned jsDelivr URL: specimen.js, which the pinned page loads beside
+// keys. It is no package export, but jsDelivr serves it from the tag. A tag cut before v0.6.0
+// holds none.
+const PAGE_SCRIPTS = pageScripts(tag);
+for (const path of PAGE_SCRIPTS) {
+  await served(path, /^(text|application)\/javascript/, "JavaScript");
+}
+
 // The pinned page from three origins, on the real network: no interception. The file:// and
 // local loads read the working tree's pinned page, which never changes once committed.
 const page = `pinned/${tag}.html`;
@@ -136,6 +147,28 @@ try {
         );
       } catch (error) {
         check(false, `${page} from ${name}: its menu opens and applies a profile`, error.message);
+      } finally {
+        opened?.close();
+      }
+    }
+  }
+  // The keys, from each origin, when the tag publishes the specimen's own script: T opens the
+  // menu, ? opens the help dialog listing the page's bindings, and j moves focus to the first
+  // section. From file:// keys and specimen.js run only through jsDelivr's CORS header.
+  if (PAGE_SCRIPTS.length) {
+    for (const [name, url] of Object.entries(origins)) {
+      let opened;
+      try {
+        opened = await openPage(url, { scheme: "light" });
+        const result = await driveKeys(opened);
+        const listed = result.help.map(([keys]) => keys).join(",");
+        check(
+          listed === "T,?,J,K,G" && result.focused === "tokens",
+          `${page} from ${name}: T opens the menu, ? lists ${listed}, j focuses #${result.focused}`,
+          JSON.stringify(result),
+        );
+      } catch (error) {
+        check(false, `${page} from ${name}: its keys work`, error.message);
       } finally {
         opened?.close();
       }

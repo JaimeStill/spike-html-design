@@ -11,168 +11,185 @@
 3. [x] facets
 4. [x] profiles
 5. [x] preferences
-6. [ ] keys
+6. [x] keys
 7. [ ] validate
 
-## Task brief · experiment.html.spike-html-design · preferences
+## Task brief · experiment.html.spike-html-design · keys
 
-Problem       v0.4.0 ships four color profiles but one space profile and one type profile,
-              and no way for a reader to choose among them: no registry, no menu, no
-              persistence, no script at all (the theme toggle the roadmap says this task
-              replaces was never built). Evidence 6 needs a JS profile registry that extension
-              packages add to, a theming menu on T with each facet's profile and the scheme,
-              choices that persist across reloads and pages, and the flash of the default
-              profile before a stored one applies, measured. This task also adds the second
-              space and type profiles with their data-space and data-type scopes, the first JS
-              exports and their size budgets, and the harness support a module page from
-              file:// needs. (Evidence 6; 2's swappable space and type; 8's file:// render;
+Problem       v0.5.0 has one shortcut, T, which <theme-menu> binds itself. There is no
+              shortcut API, no declaration, no help listing, no convention besides a bare key,
+              and no way to turn shortcuts off, which WCAG SC 2.1.4 (Level A) requires of
+              character-key shortcuts. Evidence 7 needs a shortcut library: one registry per
+              page, silent in fields, declared to assistive technology, and listed in a ? help
+              dialog with each page's own keys. The architect ruled that the library binds no
+              shortcuts itself and supports raw keys, chords, and combinations, each written
+              into its binding, with @github/hotkey as the precedent (amended at the review
+              stop: no modes). This task builds keys as a family of three modules, moves T off
+              <theme-menu>, and gives the specimen a help dialog and bindings. (Evidence 7, restated; 8's pinned page;
               11's budgets.)
 
 Behaviors
-  Space and type profiles
-  1. Space and type split as color did: each facet's contract stands alone, and each profile
-     is its own file, applied by a zero-specificity attribute scope on any element,
-     data-space="regular" | "compact" and data-type="mono" | "sans". The nearest scope wins.
-     With no attribute anywhere, regular and mono apply; an attribute on the root overrides
-     them. A consumer's later layer beats every profile.
-  2. regular keeps v0.4.0's space values. compact sets --space-base from 0.75rem on a 22.5rem
-     display to 0.875rem on an 80rem one, and --radius-base to 0.25rem. Lines stay 1px and
-     2px. Both stay fluid by progress() between rem bounds.
-  3. mono keeps v0.4.0's type values. sans sets the heading, ui, and body fonts to the system
-     sans stack and keeps code mono and the default scale and leadings. (Review stop: sans
-     replaces serif.)
-  4. Swapping a space or type profile changes only that facet's tokens. A preview container
-     carrying data-space or data-type renders its subtree as that profile renders at the root.
-  5. The lean entry holds the defaults: Flexoki, regular, mono. The full entry adds every
-     other profile of every facet, each imported one hop deep into its facet's sub-layer.
+  Grammar
+  1. A binding is a string in @github/hotkey's grammar: "," separates alternatives, a space
+     separates the presses of a sequence, and "+" joins a combination of Control, Alt, Meta,
+     Shift, or Mod (Meta on macOS, Control elsewhere) with one key; "Plus" and "Space" name
+     those keys. A letter written without Shift matches either case while Shift is up (caps
+     lock doesn't defeat it), and "Shift+T" requires Shift. A symbol is written as the
+     character typed ("?"), Shift ignored. A malformed string binds nothing.
+  2. The grammar module has no DOM: it parses and normalizes a binding and formats one for display and for aria-keyshortcuts. A symbol is declared
+     by its US physical key ("?" as "Shift+/"); a sequence declares nothing.
 
-  Registry
-  6. One registry per page, shared by every copy of the registry module from any URL or tag:
-     a store at a well-known global key (Symbol.for), whose shape is public API frozen per
-     tag. Registering a name under color, space, or type lists it for the menu; the page's CSS
-     ships the profile, and registering never loads CSS. Registering a name twice is harmless.
-  7. Two registration modules mirror the CSS entries. The lean one registers flexoki, regular,
-     and mono; the full one registers every built-in profile. A page imports the one matching
-     the entry it links. A page or extension importing a profile beyond its entry registers
-     that name itself, through the registry.
+  Runtime
+  3. An element carrying data-keys is a binding: when its keys are pressed, keys clicks it (so
+     its native action or invoker command runs) or focuses it if it is a field.
+     register(keys, label, handler) binds keys with no element, returns a function that
+     removes exactly that binding, and throws a TypeError on a malformed string.
+  4. Matching uses event.key. With Alt held, letters and digits match by event.code (Option
+     and AltGr change the character). A non-ASCII letter falls back to event.code (KeyJ is
+     j). keys is silent in fields (input, textarea, select, contenteditable), while an input
+     method composes (isComposing or keyCode 229), on "Dead" and "Process", with AltGraph, on
+     repeats, and on events already handled. A press keys acts on, or that continues a
+     sequence, is marked handled.
+  5. Sequences: each press must follow the last within the sequence wait, 1500 ms by default.
+     A press that doesn't continue the sequence ends it and is dropped. When one binding is a
+     prefix of another ("g" and "g c"), keys waits for the next press and runs the shorter
+     when the wait ends.
+  6. One convention: every binding is pressed as written. Chords and combinations are
+     spelled out in the binding ("g c", "Mod+k"). (Amended at the review stop: leader and
+     activator modes, data-keys-mode, and the reader's mode, leader, and activator settings
+     are removed.)
+  7. Scope: while a modal dialog is open, only element bindings inside it are active and
+     register() bindings pause; otherwise an element binding is active unless disabled,
+     inside [inert], or not visible. keys reads the page at each press. When two active
+     bindings share keys, the first wins: elements in document order, then register()
+     bindings in registration order.
+  8. keys writes aria-keyshortcuts on every element carrying data-keys from its binding
+     ("T", "Alt+T", "Shift+/"), rewrites it when data-keys or the off switch changes, and
+     leaves it off for a sequence and while the off switch covers that binding.
+  9. One store per page, at globalThis[Symbol.for("spike-html-design.keys")], shared by every
+     copy of keys from any URL or tag, with one document listener, so a key never fires
+     twice; its shape is public API frozen with v0.6.0. The runtime loads as a plain module
+     script, not render-blocking.
+  9a. Extension: keys is extensible by outside modules rather than growing features itself.
+     The runtime dispatches two events, their names and detail shapes public API frozen with
+     v0.6.0. keys-fire, cancelable, on the bound element (or document for a register()
+     binding) before it acts, with the binding and the keys pressed; cancelling it
+     stops the action. keys-sequence on document as a sequence starts, continues, and ends
+     (fired, timed out, or dropped), with the presses so far. The grammar module is exported
+     for formatting. A test fixture builds a pending-sequence indicator as an outside module
+     from these alone, proving the extension point; the indicator does not ship.
 
-  Preferences
-  8. The preferences module, loaded render-blocking after the registration module, applies the
-     stored choice to the root before first paint: data-palette, data-space, data-type, and
-     data-scheme, where system means no data-scheme. A stored name nothing registered on this
-     page falls back to that facet's default on this page and stays in storage.
-  9. Choices persist under one namespaced localStorage key per origin. Every page using the
-     baseline on an origin shares it: a choice saved on one page applies on another, including
-     one in another directory and after a reload.
-  10. Another tab's save applies live on every open page through the storage event, except
-      while that page's menu is open: the menu ignores it, Save overwrites it, and Cancel
-      restores the stored value, the other tab's included.
-  11. The flash is measured: the time from first paint to the stored choice applying, in
-      headless chromium, with a module fetch delayed as a CDN's would be. With the
-      render-blocking module the choice applies before first paint (0 ms), and the cost,
-      first paint waiting on the module fetch, is recorded. Firefox's flash is recorded from
-      feature support, not measured. A failed module load doesn't stall paint.
-  12. The preferences module defines <theme-menu>, a thin element that loads the menu module
-      the first time it opens, never before: first paint precedes any fetch of it. It opens
-      on the invoker command --open (a page button with commandfor="<id>" command="--open")
-      and on T, pressed outside fields with no modifier. keys.js takes over T in v0.6.0.
+  Help dialog and the reader's settings
+  10. The page places a native <dialog> holding an element marked data-keys-list and opens it
+      with a visible button through show-modal. The help module loads on the dialog's first
+      open. Each time it opens, the module fills the marked element with a table of the
+      bindings active with the dialog closed, each row a button that closes the dialog and
+      runs the binding; its keys as sibling kbd ("+" in a combination, "then"
+      between presses); labels from aria-label, else text without kbd, else register()'s
+      label; the reader's settings; and a screen-reader note. keys adds no CSS.
+  11. Settings: an off switch, on by default, that turns off character-key shortcuts (single
+      characters and chords of them) while combinations with Control, Alt, or Meta stay on,
+      its rows listed and marked inactive; and the wait (1000, 1500, 3000, 5000 ms). (Amended
+      at the review stop: mode, leader, and activator settings removed.) Only changed settings are stored, as JSON under localStorage key
+      spike-html-design.keys, per origin; keys reads them at each press, so another tab's
+      change applies at once.
+  12. The note tells screen-reader users how to pass a key through (NVDA+F2, JAWS+3,
+      Narrator+3, VO+Tab).
 
-  Theming menu
-  13. The menu is a modal native <dialog> in light DOM, so the elements layer styles it. One
-      row per section, in order: color profile, scheme, space, type. Each row is a native
-      radio group drawn as ◀ current value ▶; the other radios are hidden visually but stay
-      in the group. The scheme row cycles system, light, dark, system the default.
-  14. Keys: Up/Down and k/j move between rows; Left/Right and h/l cycle within a row; Tab is
-      one stop per row. Every key the menu handles stops at the dialog.
-  15. Every change applies at once to the preview and the page. T and Save accept and write
-      storage once. Escape and Cancel restore the page and preview to what applied when the
-      menu opened, and write nothing. Save shows <kbd>T</kbd> and Cancel <kbd>Esc</kbd>, each
-      with aria-keyshortcuts. A backdrop click does nothing.
-  16. The preview is a container carrying data-palette, data-scheme, data-space, data-type
-      for the current selection, holding the preview card's contents without its frame or
-      token strip: a heading; a paragraph with a link, inline code, and kbd; a neutral and a
-      hue button; a labeled text input; a three-row striped table. For every selection its
-      tokens match what the root resolves for it.
-  17. The menu's arrangement CSS is its own, never the baseline's layers: one constructed sheet
-      the element adopts onto the document, in layer spike-html-design.theme-menu, after tools
-      and under every consumer layer and unlayered CSS; the spike's namespace is the
-      custom-component layer.
-
-  Package
-  18. package.json names spike-html-design at 0.5.0. Profile exports nest,
-      ./profiles/<facet>/<name>, for every facet; color's keys move from v0.4.0's flat keys,
-      which v0.4.0 keeps. JS exports: ./registry, ./preferences, ./theme-menu, ./register,
-      ./register/full. No dependencies; every export resolves to a published file.
-  19. The check budgets each JS export's brotli-11 size beside the CSS entries; JS budgets are
-      approved at the session brief. The lean entry stays within 14,000 B and full within
-      18,000 B.
+  T
+  13. <theme-menu> no longer listens for T. A page binds T with data-keys on its Theme button
+      and loads keys. While the menu is open, T reaches the menu's Save, which carries T
+      inside the modal. --open and the menu's own keys are unchanged; v0.5.0 keeps its T.
 
   Specimen and pins
-  20. The specimen loads every profile and the modules by relative URL. Its header ends in a
-      native "Theme" button with <kbd>T</kbd>, aria-keyshortcuts="T", and
-      commandfor/command="--open"; it shows the space and type profiles beside color's.
-      Served and on Pages, the menu works. From file://, the working-tree specimen has no
-      menu (chromium blocks relative module scripts); the gap is recorded. Its CSS still
-      renders the same from file:// and a local server under the Pages subpath.
-  20a. The specimen's Color, Space, and Type sections follow the current selection: the Color
-      section's Light and Dark columns show the selected profile's swatches and hex values in
-      each scheme, and the Space and Type captions describe the selected profile. Specimen-only
-      code; no package or budget change. (Review stop.)
-  21. The harness answers intercepted requests with Access-Control-Allow-Origin, so a module
-      page from file:// can be tested hermetically.
-  22. A v0.5.0 pinned page is the specimen linking the @v0.5.0 jsDelivr full entry and modules.
-      From file:// its menu works through jsDelivr's CORS header. Its hermetic test and the
-      live pin check cover every stylesheet and module the tag publishes. v0.1.0–v0.4.0
-      pinned pages still pass against their own tags.
-  23. README, STANDARDS.md, and the goal record describe v0.5.0: space and type profiles and
-      scopes, the registry and registration, preferences, storage, and the flash figure; the
-      menu and its keys; exports and budgets; the file:// exception for modules; and that
-      preferences styles nothing in the baseline's layers (the menu's CSS is the component's).
+  14. The specimen loads keys. Its header holds the Theme button (T) and a
+      Help button (?) opening a native help dialog; inside it a Close button carries ?, and
+      Escape closes it natively. register() binds j and k, moving focus to the next or
+      previous of the 19 sections with an id (tabindex="-1", a focus style in the specimen
+      layer), and g to the top. Served and on Pages all work and the dialog lists them. From file:// the working-tree
+      specimen has no keys, as it has no menu (recorded).
+  15. A v0.6.0 pinned page is the specimen linking the @v0.6.0 jsDelivr full entry and
+      modules; from file:// its keys work through jsDelivr's CORS header. Its hermetic test
+      and the live pin check cover every stylesheet and module the tag publishes; v0.1.0–
+      v0.5.0 pinned pages still pass against their own tags.
 
-Test seams    the harness page: a page in headless chromium, read for computed styles,
-              attributes, storage, paint timing, and keyboard results under emulated scheme,
-              viewport, and intercepted or delayed requests; the check's size report over the
-              exported entries.
+  Package and docs
+  16. package.json at 0.6.0 adds ./keys, ./keys/grammar, ./keys/help, each with a brotli
+      budget in BUDGETS set from its built size and approved at the session brief
+      (@github/hotkey's 2,872 B is the runtime's yardstick). Other budgets unchanged; lean
+      within 14,000 B, full within 18,000 B.
+  17. README, STANDARDS.md, and the goal record describe v0.6.0: the grammar and its
+      differences from @github/hotkey; register(); matching and silence; sequences, wait,
+      prefix rule; scope and conflicts; derived aria-keyshortcuts; the
+      store; the help dialog, settings, and storage; T's move; evidence 7 restated; the
+      review stop's finding that bare keys plus written chords and combinations suffice.
+
+  Session-brief redirect (architect)
+  18. Escape releases a field: with focus in a field (input, textarea, select, contenteditable)
+      outside an open modal, an Escape no other listener handled blurs it, so shortcuts work
+      again; inside an open modal the dialog keeps Escape (the theme menu's Cancel, the native
+      close). The help dialog lists it as a fixed row ("Esc", leave a field) with no button
+      action, outside the off switch.
+  19. Surfaces: --bg is the base; --bg-1 and --bg-2 step toward the text: lightest to darkest in
+      light schemes, darkest to lightest in dark. Light keeps today's page as --bg and today's
+      pane as --bg-1; dark takes today's pane as --bg and today's page as --bg-1; --bg-2 is
+      unchanged. --bg-0 is gone, with no alias. Rules keep reading --bg; the dialog and the
+      theme menu's panel read --bg-1 as elevated surfaces, and the specimen's panes read --bg-1.
+      A profile whose upstream swatches don't fall in that order takes them in lightness order
+      (Everforest light: bg0, bg1, bg_dim). The check holds every profile to the order.
+
+Test seams    the harness page in headless chromium, read for focus, attributes, storage,
+              dialog state, and scroll position after real presses (view.press) or CDP
+              Input.dispatchKeyEvent with any key, code, and modifier, under intercepted
+              requests; the grammar module as plain functions under bun; the size report.
 
 Slices
-  1. Space and type profiles: split facets, compact and sans (amended: built as serif, which
-     sans replaced at the review stop), data-space/data-type scopes, independence and
-     preview-equivalence tests, both entries' imports, v0.5.0's probes, package.json at 0.5.0.
-     Demo: a compact, sans container inside a regular, mono page.
-  2. Registry and registration: the shared global store, ./register and ./register/full, a
-     two-copies-one-store test; the harness gains the CORS header. Demo: a fixture page lists
-     the lean and full registrations.
-  3. Preferences: pre-paint apply, the storage key and fallback, the storage event, the thin
-     <theme-menu> with --open and T, the flash measurement. Demo: a choice stored on one page
-     applies before first paint on another; the flash figures.
-  4. The menu: menu module loaded on first open, radio rows, keys, live preview, Save/Cancel
-     with snapshot, adopted sheet in spike-html-design.theme-menu, the specimen's Theme button.
-     Demo: the served workbench with the menu in use.
-  ── REVIEW STOP (after slice 4): the architect uses the menu and views compact and the second
-     type profile (amended: serif then, replaced there by sans) on the served workbench
-     (`mise run serve`), before any tag; redirects go to Decisions ──
-  4b. Review-stop fixes: sans replaces serif; the Theme button sits beneath the title and
-      above the intro; the specimen's Color, Space, and Type sections follow the selection
-      (behavior 20a). Demo: the served workbench, switching profiles in the menu.
-  5. Package and budgets: nested profile keys, JS exports, JS budgets in the size report and
-     check, lean and full consumer tests on the new keys. Demo: check passes; size report
-     lists every CSS and JS entry.
-  6. Docs and pin: README, STANDARDS.md, goal record, the v0.5.0 pinned page with modules from
-     jsDelivr, the pin check over stylesheets and modules. Demo: check passes; the pinned
-     page's menu works from file:// under interception.
+  1. Grammar module under unit tests; v0.6.0's probes and package.json at 0.6.0. Demo: tests
+     format "g t", "Alt+T", and "?" every way.
+  2. Runtime in raw mode: store and listener, element bindings, register() and remover,
+     matching and silence, sequences, prefix rule, scope, first-wins. Demo: a fixture where T
+     clicks a button, "g c" and "g" coexist, and nothing fires in a field, on repeat, under a
+     modal, or when disabled. Includes the keys-fire and keys-sequence events and the
+     outside-module indicator fixture (behavior 9a).
+  3. Modes and aria: leader and activator wrapping, data-keys-mode, stored settings read at
+     each press, derived aria-keyshortcuts. Demo: one fixture pressed in all three modes.
+  4. T moves to keys. Demo: the served specimen's T opens the menu and, while open, saves.
+  5. Help dialog and settings. Demo: a fixture's dialog lists its bindings; switching modes or
+     the off switch changes what fires, in this tab and another.
+  6. Specimen bindings. Demo: the served workbench driven from the keyboard in each mode.
+  ── REVIEW STOP (after slice 6): the architect compares raw keys, leader chords, and
+     activator combinations on the served workbench (`mise run serve`), with the help dialog
+     and its settings, before any tag; redirects go to Decisions ── (held: raw only)
+  6b. Review-stop simplification: remove modes (grammar wrap and its constants, data-keys-mode,
+      mode resolution, the reader's mode, leader, and activator settings, the help dialog's
+      controls and note sentence for them, keys-fire's mode); storage {enabled?, wait?}.
+      Demo: the served workbench; every test green. A second look follows. ──
+  7. Package and budgets: three exports, budgets, consumer test. Demo: size report lists them.
+  8. Docs and pin: README, STANDARDS.md, goal record, v0.6.0 pinned page, pin check. Demo:
+     the pinned page's keys and help dialog work from file:// under interception.
+  9. Escape releases a field (behavior 18). Demo: Esc in the specimen's field restores j.
+  10. Surfaces (behavior 19): profiles, contract, rules, specimen, probes, contrast, docs.
+      Demo: the served workbench in each profile and scheme.
+  ── REVIEW STOP 3 (after slice 10): the architect views the surfaces on the served workbench
+     before the reviews run again ──
 
-Out of scope  keys.js, the ? dialog, page-wide j/k/g, a leader key (keys); promoting
-              <theme-menu> to a shadow-DOM web component (spike-html-components); the git-tag
-              install, extension fixture, exported conformance test, CDN import-chain cost,
-              bundling (validate); measuring Firefox's flash; backdrop-click close and
-              closedby; space or type profiles beyond compact and sans (amended from serif at the
-              review stop); role tokens and new hooks; color profile values.
-Door          one-way for tag v0.5.0, which jsDelivr caches as immutable: the nested profile
-              keys, JS export keys, the <theme-menu> name, the --open command, the registry's
-              global store shape, and the storage key freeze with it (v0.4.0 keeps its flat
-              keys). The storage key becomes shared state for readers on an origin, so renaming
-              it later drops saved choices. Two-way otherwise.
-Release       v0.5.0
+Out of scope  leader and activator modes (removed at the review stop); per-binding remapping;
+              a page setting the wait; a shipped sequence-pending indicator
+              (an outside module builds it through 9a); bindings in shadow roots (spike-html-components); section
+              tree and reading progress (spike-html-hosting); the Keyboard Map API; focusgroup
+              for the menu; verifying JAWS, Narrator, VoiceOver; layouts beyond US and one
+              non-Latin, tested; Firefox and Safari, tested; validate's items.
+Door          one-way for tag v0.6.0: exports ./keys, ./keys/grammar, ./keys/help; the grammar
+              and its @github/hotkey differences; register()'s signature and remover; the
+              matching, sequence, prefix, dropped-press, and first-wins rules; the 1500 ms
+              default wait; Escape releasing a field; the surface tokens --bg, --bg-1, --bg-2
+              and their order (--bg-0 removed); data-keys and data-keys-list; keys owning aria-keyshortcuts on bound elements; the keys-fire and
+              keys-sequence events and their details; the store key and
+              shape; storage key spike-html-design.keys and its JSON (renaming drops readers'
+              settings); preferences.js without T. Two-way: specimen bindings, help wording.
+Release       v0.6.0
+
+## Progress
 
 ## Decisions
 
@@ -473,7 +490,8 @@ Release       v0.5.0
   color: every text token (--fg, --fg-2, --fg-3) and every hue against every surface (--bg,
   --bg-2, --border, --border-2, --border-3), in each scheme. Surfaces get no ratio of their own.
   Amends behavior 15; rejected grading surfaces against --bg with text thresholds. From profiles
-  the surfaces are --bg-0, --bg, --bg-2, --border, and --border-2.
+  the surfaces are --bg-0, --bg, --bg-2, --border, and --border-2. From keys they are --bg,
+  --bg-1, --bg-2, --border, and --border-2 (keys session-brief redirect).
 - facets (BUILD, architect): display tests are framed by aspect ratio, not by any one monitor:
   21:9, 16:9, 16:10, 4:3, 1:1, and their portrait mirrors down to 9:21, each at a small and a
   large size. Amends behavior 7's "including 3440×1440".
@@ -568,9 +586,11 @@ Release       v0.5.0
 - plan profiles: inline code is a --bg-2 chip in elements, text through --code-color with fallback
   --fg. Superseded by profiles review stop 1: green text, no chip.
 - plan profiles: --bg-2 steps toward the text in both schemes (lighter in dark).
-- plan profiles: pane token --bg-0, darker than --bg in both schemes.
+- plan profiles: pane token --bg-0, darker than --bg in both schemes. Superseded by the keys
+  session-brief redirect: --bg-0 is gone, and --bg-1 is one step from --bg toward the text.
 - plan profiles: Flexoki's ladder shifts one step so the pane is distinct; supersedes the Flexoki
-  tiers confirmed at the facets review stop.
+  tiers confirmed at the facets review stop. Superseded by the keys session-brief redirect: with
+  no pane, dark's --bg is black again and --bg-1 base-950; light keeps paper, base-50, base-100.
 - plan profiles: two border steps: --border (dividers, containers, hover fills) and --border-2
   (control boundaries, replacing --border-3); rejected keeping an unread middle step.
 - plan profiles: controls take a colored border on hover only; active and focus keep their
@@ -626,7 +646,8 @@ Release       v0.5.0
   `dialog > :is(form, menu, footer):last-child:not(:first-child)` in the elements layer, so
   every consumer's `method="dialog"` form gets the space.
 - profiles BUILD: Everforest pinned at v0.3.0; its `--border` is bg3 light (bg2 light equals
-  bg_dim, the pane) and bg2 dark. Its magenta is its purple, which fills the ANSI magenta slots.
+  bg_dim, the pane; from keys bg_dim is light's --bg-2) and bg2 dark. Its magenta is its purple,
+  which fills the ANSI magenta slots.
 - profiles BUILD: Primer pinned at github-vscode-theme v6.3.5, resolving @primer/primitives 7.10.0
   with the theme's src/colors.js overrides; every new hex was checked against upstream, 64 of 64.
 - profiles BUILD: the specimen's banners are `--text-2xl`, `--text-xl`, and `--text-l`, since
@@ -789,6 +810,177 @@ Release       v0.5.0
 - preferences SHIP (architect): accepted the session brief and the JS budgets (registry 1,200,
   preferences 3,800, theme-menu 8,500, register 1,450, register-full 1,550 B brotli), "fine for
   the spike"; size is to be revisited with the holistic client strategy. v0.5.0 releases.
+- plan keys: currency was current on main before round 1 (`mise run currency` printed nothing).
+- plan keys: the package binds no shortcuts; the specimen binds T, ?, j, k, and g through the API,
+  and evidence 7 is restated so (architect: keys is purely the shortcut API).
+- plan keys: the ? help dialog is a native <dialog> the page places, opened by the built-in
+  show-modal command from a visible button; keys fills a marked list in it.
+- plan keys: <theme-menu> drops its own T listener at v0.6.0; one owner per key. v0.5.0 keeps its T.
+- plan keys: one binding store per page at globalThis[Symbol.for("spike-html-design.keys")], one
+  document listener; its shape frozen per tag.
+- plan keys: keys loads as a plain module script, not render-blocking.
+- plan keys (research redirect, architect): before round 2, the session researched
+  aria-keyshortcuts and current shortcut practice. aria-keyshortcuts only declares (UAs must not
+  act on it), names physical keys, folds case, and has no sequences; NVDA and JAWS browse mode
+  trap single characters (t, k, g, j). Supersedes round 1's "the element carrying
+  aria-keyshortcuts is the binding": the binding is a behavior attribute in @github/hotkey's
+  grammar (the precedent, architect), and keys writes aria-keyshortcuts from it.
+- plan keys (architect): keys is a module family supporting raw keys, leader chords, and an
+  activator combination; the architect hasn't chosen a convention, so the library supports all
+  three. Supersedes round 1's "no leader key or sequences in v0.6.0". Superseded in part by the
+  keys review stop: the library keeps sequences and combinations but no modes.
+- plan keys: both per-binding strings and one activation mode: bare bindings follow the mode;
+  strings spelling out a sequence or combination are used as written. Answers the "global or
+  encapsulated mode" pending question. Superseded by the keys review stop: no mode.
+- plan keys: the attribute is data-keys, not data-hotkey: bare keys and caps lock differ from
+  @github/hotkey, so a shared name would promise compatibility that isn't there.
+- plan keys: a letter without Shift matches either case; "Shift+T" requires Shift. A symbol is
+  written as the character ("?"), Shift ignored; rejected @github/hotkey's "Shift+?".
+- plan keys: matching by event.key; with Alt held letters and digits match by event.code
+  (Option and AltGr change the character); non-ASCII letters fall back to event.code. Rejected
+  @github/hotkey's Option-symbol table.
+- plan keys (architect): the default leader is g ("g for goto"; h, j, k, l stay free for
+  navigation). Rejected comma, Space (takes scrolling), backslash (AltGr on German and French).
+  Superseded by the keys review stop: no leader.
+- plan keys: the default activator is Alt (Option): the one modifier whose browser shortcuts a
+  page can cancel everywhere, and NVDA browse mode passes it. Rejected Meta (window manager,
+  Omarchy), Control (Ctrl+T/W/N reserved), Alt+Shift (Firefox accesskey, layout switch).
+  Superseded by the keys review stop: no activator.
+- plan keys: sequence wait 1500 ms (@github/hotkey); the reader can choose 1000, 1500, 3000, or
+  5000 ms (architect).
+- plan keys: a prefix conflict ("g" and "g c") waits, then runs the shorter (vim); rejected
+  mousetrap's longest-wins and @github/hotkey's replace.
+- plan keys (architect): a press that doesn't continue a sequence is dropped, as @github/hotkey
+  does; rejected retrying it as a fresh press.
+- plan keys: every repeat is ignored; under an open modal only bindings inside it are active
+  and register() bindings pause; disabled, [inert], and hidden elements are skipped; the first
+  active binding wins (elements in document order, then register() order).
+- plan keys: register(keys, label, handler) returns its remover; no unregister export.
+- plan keys: the off switch (on by default) turns off character-key shortcuts only (raw and
+  leader), as WCAG 2.1.4 covers; combinations stay on. Rows stay listed, marked inactive. The
+  keys review stop drops leader; the switch covers single characters and chords of them.
+- plan keys: three modules: grammar (no DOM), runtime, and a help module loaded on the dialog's
+  first open. Exports ./keys, ./keys/grammar, ./keys/help; each its own budget.
+- plan keys: help rows are buttons that close the dialog and run the binding, so every binding
+  has a visible control; a fixed screen-reader pass-through note ships in the help module; the
+  reader's settings live in the help dialog, not the theme menu.
+- plan keys: labels from aria-label, else text without kbd, else register()'s label.
+- plan keys: the page sets its default mode with <html data-keys-mode>; default raw; the reader
+  can override the mode, leader (g, comma, backslash, Space), activator (Alt, Control, Meta,
+  Alt+Shift), and wait. A page sets only the mode (consistency across an origin, WCAG 3.2.3).
+  Superseded by the keys review stop: no data-keys-mode; the reader sets the off switch and the
+  wait.
+- plan keys: the help dialog shows the current mode's keys only, as sibling kbd with "+" and
+  "then"; rejected nested kbd (a key drawn inside a key). From the keys review stop it shows
+  each binding's keys as written.
+- plan keys: keys writes aria-keyshortcuts from the binding in effect, declares a symbol by its
+  US physical key ("Shift+/"), declares nothing for a sequence, and removes it while the off
+  switch covers the binding.
+- plan keys (architect): no sequence-pending indicator ships; "the module should be extensible
+  to external contributions that enable such features": the runtime dispatches keys-fire
+  (cancelable) and keys-sequence events, and a fixture builds the indicator from outside.
+- plan keys: names: Symbol.for("spike-html-design.keys"), localStorage spike-html-design.keys
+  holding only changed settings as JSON; attributes data-keys, data-keys-list, data-keys-mode.
+  The keys review stop drops data-keys-mode.
+- plan keys: the specimen states no mode; j and k move focus through all 31 sections with an id
+  (tabindex="-1"); g goes to the top (g g in leader mode). A review stop follows slice 6. The
+  keys review stop supersedes the mode clauses, and keys BUILD corrects 31 to 19.
+- plan keys: assumed: bare means one press with no modifier but Shift; register() throws a
+  TypeError on a malformed string, and a malformed data-keys binds nothing and warns once; keys
+  is silent in fields even for combinations; presses continuing a sequence are marked handled.
+- keys BUILD: the ./keys and ./keys/grammar exports moved into slice 2 with provisional budgets
+  (8,300 and 4,250 B brotli), since the pinned test requires every tracked module to be an
+  export; slice 7 sets the final figures, approved at the session brief.
+- keys BUILD: the store is { registered, wait, listening }; the first copy installs one
+  bubble-phase document listener, so a page handler can prevent a key first.
+- keys BUILD: a press that doesn't continue a pending sequence drops it, even when a shorter
+  binding ("g" beside "g c") was waiting; lone modifier presses are ignored, so Shift on the way
+  to a "g Shift+T" doesn't drop it.
+- keys BUILD: a register() handler receives the keys-fire event; keys-sequence goes out only when
+  a press leaves a longer binding pending.
+- keys BUILD: settings() and changeSettings(change) are the runtime's exports for the help
+  module; a written mode, raw included, stays stored until set to null, so a reader can choose
+  raw on a page that defaults to leader. store.wait is the package default; the stored wait wins.
+  The mode clause is superseded by the keys review stop: settings() is { enabled, wait }.
+- keys BUILD: the off switch covers an alternative only when every press is a single character
+  with no Control, Alt, or Meta (Space included, so Space-leader chords are covered); named keys
+  like Escape stay on. The keys review stop drops leader; Space still counts as a character.
+- keys BUILD: keys removes the aria-keyshortcuts it wrote when data-keys is removed, and never
+  touches an element that never carried data-keys. The provisional keys.js budget rose to 10,550 B
+  (entry 9,335 B brotli with the grammar).
+- keys BUILD: inside the open theme menu, T stays the menu's own key (Save keeps its hand-written
+  aria-keyshortcuts="T"); data-keys on Save can't fire, since focus sits on a radio (a field), and
+  the menu stops T at the dialog, so one press acts once. Plain T saves in every mode, as a
+  focused component's key outside the off switch. theme-menu.js's accept() export is removed.
+  "In every mode" is superseded by the keys review stop: there are no modes.
+- keys BUILD: Shift+T no longer opens the menu: "t" matches either case with Shift up (caps lock
+  works); v0.5.0 allowed Shift.
+- keys BUILD: keys.js exports bindings(dialog) for the help module; only the listening copy loads
+  keys-help.js, on the first beforetoggle of a dialog holding [data-keys-list], and fills it
+  synchronously on later opens. A row's run() dispatches no keys-fire (no key was pressed).
+- keys BUILD: labels drop kbd and the text between sibling kbd ("then", "+"); a field with no text
+  takes its <label>'s text; an unlabeled binding shows its keys. A row the off switch covers gets
+  data-keys-off and a visible "off", not aria-disabled, since its button still works.
+- keys BUILD: the theme menu ignores repeated T and Escape, so holding the T that opened it doesn't
+  save it; held move keys still repeat. Provisional keys-help budget 15,100 B (entry 13,338 B).
+- keys BUILD: j and k step the specimen's 19 sections with an id (31 <section>s, 12 cells without
+  ids; corrects the plan's "31"), from the innermost section holding focus, else from the
+  viewport's top edge; no wrap. The specimen's bindings live in specimen.js (external, so the
+  pinned page's markup normalizes); slice 8 adds it to the pinned page's mocked files and the pin
+  check. From file:// the native Help button still opens the dialog, with fallback text.
+- keys review stop (architect): simplify: raw is the only convention; chords and combinations are
+  written into each binding ("g c", "Mod+k"). Leader and activator modes, data-keys-mode, and the
+  reader's mode, leader, and activator settings are removed; the help dialog "looks really
+  great" and the shortcuts' behavior is kept. Supersedes plan keys' activation-mode, default
+  leader (g) and activator (Alt), page-mode, and specimen-convention lines. Accepted cost:
+  screen-reader users in browse mode rely on the help rows and the pass-through note, and the
+  off switch is the only WCAG 2.1.4 route (G217 suffices).
+- keys review stop (architect): the reader's wait setting stays (1000, 1500, 3000, 5000 ms); the
+  storage shape is {enabled?, wait?}, changed settings only, under spike-html-design.keys.
+- keys review stop 2 (architect): accepted slice 6b, one convention with written chords and
+  combinations, on the served workbench.
+- keys BUILD: final keys budgets, totals plus about 13% rounded up to the hundred: keys.js 10,300
+  (9,097), keys-grammar.js 3,500 (3,066), keys-help.js 13,200 (11,668), for approval at the session
+  brief. Comments are 53–56% of the keys modules' brotli size (the keys.js entry is 4,117 B
+  without them), measured at slice 7; left as written, for the holistic size strategy.
+- keys spec review: a failed keys-help.js import warns at each open and leaves the dialog as the
+  page wrote it, its Close working; the next open imports again, but chromium keeps the failed
+  module in the document's module map, so a reload recovers (10f59ad, 6f87e44).
+- keys editor: after the spec review fixes and the editor's doc-comment edits, the entries are
+  keys.js 9,275 B, keys-grammar.js 3,066 B, and keys-help.js 11,834 B brotli; the budgets above
+  leave headroom of about 11.1%, 14.2%, and 11.5% of each size. BUDGETS is unchanged.
+  Superseded by the redirect's sizes below.
+- keys: notes outside the task: every `mise run check` leaves its headless chromium profile, about
+  133 MB, at `/tmp/.<hex>-00000000.bun-chrome`, one per run; 428 of them (9.7 GB) filled /tmp and
+  blocked the check this session. The harness should remove its profile; not fixed here.
+- keys session-brief redirect (architect): Escape releases a field outside an open modal, when no
+  other listener handled it; only fields, so a j/k reading position survives; inside an open
+  modal the dialog keeps Escape; the help dialog lists it as a fixed row outside the off switch.
+- keys session-brief redirect (architect): --bg is the base background and surfaces on top step
+  toward the text, indicating elevation: lightest to darkest in light schemes, darkest to
+  lightest in dark. Flexoki light: paper, base-50, base-100. Rules keep reading --bg; the dialog
+  and theme menu panel read --bg-1. No alias for --bg-0 (each tag freezes its own names).
+  Supersedes the color contract's "--bg-0 the pane, darker than the page in both schemes".
+- keys session-brief redirect (architect concurred): Everforest light takes lightness order (bg0,
+  bg1, bg_dim), since bg1 is lighter than bg_dim; values stay upstream's, only the steps move.
+- keys BUILD (slice 9): Escape blurs without preventDefault, so a field's own Escape (search's
+  clear) still runs, and only while the field still holds focus; the help dialog's Esc row is a
+  plain fixed row (data-keys-fixed), and the "no shortcuts" paragraph is gone since the table
+  always has that row.
+- keys BUILD (slice 10): the theme menu is a native dialog, so it takes --bg-1 from
+  :where(dialog); its sheet's one var(--bg) is the preview, a sample page, and stays. The order
+  check reads chromium's resolved colors per profile and scheme and requires --bg-2 short of the
+  text. --bg-1 leaves the retired-names list; --bg-0 joins a dropped-names guard.
+- keys review stop 3 (architect): accepted the surfaces and the Escape release on the served
+  workbench.
+- keys editor (redirect): after slices 9 and 10 and the standards fixes (8583349, 503447c), the
+  entries are keys.js 9,661 of 10,300, keys-grammar.js 3,066 of 3,500, keys-help.js 12,351 of
+  13,200, baseline.css 13,657 of 14,000, and full.css 17,533 of 18,000 B brotli. BUDGETS is
+  unchanged.
+- keys SHIP (architect): accepted the session brief and the keys budgets (keys.js 10,300,
+  keys-grammar.js 3,500, keys-help.js 13,200 B brotli); budgets mean little until later spikes
+  settle the build process and how the web infrastructure is structured and served. v0.6.0
+  releases.
 
 ## Pending edits
 
@@ -796,9 +988,11 @@ Release       v0.5.0
   faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
   replaces the layers and themes edits to "Style baseline", "Palette", and "Themes"). From
   profiles it covers the sixteen-token color interface, `data-palette` and `data-scheme` scopes
-  on any element, the five color profiles, the hooks (`--interaction-color`, `--code-color`,
+  on any element, the four color profiles, the hooks (`--interaction-color`, `--code-color`,
   `--kbd-color`, `--button-color`, `--table-stripe`), and the lean and full entries with their
-  enforced brotli budgets.
+  enforced brotli budgets. From keys it describes the surfaces: --bg is the base, --bg-1 and
+  --bg-2 step toward the text (lightest to darkest in light, darkest to lightest in dark), and
+  dialogs sit on --bg-1.
 - coordinator · roadmap.toml, preferences summary: gains a second space and a second type
   profile, and the data-space and data-type scopes (plan profiles).
 - coordinator · roadmap.toml, keys summary: drop "plus key-hint styling"; keys is the
@@ -810,7 +1004,19 @@ Release       v0.5.0
   data-type scopes (plan preferences; supersedes the plan profiles edit above).
 - coordinator · roadmap.toml, keys summary: keys.js is purely the shortcut API, binding specific
   shortcuts a higher-level concern; capture the question of an optional leader key, with a
-  global mode (no leader) and an encapsulated mode (leader chords) (plan preferences).
+  global mode (no leader) and an encapsulated mode (leader chords) (plan preferences). The
+  leader question is superseded by the keys edit below.
 - coordinator · html-artifacts.md, "Build": a page's CSS works the same from file://, but
   chromium blocks relative ES module scripts there, so a file:// page loads the modules from
   jsDelivr (CORS); an untagged working-tree page has no modules from file:// (preferences).
+- coordinator · html-artifacts.md, "Keyboard": rewrite: keys is a module family (grammar,
+  runtime, help) binding keys, chords, and combinations as written through a data-keys
+  behavior attribute, writing aria-keyshortcuts from it; the package binds no
+  shortcuts; the reader's off switch and settings; Escape in a field, outside an open modal,
+  blurs it so shortcuts work again; key-hint styling stays with elements (keys).
+- coordinator · roadmap.toml, keys summary: names the module family and data-keys with written
+  chords and combinations; the leader-key question was tried and dropped at the keys review
+  stop (supersedes the plan preferences keys edit's leader question) (keys).
+- coordinator · html-artifacts.md, "Answers · experiment.html": validate records that v0.5.0's
+  <theme-menu> binds T with no way to turn it off, failing WCAG 2.1.4 (Level A); the tag is
+  immutable, and v0.6.0 moves T to keys, whose off switch covers it (keys).

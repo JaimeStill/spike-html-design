@@ -7,13 +7,17 @@ const root = dirname(import.meta.dir);
 
 // MODULES are the package's JS entries, each to the modules it statically imports, depth first,
 // each once. theme-menu.js is absent from preferences.js's: preferences.js loads it with a
-// dynamic import() when the menu first opens, so it is fetched on demand, not with preferences.js.
+// dynamic import() when the menu first opens, so it is fetched on demand, not with preferences.js;
+// keys-help.js is absent from keys.js's the same way.
 const MODULES = {
   "modules/registry.js": [],
   "modules/preferences.js": ["modules/registry.js"],
   "modules/theme-menu.js": ["modules/preferences.js", "modules/registry.js"],
   "modules/register.js": ["modules/registry.js"],
   "modules/register-full.js": ["modules/registry.js"],
+  "modules/keys.js": ["modules/keys-grammar.js"],
+  "modules/keys-grammar.js": [],
+  "modules/keys-help.js": ["modules/keys.js", "modules/keys-grammar.js"],
 };
 
 // FIXTURE is a one-entry package, entry.css importing part.css, that the budget tests audit

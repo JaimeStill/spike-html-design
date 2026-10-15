@@ -21,12 +21,12 @@ export const COLOR_PROFILES = {
     version: null,
     variants: ["light", "dark"],
     tokens: {
-      "--bg-0": [
-        ["base-50", "#f2f0e5"],
-        ["black", "#100f0f"],
-      ],
       "--bg": [
         ["paper", "#fffcf0"],
+        ["black", "#100f0f"],
+      ],
+      "--bg-1": [
+        ["base-50", "#f2f0e5"],
         ["base-950", "#1c1b1a"],
       ],
       "--bg-2": [
@@ -96,12 +96,12 @@ export const COLOR_PROFILES = {
     version: "v6.3.5",
     variants: ["GitHub Light Default", "GitHub Dark Dimmed"],
     tokens: {
-      "--bg-0": [
-        ["canvas.inset", "#f6f8fa"],
-        ["canvas.inset", "#1c2128"],
-      ],
       "--bg": [
         ["canvas.default", "#ffffff"],
+        ["canvas.inset", "#1c2128"],
+      ],
+      "--bg-1": [
+        ["canvas.inset", "#f6f8fa"],
         ["canvas.default", "#22272e"],
       ],
       "--bg-2": [
@@ -169,12 +169,12 @@ export const COLOR_PROFILES = {
     version: "v1.8.0",
     variants: ["latte", "mocha"],
     tokens: {
-      "--bg-0": [
-        ["mantle", "#e6e9ef"],
-        ["mantle", "#181825"],
-      ],
       "--bg": [
         ["base", "#eff1f5"],
+        ["mantle", "#181825"],
+      ],
+      "--bg-1": [
+        ["mantle", "#e6e9ef"],
         ["base", "#1e1e2e"],
       ],
       "--bg-2": [
@@ -242,16 +242,16 @@ export const COLOR_PROFILES = {
     version: "v0.3.0",
     variants: ["hard", "hard"],
     tokens: {
-      "--bg-0": [
-        ["bg_dim", "#f2efdf"],
-        ["bg_dim", "#1e2326"],
-      ],
       "--bg": [
         ["bg0", "#fffbef"],
+        ["bg_dim", "#1e2326"],
+      ],
+      "--bg-1": [
+        ["bg1", "#f8f5e4"],
         ["bg0", "#272e33"],
       ],
       "--bg-2": [
-        ["bg1", "#f8f5e4"],
+        ["bg_dim", "#f2efdf"],
         ["bg1", "#2e383c"],
       ],
       "--border": [
