@@ -1,6 +1,6 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
+- **State:** building
 - **Task:** keys
 - **Branch:** keys
 
@@ -124,6 +124,20 @@ Behaviors
       store; the help dialog, settings, and storage; T's move; evidence 7 restated; the
       review stop's finding that bare keys plus written chords and combinations suffice.
 
+  Session-brief redirect (architect)
+  18. Escape releases a field: with focus in a field (input, textarea, select, contenteditable)
+      outside an open modal, an Escape no other listener handled blurs it, so shortcuts work
+      again; inside an open modal the dialog keeps Escape (the theme menu's Cancel, the native
+      close). The help dialog lists it as a fixed row ("Esc", leave a field) with no button
+      action, outside the off switch.
+  19. Surfaces: --bg is the base; --bg-1 and --bg-2 step toward the text: lightest to darkest in
+      light schemes, darkest to lightest in dark. Light keeps today's page as --bg and today's
+      pane as --bg-1; dark takes today's pane as --bg and today's page as --bg-1; --bg-2 is
+      unchanged. --bg-0 is gone, with no alias. Rules keep reading --bg; the dialog and the
+      theme menu's panel read --bg-1 as elevated surfaces, and the specimen's panes read --bg-1.
+      A profile whose upstream swatches don't fall in that order takes them in lightness order
+      (Everforest light: bg0, bg1, bg_dim). The check holds every profile to the order.
+
 Test seams    the harness page in headless chromium, read for focus, attributes, storage,
               dialog state, and scroll position after real presses (view.press) or CDP
               Input.dispatchKeyEvent with any key, code, and modifier, under intercepted
@@ -153,6 +167,11 @@ Slices
   7. Package and budgets: three exports, budgets, consumer test. Demo: size report lists them.
   8. Docs and pin: README, STANDARDS.md, goal record, v0.6.0 pinned page, pin check. Demo:
      the pinned page's keys and help dialog work from file:// under interception.
+  9. Escape releases a field (behavior 18). Demo: Esc in the specimen's field restores j.
+  10. Surfaces (behavior 19): profiles, contract, rules, specimen, probes, contrast, docs.
+      Demo: the served workbench in each profile and scheme.
+  ── REVIEW STOP 3 (after slice 10): the architect views the surfaces on the served workbench
+     before the reviews run again ──
 
 Out of scope  leader and activator modes (removed at the review stop); per-binding remapping;
               a page setting the wait; a shipped sequence-pending indicator
@@ -163,7 +182,8 @@ Out of scope  leader and activator modes (removed at the review stop); per-bindi
 Door          one-way for tag v0.6.0: exports ./keys, ./keys/grammar, ./keys/help; the grammar
               and its @github/hotkey differences; register()'s signature and remover; the
               matching, sequence, prefix, dropped-press, and first-wins rules; the 1500 ms
-              default wait; data-keys and data-keys-list; keys owning aria-keyshortcuts on bound elements; the keys-fire and
+              default wait; Escape releasing a field; the surface tokens --bg, --bg-1, --bg-2
+              and their order (--bg-0 removed); data-keys and data-keys-list; keys owning aria-keyshortcuts on bound elements; the keys-fire and
               keys-sequence events and their details; the store key and
               shape; storage key spike-html-design.keys and its JSON (renaming drops readers'
               settings); preferences.js without T. Two-way: specimen bindings, help wording.
@@ -171,7 +191,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done
+slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slices 9–10 —
 
 ## Decisions
 
@@ -930,6 +950,16 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - keys: notes outside the task: every `mise run check` leaves its headless chromium profile, about
   133 MB, at `/tmp/.<hex>-00000000.bun-chrome`, one per run; 428 of them (9.7 GB) filled /tmp and
   blocked the check this session. The harness should remove its profile; not fixed here.
+- keys session-brief redirect (architect): Escape releases a field outside an open modal, when no
+  other listener handled it; only fields, so a j/k reading position survives; inside an open
+  modal the dialog keeps Escape; the help dialog lists it as a fixed row outside the off switch.
+- keys session-brief redirect (architect): --bg is the base background and surfaces on top step
+  toward the text, indicating elevation: lightest to darkest in light schemes, darkest to
+  lightest in dark. Flexoki light: paper, base-50, base-100. Rules keep reading --bg; the dialog
+  and theme menu panel read --bg-1. No alias for --bg-0 (each tag freezes its own names).
+  Supersedes the color contract's "--bg-0 the pane, darker than the page in both schemes".
+- keys session-brief redirect: Everforest light's upstream swatches take lightness order (bg0,
+  bg1, bg_dim), since bg1 is lighter than bg_dim; values stay upstream's, only the steps move.
 
 ## Pending edits
 
