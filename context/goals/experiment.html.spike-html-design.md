@@ -171,7 +171,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986) · review stop held, 6b committed, second look pending · standards — · spec — · editor —
+slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986) · review stop held, 6b committed, second look accepted · standards — · spec — · editor —
 
 ## Decisions
 
@@ -904,6 +904,8 @@ slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   off switch is the only WCAG 2.1.4 route (G217 suffices).
 - keys review stop (architect): the reader's wait setting stays (1000, 1500, 3000, 5000 ms); the
   storage shape is {enabled?, wait?}, changed settings only, under spike-html-design.keys.
+- keys review stop 2 (architect): accepted slice 6b, one convention with written chords and
+  combinations, on the served workbench.
 
 ## Pending edits
 
