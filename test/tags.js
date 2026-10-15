@@ -50,3 +50,16 @@ export function modules(tag) {
     .split("\n")
     .filter((path) => /^modules\/[^/]+\.js$/.test(path));
 }
+
+// pageScripts returns the specimen's own scripts tag publishes, as repository paths: every .js
+// file at the tag's root, specimen.js from v0.6.0. They are no package export, but jsDelivr
+// serves them from the tag like any other file, and the tag's pinned page loads them from there.
+// A tag cut before v0.6.0 holds none and returns none.
+export function pageScripts(tag) {
+  const listed = git("ls-tree", "--name-only", `${tag}`);
+  if (!listed.ok) throw new Error(`tags: cannot list the files at ${tag}`);
+  return listed.stdout
+    .toString()
+    .split("\n")
+    .filter((path) => path.endsWith(".js"));
+}

@@ -23,7 +23,7 @@ description = "Report every mise tool and workflow action pin behind its latest;
 run = "scripts/currency.sh"
 
 [tasks.pin]
-description = "Check a published tag live: jsDelivr serves every stylesheet and module file it publishes immutable and byte-equal, and its pinned page renders the same, and its menu works, from file://, a local server, and GitHub Pages; reads the network, writes nothing"
+description = "Check a published tag live: jsDelivr serves every stylesheet, module, and page script file it publishes immutable and byte-equal, and its pinned page renders the same, and its menu and keys work, from file://, a local server, and GitHub Pages; reads the network, writes nothing"
 usage = 'arg "<tag>" help="The published tag to check, as in v0.1.0"'
 run = 'bun "$MISE_PROJECT_ROOT/scripts/pin.js" "$usage_tag"'
 

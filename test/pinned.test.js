@@ -5,7 +5,8 @@ import { basename, dirname, join } from "node:path";
 import { fileUrl, openPage, serve } from "./harness.js";
 import { ENTRIES, layersLoaded, loaded } from "./layers.js";
 import { applyFromMenu } from "./menu.js";
-import { git, modules, show, stylesheets, tagExists } from "./tags.js";
+import { driveKeys } from "./shortcuts.js";
+import { git, modules, pageScripts, show, stylesheets, tagExists } from "./tags.js";
 
 const root = dirname(import.meta.dir);
 const CDN = "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design";
@@ -61,15 +62,30 @@ const TREE_MODULES = Object.values(
   .map((path) => path.replace(/^\.\//, ""))
   .sort();
 
-// reference returns the directory holding the specimen, stylesheet, and module files a page
-// pinned to tag is compared against, and those stylesheet and module files. Once the tag is cut
+// TREE_PAGE_SCRIPTS are the specimen's own scripts the working tree will publish when cut as a
+// tag: every external script the specimen loads from outside modules/, specimen.js from v0.6.0.
+// They are no package export, but jsDelivr serves them from the tag, and the pinned page loads
+// them from there.
+const TREE_PAGE_SCRIPTS = [
+  ...readFileSync(join(root, "index.html"), "utf8").matchAll(/<script\s[^>]*\ssrc="\.\/([^"]+)"/g),
+]
+  .map(([, path]) => path)
+  .filter((path) => !path.startsWith("modules/"))
+  .sort();
+
+// reference returns the directory holding the specimen, stylesheet, module, and page script files
+// a page pinned to tag is compared against, and those stylesheet, module, and page script files. Once the tag is cut
 // they are the tag's own, read with git show, so later changes to the working tree's tokens,
 // layers, modules, or specimen never reach a pinned page's test; a tag cut before v0.5.0 has no
-// modules. Until then they are the working tree's, since the tag is cut from it after merge.
+// modules, and one cut before v0.6.0 no page scripts. Until then they are the working tree's, since the tag is cut from it after merge.
 function reference(tag) {
-  if (!tagExists(tag)) return { dir: root, files: [...TREE_STYLESHEETS, ...TREE_MODULES] };
+  if (!tagExists(tag))
+    return {
+      dir: root,
+      files: [...TREE_STYLESHEETS, ...TREE_MODULES, ...TREE_PAGE_SCRIPTS],
+    };
   const dir = join(scratch, tag);
-  const files = [...stylesheets(tag), ...modules(tag)];
+  const files = [...stylesheets(tag), ...modules(tag), ...pageScripts(tag)];
   for (const path of ["index.html", ...files]) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), show(tag, path));
@@ -121,6 +137,25 @@ test("each cut tag before v0.5.0 publishes no modules, so its checks are the sty
   expect(cut.map((tag) => [tag, modules(tag)])).toEqual(cut.map((tag) => [tag, []]));
 });
 
+test("the working tree's page script list is every .js file at its root, specimen.js", () => {
+  // What a tag publishes beside its modules is every tracked .js file at its root, as
+  // pageScripts() lists a cut tag's; a root script the specimen never loads would be missed by
+  // the list above.
+  const tracked = git("ls-files", "*.js")
+    .stdout.toString()
+    .split("\n")
+    .filter((path) => path && !path.includes("/"));
+  expect(TREE_PAGE_SCRIPTS).toEqual(tracked.sort());
+  expect(TREE_PAGE_SCRIPTS).toEqual(["specimen.js"]);
+});
+
+test("each cut tag before v0.6.0 publishes no page scripts", () => {
+  // pageScripts() reads a cut tag's list, as modules() does; the pinned test and the live pin
+  // check add specimen.js's request and the keys' test only for a tag that holds it.
+  const cut = ["v0.1.0", "v0.2.0", "v0.3.0", "v0.4.0", "v0.5.0"].filter(tagExists);
+  expect(cut.map((tag) => [tag, pageScripts(tag)])).toEqual(cut.map((tag) => [tag, []]));
+});
+
 test("there is at least one pinned page", () => {
   expect(PINNED.length).toBeGreaterThan(0);
 });
@@ -136,10 +171,13 @@ for (const name of PINNED) {
   // From v0.5.0 the specimen carries the theming menu, and its pinned page loads the menu's
   // modules from jsDelivr beside the entry.
   const menu = readFileSync(specimenPath, "utf8").includes("<theme-menu");
+  // From v0.6.0 the specimen loads keys and binds T and ? with data-keys, and its pinned page
+  // loads keys and specimen.js from jsDelivr too.
+  const keyed = readFileSync(specimenPath, "utf8").includes("data-keys");
 
-  // hermetic answers every stylesheet and module file the tag publishes at its URL under the same
-  // tag, the pinned entry, the files its imports resolve to, and the modules the page loads among
-  // them, from the reference files, with Access-Control-Allow-Origin as jsDelivr sends it, and
+  // hermetic answers every stylesheet, module, and page script file the tag publishes at its URL under the same
+  // tag, the pinned entry, the files its imports resolve to, and the modules and specimen.js the page
+  // loads among them, from the reference files, with Access-Control-Allow-Origin as jsDelivr sends it, and
   // answers every other https:// request 404 from a file that does not exist, so no test of the
   // pinned page reaches the network. The harness takes the first matching prefix.
   const hermetic = {
@@ -205,6 +243,28 @@ for (const name of PINNED) {
             repainted: true,
           });
           expect(result.chosen).not.toBe("flexoki");
+        }
+      });
+    }
+
+    if (keyed) {
+      // The working-tree specimen has no keys from file://, as it has no menu; the pinned page's
+      // keys.js and specimen.js come from jsDelivr, and specimen.js's relative import of keys.js
+      // resolves to the page's own pinned URL, so the page holds one keys with every binding.
+      test("its keys open the menu and the help dialog and move focus, from file:// and a local server", async () => {
+        for (const url of [fileUrl(pinnedPath), `${server.url}pinned/${name}`]) {
+          const page = await open(url, { scheme: "light", intercept: hermetic });
+          expect(await driveKeys(page)).toEqual({
+            menu: true,
+            help: [
+              ["T", "Theme"],
+              ["?", "Help"],
+              ["J", "Next section"],
+              ["K", "Previous section"],
+              ["G", "Top"],
+            ],
+            focused: "tokens",
+          });
         }
       });
     }
