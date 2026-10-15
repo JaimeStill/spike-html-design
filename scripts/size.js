@@ -6,7 +6,8 @@
 // followed through every module they reach, each file once. A dynamic import() is fetched later,
 // on demand, so it counts toward the module it loads, not the one that calls it: theme-menu.js,
 // which preferences.js loads when the menu first opens, is its own entry and not part of
-// preferences.js's size. Each file is fetched and compressed on its own, so the brotli total is
+// preferences.js's size, as keys-help.js, which keys.js loads when a help dialog first opens, is
+// not part of keys.js's. Each file is fetched and compressed on its own, so the brotli total is
 // the sum of each file's size, not the size of the files compressed together. Each entry has a
 // budget for that brotli total, in BUDGETS below, and the report gives each entry's budget and
 // headroom; the script exits 1 when an entry is over its budget or has none, so the check fails.
@@ -39,6 +40,7 @@ export const BUDGETS = {
   "modules/register-full.js": 1_550,
   "modules/keys.js": 10_550,
   "modules/keys-grammar.js": 4_250,
+  "modules/keys-help.js": 15_100,
 };
 
 // entries returns the package's entries, as repository paths: every target its exports map names

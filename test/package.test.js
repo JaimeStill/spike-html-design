@@ -32,6 +32,7 @@ const MODULES = {
   "./register/full": "./modules/register-full.js",
   "./keys": "./modules/keys.js",
   "./keys/grammar": "./modules/keys-grammar.js",
+  "./keys/help": "./modules/keys-help.js",
 };
 
 describe("package", () => {

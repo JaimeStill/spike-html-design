@@ -16,7 +16,9 @@
 //
 // Keys, each stopped at the dialog so no page-wide listener sees it: Up/Down and k/j move
 // between rows; Left/Right cycle a row natively, h/l cycle it the same way, wrapping; Tab is one
-// stop per row, as a radio group is; t/T saves; Escape cancels.
+// stop per row, as a radio group is; t/T saves; Escape cancels. A held key repeats a move, as a
+// native arrow does, but never Save or Cancel: a repeated t/T or Escape is stopped and does
+// nothing, so holding the T that opened the menu doesn't save it.
 //
 // T inside the menu is the menu's own key, as Escape is, not a keys.js binding: focus sits on a
 // radio, a field where keys is silent, and the menu stops T at the dialog, so a press saves once.
@@ -315,10 +317,10 @@ function onkey(element, event) {
       break;
     case "t":
     case "T":
-      close(element, true);
+      if (!event.repeat) close(element, true);
       break;
     case "Escape":
-      close(element, false);
+      if (!event.repeat) close(element, false);
       break;
     default:
       return;

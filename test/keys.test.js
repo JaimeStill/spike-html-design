@@ -778,4 +778,296 @@ describe("keys: T and the theme menu", () => {
     expect(await menuOpen(page, false)).toBe(false);
     expect(await page.evaluate("window.writes")).toBe(1);
   });
+
+  test("holding T opens the menu and its repeats save nothing; a repeated Escape cancels nothing", async () => {
+    const page = await openMenuPage();
+    await press(page, "t");
+    expect(await menuOpen(page, true)).toBe(true);
+    for (const key of ["t", "T", "Escape"]) await press(page, key, { code: key, repeat: true });
+    await sleep(page, 100);
+    expect(await menuOpen(page, false)).toBe(true);
+    expect(await page.evaluate("window.writes")).toBe(0);
+    // A held move key still repeats, as a native arrow does.
+    const section = () =>
+      page.evaluate(`document.activeElement.closest("fieldset").dataset.section`);
+    expect(await section()).toBe("color");
+    await press(page, "j", { repeat: true });
+    expect(await section()).toBe("scheme");
+    // Released and pressed again, T saves.
+    await press(page, "t");
+    expect(await menuOpen(page, false)).toBe(false);
+    expect(await page.evaluate("window.writes")).toBe(1);
+  });
+});
+
+// The help dialog: keys-help.js, which keys loads the first time a dialog holding
+// [data-keys-list] opens, fills it with the page's bindings, the reader's settings, and the
+// screen-reader note.
+describe("keys: the help dialog", () => {
+  const HELP = "keys-help.html";
+
+  // fetchedHelp resolves to whether the page has fetched keys-help.js.
+  const fetchedHelp = (page) =>
+    page.evaluate(`performance.getEntriesByType("resource")
+      .some(({ name }) => name.endsWith("/modules/keys-help.js"))`);
+
+  // filled resolves once the help dialog is open and filled, or rejects after 2 s.
+  const filled = (page) =>
+    page.evaluate(`new Promise((resolve, reject) => {
+      const end = performance.now() + 2000;
+      const poll = () => {
+        const dialog = document.getElementById("help");
+        if (dialog.open && dialog.querySelector("[data-keys-list] [data-keys-table]")) resolve(true);
+        else if (performance.now() > end) reject(new Error("help: not filled"));
+        else setTimeout(poll, 10);
+      };
+      poll();
+    })`);
+
+  // openHelp opens the dialog from its Help button, a show-modal invoker, and waits for it.
+  async function openHelp(page) {
+    await page.evaluate(`document.querySelector("button[command=show-modal]").click()`);
+    await filled(page);
+  }
+
+  // closeHelp closes the dialog from script.
+  const closeHelp = (page) => page.evaluate(`document.getElementById("help").close()`);
+
+  // rows resolves to the table's rows: each [keys, action], keys drawn with each kbd as [name]
+  // and an off row ending " off", action the row button's text.
+  const rows = (page) =>
+    page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => {
+      const [keys, action] = row.cells;
+      const drawn = [...keys.childNodes].map((node) =>
+        node.localName === "kbd" ? "[" + node.textContent + "]" : node.textContent).join("");
+      return [drawn, action.querySelector("button").textContent];
+    })`);
+
+  // choose sets one of the dialog's settings controls, as the reader would, and fires change.
+  const choose = (page, name, value) =>
+    page.evaluate(`(() => {
+      const control = document.querySelector("#help [data-keys-settings] [name=${name}]");
+      if (control.type === "checkbox") control.checked = ${JSON.stringify(value)};
+      else control.value = ${JSON.stringify(String(value))};
+      control.dispatchEvent(new Event("change", { bubbles: true }));
+    })()`);
+
+  // RAW is the fixture's rows in raw mode, with j registered after the elements.
+  const RAW = [
+    ["[?]", "Help"],
+    ["[T]", "Theme"],
+    ["[A]", "Archive the thread"],
+    ["[F]", "First"],
+    ["[G] then [C]", "Contents"],
+    ["[Control]+[K]", "Command"],
+    ["[/]", "Search"],
+    ["[J]", "Next section"],
+  ];
+
+  // registerJ registers j, and a second f the first element's f shadows.
+  const registerJ = (page) =>
+    call(
+      page,
+      `(keys.register("j", "Next section", (event) => window.log.push("j " + JSON.stringify(event.detail))),
+        keys.register("f", "Shadowed f", () => window.log.push("f registered")))`,
+    );
+
+  test("keys-help.js loads on the first open by the show-modal button, not before", async () => {
+    const page = await open(HELP);
+    await sleep(page, 100);
+    expect(await fetchedHelp(page)).toBe(false);
+    expect(
+      await page.evaluate(`document.querySelector("[data-keys-list]").childElementCount`),
+    ).toBe(0);
+    await openHelp(page);
+    expect(await fetchedHelp(page)).toBe(true);
+    expect(await page.evaluate(`document.getElementById("help").matches(":modal")`)).toBe(true);
+    expect(await rows(page)).toEqual(RAW.slice(0, -1));
+  });
+
+  test("showModal() from script, or the ? key, opens and fills it too", async () => {
+    const page = await open(HELP);
+    await page.evaluate(`document.getElementById("help").showModal()`);
+    await filled(page);
+    expect(await fetchedHelp(page)).toBe(true);
+    // Its own Close carries ? inside the modal.
+    await press(page, "?", { code: "Slash", shift: true });
+    expect(await page.evaluate(`document.getElementById("help").open`)).toBe(false);
+    await page.evaluate(`document.querySelector("[data-keys-list]").replaceChildren()`);
+    await press(page, "?", { code: "Slash", shift: true });
+    await filled(page);
+    expect(await rows(page)).toEqual(RAW.slice(0, -1));
+  });
+
+  test("lists each active binding once, as the one that fires, with its label by the rule", async () => {
+    const page = await open(HELP);
+    await registerJ(page);
+    await openHelp(page);
+    // Second F and the registered f lose to First; Disabled, Inert, Hidden, and the dialog's own
+    // Close are left out; A's label is its aria-label, Search's its <label>'s text.
+    expect(await rows(page)).toEqual(RAW);
+    // Each open lists the page as it is then.
+    await closeHelp(page);
+    await page.evaluate(`(document.querySelector("[data-keys=d]").disabled = false,
+      document.querySelector("[data-log='f first']").remove())`);
+    await openHelp(page);
+    const listed = await rows(page);
+    expect(listed).toContainEqual(["[D]", "Disabled"]);
+    expect(listed).toContainEqual(["[F]", "Second"]);
+  });
+
+  test("draws the keys of the current mode, set by the page or the reader", async () => {
+    const page = await open(HELP);
+    await openHelp(page);
+    await choose(page, "mode", "leader");
+    let listed = await rows(page);
+    expect(listed[1]).toEqual(["[G] then [T]", "Theme"]);
+    expect(listed[0]).toEqual(["[G] then [?]", "Help"]);
+    expect(listed[4]).toEqual(["[G] then [C]", "Contents"]);
+    expect(listed[5]).toEqual(["[Control]+[K]", "Command"]);
+    await choose(page, "leader", "Space");
+    expect((await rows(page))[1]).toEqual(["[Space] then [T]", "Theme"]);
+    await choose(page, "mode", "activator");
+    await choose(page, "activator", "Alt+Shift");
+    listed = await rows(page);
+    expect(listed[1]).toEqual(["[Alt]+[Shift]+[T]", "Theme"]);
+    // A symbol ignores Shift: ? is drawn as typed, with the activator's Alt alone.
+    expect(listed[0]).toEqual(["[Alt]+[?]", "Help"]);
+  });
+
+  test("in leader mode g c and g t list once each, beside the leader's own chords", async () => {
+    const page = await open(HELP);
+    await call(page, `keys.register("g", "Top", () => {})`);
+    await call(page, `keys.changeSettings({ mode: "leader" })`);
+    await openHelp(page);
+    // g is bare: in leader mode it is g g, so it doesn't shadow g c.
+    expect((await rows(page)).at(-1)).toEqual(["[G] then [G]", "Top"]);
+  });
+
+  test("a row button closes the dialog and runs its binding: click, focus, or the handler", async () => {
+    const page = await open(HELP);
+    await registerJ(page);
+    const runRow = async (action) => {
+      await openHelp(page);
+      await page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] button")]
+        .find((button) => button.textContent === ${JSON.stringify(action)}).click()`);
+      expect(await page.evaluate(`document.getElementById("help").open`)).toBe(false);
+    };
+    await runRow("Theme");
+    await runRow("Next section");
+    expect(await log(page)).toEqual([
+      "t",
+      `j ${JSON.stringify({ binding: "j", keys: [], mode: "raw", label: "Next section" })}`,
+    ]);
+    // Running a row is no key press: keys-fire is not dispatched.
+    expect(await page.evaluate("window.fired")).toEqual([]);
+    await runRow("Search");
+    expect(await page.evaluate("document.activeElement.id")).toBe("search");
+  });
+
+  test("the settings are stored through changeSettings and change what fires", async () => {
+    const page = await open(HELP);
+    await openHelp(page);
+    const shown = await page.evaluate(`(() => {
+      const fieldset = document.querySelector("#help [data-keys-settings]");
+      return {
+        legend: fieldset.querySelector("legend").textContent,
+        controls: [...fieldset.querySelectorAll("input, select")].map((el) =>
+          [el.name, el.type === "checkbox" ? el.checked : el.value,
+           el.type === "checkbox" ? null : [...el.options].map((o) => o.value)]),
+      };
+    })()`);
+    expect(shown).toEqual({
+      legend: "Settings",
+      controls: [
+        ["enabled", true, null],
+        ["mode", "raw", ["raw", "leader", "activator"]],
+        ["leader", "g", ["g", ",", "\\", "Space"]],
+        ["activator", "Alt", ["Alt", "Control", "Meta", "Alt+Shift"]],
+        // The tests' store wait, WAIT, is listed first, as the page's own.
+        ["wait", "", ["", "1000", "1500", "3000", "5000"]],
+      ],
+    });
+    expect(
+      await page.evaluate(`document.querySelector("#help [data-keys-settings]").textContent`),
+    ).toContain("Control+T, Control+W, and Control+N never reach a page");
+    await choose(page, "mode", "activator");
+    await choose(page, "activator", "Control");
+    await choose(page, "wait", 3000);
+    expect(await saved(page)).toEqual({ mode: "activator", activator: "Control", wait: 3000 });
+    await closeHelp(page);
+    await press(page, "t");
+    await press(page, "t", { ctrl: true });
+    expect(await log(page)).toEqual(["t"]);
+    // Back to a default removes it from storage.
+    await openHelp(page);
+    await choose(page, "activator", "Alt");
+    expect(await saved(page)).toEqual({ mode: "activator", wait: 3000 });
+  });
+
+  test("the off switch marks character-key rows off while combinations still fire", async () => {
+    const page = await open(HELP);
+    await openHelp(page);
+    await choose(page, "enabled", false);
+    expect(await saved(page)).toEqual({ enabled: false });
+    const offs =
+      await page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")]
+      .map((row) => [row.cells[1].textContent, row.hasAttribute("data-keys-off")])`);
+    expect(offs).toEqual([
+      ["Help", true],
+      ["Theme", true],
+      ["Archive the thread", true],
+      ["First", true],
+      ["Contents", true],
+      ["Command", false],
+      ["Search", true],
+    ]);
+    expect((await rows(page))[1]).toEqual(["[T] off", "Theme"]);
+    // An off row's button still runs its action: a click is no character-key shortcut.
+    await page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] button")]
+      .find((button) => button.textContent === "Theme").click()`);
+    expect(await log(page)).toEqual(["t"]);
+    await press(page, "t");
+    await press(page, "g");
+    await press(page, "c");
+    await press(page, "k", { ctrl: true });
+    expect(await log(page)).toEqual(["t", "Control+k"]);
+    // In activator mode the bare bindings are combinations, so they're on again.
+    await openHelp(page);
+    await choose(page, "mode", "activator");
+    expect((await rows(page))[1]).toEqual(["[Alt]+[T]", "Theme"]);
+  });
+
+  test("carries the screen-reader note", async () => {
+    const page = await open(HELP);
+    await openHelp(page);
+    const note = await page.evaluate(
+      `document.querySelector("#help [data-keys-note]").textContent`,
+    );
+    for (const text of ["NVDA+F2", "JAWS+3", "Narrator+3", "VO+Tab", "NVDA's browse mode"]) {
+      expect(note).toContain(text);
+    }
+  });
+
+  test("another tab's change shows in the dialog on the next open, and changes what fires", async () => {
+    const one = await open(HELP);
+    const two = await open(HELP);
+    await openHelp(two);
+    await closeHelp(two);
+    await openHelp(one);
+    await choose(one, "mode", "leader");
+    await choose(one, "enabled", false);
+    await sleep(two, 50);
+    await openHelp(two);
+    expect((await rows(two))[1]).toEqual(["[G] then [T] off", "Theme"]);
+    expect(
+      await two.evaluate(`[...document.querySelectorAll("#help [data-keys-settings] :is(input, select)")]
+        .map((el) => el.type === "checkbox" ? el.checked : el.value)`),
+    ).toEqual([false, "leader", "g", "Alt", ""]);
+    await closeHelp(two);
+    await press(two, "g");
+    await press(two, "t");
+    await press(two, "k", { ctrl: true });
+    expect(await log(two)).toEqual(["Control+k"]);
+  });
 });

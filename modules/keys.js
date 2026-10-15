@@ -113,6 +113,25 @@
 //                                   kept as chosen, raw included, since it overrides the page's,
 //                                   until null removes it. Nothing left removes the storage key.
 //                                   It throws a TypeError on an unknown name or invalid value.
+//   bindings(dialog)                the bindings that would be active were dialog closed, for the
+//                                   help module: the page outside dialog, under any other modal's
+//                                   scope, with dialog's own elements left out. Each is listed
+//                                   once per sequence, as the binding that fires it (first wins),
+//                                   and a binding left with no sequence is not listed. Each is
+//                                   { keys, label, element, sequences, off, run }: keys as
+//                                   written, label register()'s or null, element the bound
+//                                   element or null, sequences its parsed sequences as pressed
+//                                   in the current mode, the off switch aside; off whether the
+//                                   off switch covers every one of them; run() acts as a press
+//                                   would, clicking or focusing the element or calling the
+//                                   handler, with no keys-fire dispatched, since nothing was
+//                                   pressed. A handler run this way receives an undispatched
+//                                   keys-fire event whose detail's keys is [].
+//
+// The help dialog: a page places a native <dialog> holding an element marked data-keys-list.
+// The copy that listens loads keys-help.js, beside itself, the first time such a dialog fires
+// beforetoggle to open, however it opens (a show-modal invoker, showModal(), or show()), and
+// from then on has it fill the dialog's marked elements at each open, before the dialog shows.
 import {
   ACTIVATORS,
   DEFAULTS,
@@ -272,10 +291,13 @@ function elementBinding(el, current) {
 
 // active returns the bindings in effect, in the order the first wins: elements in document
 // order, then register()'s in registration order. A modal dialog narrows them to its elements.
-function active(current) {
-  const modal = document.querySelector(":modal");
+// With closed given, a dialog, they are those in effect were it closed: its elements are left
+// out, and it narrows nothing.
+function active(current, closed = null) {
+  const modal = [...document.querySelectorAll(":modal")].find((el) => el !== closed);
   const elements = [...document.querySelectorAll("[data-keys]")]
     .filter((el) => !modal || modal.contains(el))
+    .filter((el) => !closed?.contains(el))
     .filter((el) => !el.matches(":disabled") && !el.closest("[inert]") && el.checkVisibility())
     .map((el) => elementBinding(el, current))
     .filter(Boolean);
@@ -335,21 +357,75 @@ function end(reason) {
   sequenceEvent("end", strings, reason);
 }
 
-// fire dispatches keys-fire for a binding's matched sequence, in the mode it matched in, and,
-// unless it is cancelled, acts: it clicks or focuses the element, or calls register()'s handler.
-function fire({ binding, sequence, mode }) {
+// fireEvent returns the keys-fire event for binding, its keys sequence, the presses that fired
+// it, in mode.
+function fireEvent(binding, sequence, mode) {
   const detail = {
     binding: normalize(binding.keys, { mac }),
     keys: sequence.map(stringify),
     mode,
   };
   if (binding.entry) detail.label = binding.entry.label;
-  const target = binding.el ?? document;
-  const event = new CustomEvent("keys-fire", { bubbles: true, cancelable: true, detail });
-  if (!target.dispatchEvent(event)) return;
+  return new CustomEvent("keys-fire", { bubbles: true, cancelable: true, detail });
+}
+
+// act runs binding: it clicks or focuses the element, or calls register()'s handler with event.
+function act(binding, event) {
   if (binding.entry) binding.entry.handler(event);
   else if (isField(binding.el)) binding.el.focus();
   else binding.el.click();
+}
+
+// fire dispatches keys-fire for a binding's matched sequence, in the mode it matched in, and,
+// unless it is cancelled, acts.
+function fire({ binding, sequence, mode }) {
+  const event = fireEvent(binding, sequence, mode);
+  if ((binding.el ?? document).dispatchEvent(event)) act(binding, event);
+}
+
+export function bindings(dialog) {
+  const current = settings();
+  const seen = new Set();
+  const listed = [];
+  for (const binding of active({ ...current, enabled: true }, dialog)) {
+    const sequences = binding.alternatives.filter((sequence) => {
+      const key = stringify(sequence);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (sequences.length === 0) continue;
+    listed.push({
+      keys: binding.keys,
+      label: binding.entry?.label ?? null,
+      element: binding.el ?? null,
+      sequences,
+      off: !current.enabled && sequences.every((sequence) => sequence.every(isCharacter)),
+      run: () => act(binding, fireEvent(binding, [], current.mode)),
+    });
+  }
+  return listed;
+}
+
+// help is keys-help.js once loaded, and loading the promise of it; see "The help dialog".
+let help = null;
+let loading = null;
+
+// onbeforetoggle has the help module fill a dialog holding [data-keys-list] as it opens: at
+// once, before it shows, once the module is loaded, and on the first open when it loads.
+function onbeforetoggle(event) {
+  const dialog = event.target;
+  if (event.newState !== "open" || !(dialog instanceof HTMLDialogElement)) return;
+  if (!dialog.querySelector("[data-keys-list]")) return;
+  if (help) {
+    help.fill(dialog);
+    return;
+  }
+  loading ??= import(new URL("./keys-help.js", import.meta.url).href).then((module) => {
+    help = module;
+    return module;
+  });
+  loading.then((module) => module.fill(dialog));
 }
 
 // onkey reads the settings and the bindings in effect and matches the press against them, after
@@ -403,6 +479,8 @@ function onkey(event) {
 if (!store.listening) {
   store.listening = true;
   document.addEventListener("keydown", onkey);
+  // beforetoggle doesn't bubble, so it is heard in the capture phase.
+  document.addEventListener("beforetoggle", onbeforetoggle, true);
   declare();
   addEventListener("storage", (event) => {
     if (event.key === STORAGE || event.key === null) declare();
