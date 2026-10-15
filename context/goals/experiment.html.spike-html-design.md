@@ -171,7 +171,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 7/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103) · review stop held, 6b committed, second look accepted · standards — · spec — · editor —
+slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards — · spec — · editor —
 
 ## Decisions
 
