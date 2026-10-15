@@ -81,7 +81,7 @@ restating it.
   A component's own keys inside its open dialog, such as the theming menu's T, are the
   component's, with its hand-written attribute.
 - Prefer a bare key, then a written chord ("g c"), then a combination ("Mod+k"); every binding is
-  pressed as written, with no mode that rewrites it.
+  pressed as written.
 - One owner per key on a page: a component never listens for a key the page might bind.
 - A page that binds keys places the help dialog, with `data-keys-list`, and opens it from a
   visible button.

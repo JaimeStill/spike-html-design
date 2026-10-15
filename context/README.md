@@ -62,9 +62,9 @@ Its packaging, a git-tag package that other packages extend, is also an input to
    itself. A page binds its own, in one store per page. Keys is silent in fields, on repeats,
    and while an input method composes; writes aria-keyshortcuts; has an off switch; and fills
    the page's ? help dialog with the page's bindings. The specimen binds T, ?, j, k, and g
-   through it. One convention: every binding is pressed as written, with chords and
-   combinations spelled out. It was chosen at the keys review stop, after leader and activator
-   modes were built and tried on the specimen.
+   through it. One convention holds: every binding is pressed as written, with chords and
+   combinations spelled out. The keys review stop tried leader and activator modes on the
+   specimen and found this convention enough.
 8. Consumption by version, two ways:
    - an install by git tag with bun, with CSS imported from node_modules;
    - a pinned jsDelivr URL, rendering the same from `file://`, a local server, and Pages.
@@ -115,14 +115,15 @@ v0.6.0", below, describes the interface a page uses now.
   older than Firefox 155 and Safari 26, lose fluid sizing: the space tokens and the fluid text
   steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
   their unset values.
-- **Profiles** (profiles, preferences): the color interface is sixteen tokens, with a pane surface,
-  `--bg-0`, and two border steps. Four profiles fill it, Flexoki, Primer, Catppuccin, and
-  Everforest, each light and dark in its own file, with a contrast record per profile and
+- **Profiles** (profiles, preferences): the color interface is sixteen tokens, with a pane
+  surface, `--bg-0`, and two border steps. Four profiles fill it, Flexoki, Primer, Catppuccin,
+  and Everforest, each light and dark in its own file, with a contrast record per profile and
   scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any element's
   subtree, so a preview container renders as its profile renders at the root. Space has two
   profiles, regular and compact, and type two, mono and sans, which `data-space` and `data-type`
-  apply the same way (preferences). The elements layer reads three hooks, `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd`
-  as an outlined key, the baseline's only key-hint styling.
+  apply the same way (preferences). The elements layer reads three hooks,
+  `--interaction-color`, `--code-color`, and `--kbd-color`, and styles `kbd` as an outlined key,
+  the baseline's only key-hint styling.
 - **Elements** (facets): class-free, zero-specificity styling of every rendered native element,
   limited to paint, type, border (with a table's `border-collapse` and `border-spacing`), radius,
   margin, and padding, with `::file-selector-button`, `::marker`, `::placeholder`, and
@@ -368,8 +369,8 @@ That is recorded from its feature support, not measured.
 with an id, and opens it with its own button, `commandfor="<id>" command="--open"`. From v0.6.0
 `<theme-menu>` listens for no key to open: a page that wants T gives that button
 `data-keys="t"` and loads keys, as the specimen does. T then opens the menu with Shift up, so
-caps lock doesn't block it, and Shift+T no longer does, as it did in v0.5.0, whose menu keeps its
-own T. The element fetches `theme-menu.js` the first time it opens, never before first paint,
+caps lock doesn't block it; Shift+T doesn't open it. v0.5.0's menu keeps its own T, which Shift+T
+also opened. The element fetches `theme-menu.js` the first time it opens, never before first paint,
 from the URL and tag its own module came from.
 
 The menu is a modal native `<dialog>` in light DOM, so the elements layer styles it, and it is
@@ -507,8 +508,9 @@ indicator doesn't ship.
 
 The page places a native `<dialog>` holding an element marked `data-keys-list`, and opens it with
 a visible button through `command="show-modal"`, as "Wiring a page" shows. Keys loads the help
-module the first time the dialog opens, however it opens, and at each open the module fills the
-marked element, before the dialog shows, with:
+module the first time the dialog opens, however it opens. On that first open the dialog shows
+with the page's own text in the marked element, and the module replaces it once it loads; on
+every later open the module fills the element before the dialog shows. It fills it with:
 
 - a table of the bindings active with the dialog closed, one row each: its keys drawn as sibling
   `kbd` elements, "+" within a combination and "then" between presses, and its action, a button
@@ -525,6 +527,11 @@ listed, marked off, and their buttons still work. Only changed settings are stor
 under the localStorage key `spike-html-design.keys`, per origin, shaped `{ enabled?, wait? }`.
 Keys reads them at each press, so another tab's change applies at once. The help module adds no
 CSS: the elements layer styles the table, the controls, and `kbd`.
+
+When the help module fails to load, keys logs a console warning at each open, and the dialog
+keeps the page's own text, its Close button still working. Keys imports the module again at the
+next open, but chromium keeps the failed module for the life of the document, so only a reload
+loads it.
 
 ### Entries and exports
 
@@ -580,10 +587,10 @@ export is not an entry; its size counts in the entry that imports it.
 | `modules/keys-grammar.js` | 3,500 |
 | `modules/keys-help.js` | 13,200 |
 
-The keys budgets are each entry's v0.6.0 total, 9,097, 3,066, and 11,668 bytes, plus about 13%,
-rounded up to the hundred. `keys.js` is about three times @github/hotkey's 2,872 bytes, the
-precedent's runtime; comments are 53–56% of the keys modules' brotli size, left as written for
-validate's holistic size strategy.
+v0.6.0's keys entries total 9,275, 3,066, and 11,834 bytes, leaving 1,025, 434, and 1,366 bytes
+of headroom. `keys.js` is about three times @github/hotkey's 2,872 bytes, the precedent's
+runtime; comments are 53–56% of the keys modules' brotli size, left as written for validate's
+holistic size strategy.
 
 The check fails when an entry exceeds its budget or has none. The budgets live in `BUDGETS` in
 `scripts/size.js`, and raising one is the architect's decision. Raw sizes are reported, not

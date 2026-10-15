@@ -119,7 +119,7 @@
 // The help dialog: a page places a native <dialog> holding an element marked data-keys-list.
 // The copy that listens loads keys-help.js, beside itself, the first time such a dialog fires
 // beforetoggle to open, however it opens (a show-modal invoker, showModal(), or show()), and
-// from then on has it fill the dialog's marked elements at each open, before the dialog shows.
+// fills the dialog's marked elements once it loads, then at each later open before it shows.
 // A load that fails is warned of on the console and imported again at the next open; chromium
 // keeps a failed module in the document, so a reload is what recovers. Until then the dialog
 // opens as the page wrote it.
@@ -375,8 +375,8 @@ export function bindings(dialog) {
 let help = null;
 let loading = null;
 
-// onbeforetoggle has the help module fill a dialog holding [data-keys-list] as it opens: at
-// once, before it shows, once the module is loaded, and on the first open when it loads.
+// onbeforetoggle has the help module fill a dialog holding [data-keys-list] as it opens: before
+// it shows when the module is loaded, and on the first open once the module loads.
 function onbeforetoggle(event) {
   const dialog = event.target;
   if (event.newState !== "open" || !(dialog instanceof HTMLDialogElement)) return;

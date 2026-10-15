@@ -171,7 +171,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor —
+slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done
 
 ## Decisions
 
@@ -805,10 +805,11 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   grammar (the precedent, architect), and keys writes aria-keyshortcuts from it.
 - plan keys (architect): keys is a module family supporting raw keys, leader chords, and an
   activator combination; the architect hasn't chosen a convention, so the library supports all
-  three. Supersedes round 1's "no leader key or sequences in v0.6.0".
+  three. Supersedes round 1's "no leader key or sequences in v0.6.0". Superseded in part by the
+  keys review stop: the library keeps sequences and combinations but no modes.
 - plan keys: both per-binding strings and one activation mode: bare bindings follow the mode;
   strings spelling out a sequence or combination are used as written. Answers the "global or
-  encapsulated mode" pending question.
+  encapsulated mode" pending question. Superseded by the keys review stop: no mode.
 - plan keys: the attribute is data-keys, not data-hotkey: bare keys and caps lock differ from
   @github/hotkey, so a shared name would promise compatibility that isn't there.
 - plan keys: a letter without Shift matches either case; "Shift+T" requires Shift. A symbol is
@@ -818,9 +819,11 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   @github/hotkey's Option-symbol table.
 - plan keys (architect): the default leader is g ("g for goto"; h, j, k, l stay free for
   navigation). Rejected comma, Space (takes scrolling), backslash (AltGr on German and French).
+  Superseded by the keys review stop: no leader.
 - plan keys: the default activator is Alt (Option): the one modifier whose browser shortcuts a
   page can cancel everywhere, and NVDA browse mode passes it. Rejected Meta (window manager,
   Omarchy), Control (Ctrl+T/W/N reserved), Alt+Shift (Firefox accesskey, layout switch).
+  Superseded by the keys review stop: no activator.
 - plan keys: sequence wait 1500 ms (@github/hotkey); the reader can choose 1000, 1500, 3000, or
   5000 ms (architect).
 - plan keys: a prefix conflict ("g" and "g c") waits, then runs the shorter (vim); rejected
@@ -832,7 +835,8 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   active binding wins (elements in document order, then register() order).
 - plan keys: register(keys, label, handler) returns its remover; no unregister export.
 - plan keys: the off switch (on by default) turns off character-key shortcuts only (raw and
-  leader), as WCAG 2.1.4 covers; combinations stay on. Rows stay listed, marked inactive.
+  leader), as WCAG 2.1.4 covers; combinations stay on. Rows stay listed, marked inactive. The
+  keys review stop drops leader; the switch covers single characters and chords of them.
 - plan keys: three modules: grammar (no DOM), runtime, and a help module loaded on the dialog's
   first open. Exports ./keys, ./keys/grammar, ./keys/help; each its own budget.
 - plan keys: help rows are buttons that close the dialog and run the binding, so every binding
@@ -842,8 +846,11 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - plan keys: the page sets its default mode with <html data-keys-mode>; default raw; the reader
   can override the mode, leader (g, comma, backslash, Space), activator (Alt, Control, Meta,
   Alt+Shift), and wait. A page sets only the mode (consistency across an origin, WCAG 3.2.3).
+  Superseded by the keys review stop: no data-keys-mode; the reader sets the off switch and the
+  wait.
 - plan keys: the help dialog shows the current mode's keys only, as sibling kbd with "+" and
-  "then"; rejected nested kbd (a key drawn inside a key).
+  "then"; rejected nested kbd (a key drawn inside a key). From the keys review stop it shows
+  each binding's keys as written.
 - plan keys: keys writes aria-keyshortcuts from the binding in effect, declares a symbol by its
   US physical key ("Shift+/"), declares nothing for a sequence, and removes it while the off
   switch covers the binding.
@@ -852,8 +859,10 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   (cancelable) and keys-sequence events, and a fixture builds the indicator from outside.
 - plan keys: names: Symbol.for("spike-html-design.keys"), localStorage spike-html-design.keys
   holding only changed settings as JSON; attributes data-keys, data-keys-list, data-keys-mode.
+  The keys review stop drops data-keys-mode.
 - plan keys: the specimen states no mode; j and k move focus through all 31 sections with an id
-  (tabindex="-1"); g goes to the top (g g in leader mode). A review stop follows slice 6.
+  (tabindex="-1"); g goes to the top (g g in leader mode). A review stop follows slice 6. The
+  keys review stop supersedes the mode clauses, and keys BUILD corrects 31 to 19.
 - plan keys: assumed: bare means one press with no modifier but Shift; register() throws a
   TypeError on a malformed string, and a malformed data-keys binds nothing and warns once; keys
   is silent in fields even for combinations; presses continuing a sequence are marked handled.
@@ -870,9 +879,10 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - keys BUILD: settings() and changeSettings(change) are the runtime's exports for the help
   module; a written mode, raw included, stays stored until set to null, so a reader can choose
   raw on a page that defaults to leader. store.wait is the package default; the stored wait wins.
+  The mode clause is superseded by the keys review stop: settings() is { enabled, wait }.
 - keys BUILD: the off switch covers an alternative only when every press is a single character
   with no Control, Alt, or Meta (Space included, so Space-leader chords are covered); named keys
-  like Escape stay on.
+  like Escape stay on. The keys review stop drops leader; Space still counts as a character.
 - keys BUILD: keys removes the aria-keyshortcuts it wrote when data-keys is removed, and never
   touches an element that never carried data-keys. The provisional keys.js budget rose to 10,550 B
   (entry 9,335 B brotli with the grammar).
@@ -880,6 +890,7 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   aria-keyshortcuts="T"); data-keys on Save can't fire, since focus sits on a radio (a field), and
   the menu stops T at the dialog, so one press acts once. Plain T saves in every mode, as a
   focused component's key outside the off switch. theme-menu.js's accept() export is removed.
+  "In every mode" is superseded by the keys review stop: there are no modes.
 - keys BUILD: Shift+T no longer opens the menu: "t" matches either case with Shift up (caps lock
   works); v0.5.0 allowed Shift.
 - keys BUILD: keys.js exports bindings(dialog) for the help module; only the listening copy loads
@@ -909,7 +920,16 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - keys BUILD: final keys budgets, totals plus about 13% rounded up to the hundred: keys.js 10,300
   (9,097), keys-grammar.js 3,500 (3,066), keys-help.js 13,200 (11,668), for approval at the session
   brief. Comments are 53–56% of the keys modules' brotli size (the keys.js entry is 4,117 B
-  without them); left as written, for the holistic size strategy.
+  without them), measured at slice 7; left as written, for the holistic size strategy.
+- keys spec review: a failed keys-help.js import warns at each open and leaves the dialog as the
+  page wrote it, its Close working; the next open imports again, but chromium keeps the failed
+  module in the document's module map, so a reload recovers (10f59ad, 6f87e44).
+- keys editor: after the spec review fixes and the editor's doc-comment edits, the entries are
+  keys.js 9,275 B, keys-grammar.js 3,066 B, and keys-help.js 11,834 B brotli; the budgets above
+  leave headroom of about 11.1%, 14.2%, and 11.5% of each size. BUDGETS is unchanged.
+- keys: notes outside the task: every `mise run check` leaves its headless chromium profile, about
+  133 MB, at `/tmp/.<hex>-00000000.bun-chrome`, one per run; 428 of them (9.7 GB) filled /tmp and
+  blocked the check this session. The harness should remove its profile; not fixed here.
 
 ## Pending edits
 
@@ -931,7 +951,8 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   data-type scopes (plan preferences; supersedes the plan profiles edit above).
 - coordinator · roadmap.toml, keys summary: keys.js is purely the shortcut API, binding specific
   shortcuts a higher-level concern; capture the question of an optional leader key, with a
-  global mode (no leader) and an encapsulated mode (leader chords) (plan preferences).
+  global mode (no leader) and an encapsulated mode (leader chords) (plan preferences). The
+  leader question is superseded by the keys edit below.
 - coordinator · html-artifacts.md, "Build": a page's CSS works the same from file://, but
   chromium blocks relative ES module scripts there, so a file:// page loads the modules from
   jsDelivr (CORS); an untagged working-tree page has no modules from file:// (preferences).
@@ -942,3 +963,6 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - coordinator · roadmap.toml, keys summary: names the module family and data-keys with written
   chords and combinations; the leader-key question was tried and dropped at the keys review
   stop (supersedes the plan preferences keys edit's leader question) (keys).
+- coordinator · html-artifacts.md, "Answers · experiment.html": validate records that v0.5.0's
+  <theme-menu> binds T with no way to turn it off, failing WCAG 2.1.4 (Level A); the tag is
+  immutable, and v0.6.0 moves T to keys, whose off switch covers it (keys).
