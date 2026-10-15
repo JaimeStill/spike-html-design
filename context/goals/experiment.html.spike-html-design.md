@@ -172,7 +172,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 3/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef) · review stop — · standards — · spec — · editor —
+slices 4/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -877,6 +877,12 @@ slices 3/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef) · review
 - keys BUILD: keys removes the aria-keyshortcuts it wrote when data-keys is removed, and never
   touches an element that never carried data-keys. The provisional keys.js budget rose to 10,550 B
   (entry 9,335 B brotli with the grammar).
+- keys BUILD: inside the open theme menu, T stays the menu's own key (Save keeps its hand-written
+  aria-keyshortcuts="T"); data-keys on Save can't fire, since focus sits on a radio (a field), and
+  the menu stops T at the dialog, so one press acts once. Plain T saves in every mode, as a
+  focused component's key outside the off switch. theme-menu.js's accept() export is removed.
+- keys BUILD: Shift+T no longer opens the menu: "t" matches either case with Shift up (caps lock
+  works); v0.5.0 allowed Shift.
 
 ## Pending edits
 
