@@ -1,9 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { FINGERPRINT_PROPERTIES, fileUrl, openPage, serve } from "./harness.js";
+import { GITHUB, install as installFixture, MANIFEST, PACKAGE, rendered } from "./extension.js";
+import { fileUrl, openPage, serve } from "./harness.js";
 import { git, modules, pageScripts, show, stylesheets } from "./tags.js";
 
 // The extension fixture package, test/fixtures/extension-package: a consumer that depends on the
@@ -25,11 +26,7 @@ import { git, modules, pageScripts, show, stylesheets } from "./tags.js";
 // store, at its well-known global key, so it checks a profile against any tag's CSS and modules.
 
 const root = dirname(import.meta.dir);
-const fixture = join(import.meta.dir, "fixtures", "extension-package");
-const manifest = JSON.parse(readFileSync(join(fixture, "package.json"), "utf8"));
-const PACKAGE = "spike-html-design";
-// GITHUB is the dependency's source as the fixture declares it, and TAG the tag it pins.
-const GITHUB = "github:JaimeStill/spike-html-design";
+// TAG is the tag the fixture pins.
 const TAG = "v0.6.0";
 const CDN = `https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@${TAG}/`;
 const KEY = "spike-html-design.preferences";
@@ -49,26 +46,12 @@ async function open(url, options) {
 }
 
 beforeAll(() => {
-  cpSync(fixture, project, { recursive: true });
   // The one rewrite: GitHub's source for the local repository's, the tag kept.
-  const offline = {
-    ...manifest,
-    dependencies: {
-      [PACKAGE]: manifest.dependencies[PACKAGE].replace(GITHUB, `git+${pathToFileURL(root).href}`),
-    },
-  };
-  writeFileSync(join(project, "package.json"), `${JSON.stringify(offline, null, 2)}\n`);
   const closed = "http://127.0.0.1:9";
-  install = Bun.spawnSync([process.execPath, "install", "--no-save"], {
-    cwd: project,
-    env: {
-      ...process.env,
-      BUN_INSTALL_CACHE_DIR: join(scratch, "cache"),
-      HTTP_PROXY: closed,
-      HTTPS_PROXY: closed,
-      http_proxy: closed,
-      https_proxy: closed,
-    },
+  install = installFixture(scratch, project, {
+    source: `git+${pathToFileURL(root).href}`,
+    tag: TAG,
+    env: { HTTP_PROXY: closed, HTTPS_PROXY: closed, http_proxy: closed, https_proxy: closed },
   });
   server = serve(project);
 });
@@ -97,39 +80,6 @@ function tagFiles() {
 // HERMETIC answers every other https:// request 404 from a file that does not exist, so neither
 // page reaches the network.
 const HERMETIC = { "https://": join(import.meta.dir, "fixtures", "absent") };
-
-// RENDERED are the elements both pages hold, in the header the fixture copies from the specimen,
-// and PROPERTIES what the comparison reads on each: the fingerprint's properties but the box's
-// size and margins, which the specimen's own layout layer sets and the fixture's page leaves.
-// The header's intro paragraph is left out for the same reason, since that layer colors it; its
-// code and kbd, which the baseline colors, are kept.
-const RENDERED = [
-  "html",
-  "body",
-  "body > header > h1",
-  "body > header > button",
-  "body > header > button > kbd",
-  "body > header > p > code",
-  "body > header > p > kbd",
-];
-const PROPERTIES = FINGERPRINT_PROPERTIES.filter(
-  (property) => !/^(width|height|margin-)/.test(property),
-);
-
-// rendered resolves to the root's custom properties and each of RENDERED's computed PROPERTIES.
-function rendered(page) {
-  return page.evaluate(`(() => {
-    const root = getComputedStyle(document.documentElement);
-    const tokens = Object.fromEntries([...root].filter((name) => name.startsWith("--"))
-      .map((name) => [name, root.getPropertyValue(name).trim()]));
-    const elements = Object.fromEntries(${JSON.stringify(RENDERED)}.map((selector) => {
-      const style = getComputedStyle(document.querySelector(selector));
-      return [selector, Object.fromEntries(${JSON.stringify(PROPERTIES)}
-        .map((name) => [name, style.getPropertyValue(name)]))];
-    }));
-    return { tokens, elements };
-  })()`);
-}
 
 // resolved resolves to the color token resolves to inside the element matching selector.
 function resolved(page, token, selector) {
@@ -167,14 +117,14 @@ const HARBOR = {
 
 describe("extension package", () => {
   test("depends on the baseline by git tag, as a consumer writes it, and is offline-installed at that tag's commit", async () => {
-    expect(manifest.dependencies).toEqual({ [PACKAGE]: `${GITHUB}#${TAG}` });
-    expect({ exitCode: install.exitCode, stderr: install.stderr.toString() }).toMatchObject({
+    expect(MANIFEST.dependencies).toEqual({ [PACKAGE]: `${GITHUB}#${TAG}` });
+    expect({ exitCode: install.exitCode, stderr: install.stderr }).toMatchObject({
       exitCode: 0,
     });
     // bun names the commit it installed; it is the tag's.
     const commit = git("rev-parse", `${TAG}^{commit}`).stdout.toString().trim();
-    expect(install.stdout.toString()).toContain(`${PACKAGE}@git+file://`);
-    expect(install.stdout.toString()).toContain(`#${commit}`);
+    expect(install.stdout).toContain(`${PACKAGE}@git+file://`);
+    expect(install.stdout).toContain(`#${commit}`);
     const pkg = JSON.parse(readFileSync(join(installed, "package.json"), "utf8"));
     expect([pkg.name, pkg.version]).toEqual([PACKAGE, TAG.slice(1)]);
     // Every stylesheet and module the tag publishes is installed byte for byte.
