@@ -172,7 +172,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 2/8 committed (grammar ec54ae1, runtime c08b39c) · review stop — · standards — · spec — · editor —
+slices 3/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -868,6 +868,15 @@ slices 2/8 committed (grammar ec54ae1, runtime c08b39c) · review stop — · st
   to a "g Shift+T" doesn't drop it.
 - keys BUILD: a register() handler receives the keys-fire event; keys-sequence goes out only when
   a press leaves a longer binding pending.
+- keys BUILD: settings() and changeSettings(change) are the runtime's exports for the help
+  module; a written mode, raw included, stays stored until set to null, so a reader can choose
+  raw on a page that defaults to leader. store.wait is the package default; the stored wait wins.
+- keys BUILD: the off switch covers an alternative only when every press is a single character
+  with no Control, Alt, or Meta (Space included, so Space-leader chords are covered); named keys
+  like Escape stay on.
+- keys BUILD: keys removes the aria-keyshortcuts it wrote when data-keys is removed, and never
+  touches an element that never carried data-keys. The provisional keys.js budget rose to 10,550 B
+  (entry 9,335 B brotli with the grammar).
 
 ## Pending edits
 
