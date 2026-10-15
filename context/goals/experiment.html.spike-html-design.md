@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** validate
+- **Branch:** validate
 
 ## Tasks
 
@@ -14,182 +14,109 @@
 6. [x] keys
 7. [ ] validate
 
-## Task brief · experiment.html.spike-html-design · keys
+## Task brief · experiment.html.spike-html-design · validate
 
-Problem       v0.5.0 has one shortcut, T, which <theme-menu> binds itself. There is no
-              shortcut API, no declaration, no help listing, no convention besides a bare key,
-              and no way to turn shortcuts off, which WCAG SC 2.1.4 (Level A) requires of
-              character-key shortcuts. Evidence 7 needs a shortcut library: one registry per
-              page, silent in fields, declared to assistive technology, and listed in a ? help
-              dialog with each page's own keys. The architect ruled that the library binds no
-              shortcuts itself and supports raw keys, chords, and combinations, each written
-              into its binding, with @github/hotkey as the precedent (amended at the review
-              stop: no modes). This task builds keys as a family of three modules, moves T off
-              <theme-menu>, and gives the specimen a help dialog and bindings. (Evidence 7, restated; 8's pinned page;
-              11's budgets.)
+Problem       The spike has to answer its question. Evidence 8–11 are unproven: no
+              install by git tag has run, there is no exported conformance test
+              and no extension package that passes one, pin stability has been
+              checked only one tag at a time, and the @import chain's cost from the
+              CDN, which the facets plan made the bundling decision wait on, has
+              never been measured. "The answer" in the README and the answer
+              section for html-artifacts.md are unwritten.
 
 Behaviors
-  Grammar
-  1. A binding is a string in @github/hotkey's grammar: "," separates alternatives, a space
-     separates the presses of a sequence, and "+" joins a combination of Control, Alt, Meta,
-     Shift, or Mod (Meta on macOS, Control elsewhere) with one key; "Plus" and "Space" name
-     those keys. A letter written without Shift matches either case while Shift is up (caps
-     lock doesn't defeat it), and "Shift+T" requires Shift. A symbol is written as the
-     character typed ("?"), Shift ignored. A malformed string binds nothing.
-  2. The grammar module has no DOM: it parses and normalizes a binding and formats one for display and for aria-keyshortcuts. A symbol is declared
-     by its US physical key ("?" as "Shift+/"); a sequence declares nothing.
+  Conformance
+  1. The package exports ./conformance, an ES module with no dependencies
+     and no CSS. It checks one color profile in a live page and returns
+     a list of named failures; an empty list means the profile conforms.
+  2. A conforming profile sets each of the sixteen color tokens to a color
+     in light and in dark, and sets no space or type token. It applies at
+     zero specificity under data-palette="<name>", inside the color layer:
+     a consumer's later layer beats it. A scope with that name paints its
+     background and text from its own tokens. --bg, --bg-1 and --bg-2 step
+     toward the text in each scheme, and the name is registered in the
+     registry. The check reads computed values, so it runs from file://
+     through jsDelivr, from a local server, and from node_modules.
+  3. The four built-in color profiles conform. A fixture profile that
+     breaks each rule in turn (a missing token, unlayered, a specific
+     selector, surfaces out of order, unregistered) fails with that
+     rule's failure.
+  Install and extension
+  4. A fixture package depends on the baseline by git tag. Installed with
+     bun, its page, served over http, links the CSS entry from
+     node_modules and loads the modules from node_modules through an
+     import map, and renders as that tag's pinned page renders. In the
+     check the dependency resolves offline from the local repository at
+     the tag; the live pin check installs it from GitHub.
+  5. The same fixture package adds one color profile into the color layer
+     and registers its name. The profile appears in the theme menu,
+     applies by data-palette and by the reader's stored choice, and
+     passes ./conformance.
+  Stability, size, and cost
+  6. mise run pin passes for every published tag, v0.1.0 through v0.7.0;
+     the README records the run's date and result. The pinned pages'
+     hermetic tests still pass.
+  7. Every entry stays within its budget. ./conformance has its own
+     budget, set from its built size and approved at the session brief.
+     The size report adds, per entry, what one concatenated file and that
+     file without comments would weigh, reported and not enforced.
+  8. A read-only networked task measures, for a tag and for each CSS entry
+     from jsDelivr, the hop and file counts, the time from the entry's
+     response to its last import's, and first paint, as the median over
+     several runs; it also measures keys.js's second hop. The README
+     records the figures with their date and edge. The check asserts only
+     the hop and file counts.
+  Answer
+  9. context/README.md, "The answer": the question, a one-line answer, and
+     evidence 1–11, each naming where it is proven (a test, mise run pin,
+     the measurement task, or a review stop). It adds the size strategy:
+     the measured costs of the chain and of comments, and the options for
+     a release build, left to the intake. It also records that v0.5.0's T
+     fails WCAG 2.1.4 and that v0.6.0's off switch covers it, and the bun
+     build light-dark() rewrite as a fact for spike-html-apps. The README's
+     capabilities, exports, and budgets describe v0.7.0, and STANDARDS.md
+     states the conformance contract.
+  10. The goal record's pending edits carry the answer section for
+      html-artifacts.md, "Answers · experiment.html", in the briefs format
+      ("Answer · experiment.html.spike-html-design": question, one-line
+      answer, numbered evidence with proof, links to the README's "The
+      answer" and the remote), including the WCAG 2.1.4 line.
 
-  Runtime
-  3. An element carrying data-keys is a binding: when its keys are pressed, keys clicks it (so
-     its native action or invoker command runs) or focuses it if it is a field.
-     register(keys, label, handler) binds keys with no element, returns a function that
-     removes exactly that binding, and throws a TypeError on a malformed string.
-  4. Matching uses event.key. With Alt held, letters and digits match by event.code (Option
-     and AltGr change the character). A non-ASCII letter falls back to event.code (KeyJ is
-     j). keys is silent in fields (input, textarea, select, contenteditable), while an input
-     method composes (isComposing or keyCode 229), on "Dead" and "Process", with AltGraph, on
-     repeats, and on events already handled. A press keys acts on, or that continues a
-     sequence, is marked handled.
-  5. Sequences: each press must follow the last within the sequence wait, 1500 ms by default.
-     A press that doesn't continue the sequence ends it and is dropped. When one binding is a
-     prefix of another ("g" and "g c"), keys waits for the next press and runs the shorter
-     when the wait ends.
-  6. One convention: every binding is pressed as written. Chords and combinations are
-     spelled out in the binding ("g c", "Mod+k"). (Amended at the review stop: leader and
-     activator modes, data-keys-mode, and the reader's mode, leader, and activator settings
-     are removed.)
-  7. Scope: while a modal dialog is open, only element bindings inside it are active and
-     register() bindings pause; otherwise an element binding is active unless disabled,
-     inside [inert], or not visible. keys reads the page at each press. When two active
-     bindings share keys, the first wins: elements in document order, then register()
-     bindings in registration order.
-  8. keys writes aria-keyshortcuts on every element carrying data-keys from its binding
-     ("T", "Alt+T", "Shift+/"), rewrites it when data-keys or the off switch changes, and
-     leaves it off for a sequence and while the off switch covers that binding.
-  9. One store per page, at globalThis[Symbol.for("spike-html-design.keys")], shared by every
-     copy of keys from any URL or tag, with one document listener, so a key never fires
-     twice; its shape is public API frozen with v0.6.0. The runtime loads as a plain module
-     script, not render-blocking.
-  9a. Extension: keys is extensible by outside modules rather than growing features itself.
-     The runtime dispatches two events, their names and detail shapes public API frozen with
-     v0.6.0. keys-fire, cancelable, on the bound element (or document for a register()
-     binding) before it acts, with the binding and the keys pressed; cancelling it
-     stops the action. keys-sequence on document as a sequence starts, continues, and ends
-     (fired, timed out, or dropped), with the presses so far. The grammar module is exported
-     for formatting. A test fixture builds a pending-sequence indicator as an outside module
-     from these alone, proving the extension point; the indicator does not ship.
-
-  Help dialog and the reader's settings
-  10. The page places a native <dialog> holding an element marked data-keys-list and opens it
-      with a visible button through show-modal. The help module loads on the dialog's first
-      open. Each time it opens, the module fills the marked element with a table of the
-      bindings active with the dialog closed, each row a button that closes the dialog and
-      runs the binding; its keys as sibling kbd ("+" in a combination, "then"
-      between presses); labels from aria-label, else text without kbd, else register()'s
-      label; the reader's settings; and a screen-reader note. keys adds no CSS.
-  11. Settings: an off switch, on by default, that turns off character-key shortcuts (single
-      characters and chords of them) while combinations with Control, Alt, or Meta stay on,
-      its rows listed and marked inactive; and the wait (1000, 1500, 3000, 5000 ms). (Amended
-      at the review stop: mode, leader, and activator settings removed.) Only changed settings are stored, as JSON under localStorage key
-      spike-html-design.keys, per origin; keys reads them at each press, so another tab's
-      change applies at once.
-  12. The note tells screen-reader users how to pass a key through (NVDA+F2, JAWS+3,
-      Narrator+3, VO+Tab).
-
-  T
-  13. <theme-menu> no longer listens for T. A page binds T with data-keys on its Theme button
-      and loads keys. While the menu is open, T reaches the menu's Save, which carries T
-      inside the modal. --open and the menu's own keys are unchanged; v0.5.0 keeps its T.
-
-  Specimen and pins
-  14. The specimen loads keys. Its header holds the Theme button (T) and a
-      Help button (?) opening a native help dialog; inside it a Close button carries ?, and
-      Escape closes it natively. register() binds j and k, moving focus to the next or
-      previous of the 19 sections with an id (tabindex="-1", a focus style in the specimen
-      layer), and g to the top. Served and on Pages all work and the dialog lists them. From file:// the working-tree
-      specimen has no keys, as it has no menu (recorded).
-  15. A v0.6.0 pinned page is the specimen linking the @v0.6.0 jsDelivr full entry and
-      modules; from file:// its keys work through jsDelivr's CORS header. Its hermetic test
-      and the live pin check cover every stylesheet and module the tag publishes; v0.1.0–
-      v0.5.0 pinned pages still pass against their own tags.
-
-  Package and docs
-  16. package.json at 0.6.0 adds ./keys, ./keys/grammar, ./keys/help, each with a brotli
-      budget in BUDGETS set from its built size and approved at the session brief
-      (@github/hotkey's 2,872 B is the runtime's yardstick). Other budgets unchanged; lean
-      within 14,000 B, full within 18,000 B.
-  17. README, STANDARDS.md, and the goal record describe v0.6.0: the grammar and its
-      differences from @github/hotkey; register(); matching and silence; sequences, wait,
-      prefix rule; scope and conflicts; derived aria-keyshortcuts; the
-      store; the help dialog, settings, and storage; T's move; evidence 7 restated; the
-      review stop's finding that bare keys plus written chords and combinations suffice.
-
-  Session-brief redirect (architect)
-  18. Escape releases a field: with focus in a field (input, textarea, select, contenteditable)
-      outside an open modal, an Escape no other listener handled blurs it, so shortcuts work
-      again; inside an open modal the dialog keeps Escape (the theme menu's Cancel, the native
-      close). The help dialog lists it as a fixed row ("Esc", leave a field) with no button
-      action, outside the off switch.
-  19. Surfaces: --bg is the base; --bg-1 and --bg-2 step toward the text: lightest to darkest in
-      light schemes, darkest to lightest in dark. Light keeps today's page as --bg and today's
-      pane as --bg-1; dark takes today's pane as --bg and today's page as --bg-1; --bg-2 is
-      unchanged. --bg-0 is gone, with no alias. Rules keep reading --bg; the dialog and the
-      theme menu's panel read --bg-1 as elevated surfaces, and the specimen's panes read --bg-1.
-      A profile whose upstream swatches don't fall in that order takes them in lightness order
-      (Everforest light: bg0, bg1, bg_dim). The check holds every profile to the order.
-
-Test seams    the harness page in headless chromium, read for focus, attributes, storage,
-              dialog state, and scroll position after real presses (view.press) or CDP
-              Input.dispatchKeyEvent with any key, code, and modifier, under intercepted
-              requests; the grammar module as plain functions under bun; the size report.
+Test seams    The harness page in headless chromium: fixture pages, served
+              and from file://, read for computed values, the registry, and
+              the list ./conformance returns. The size report. The networked
+              pin and measurement tasks run outside the check.
 
 Slices
-  1. Grammar module under unit tests; v0.6.0's probes and package.json at 0.6.0. Demo: tests
-     format "g t", "Alt+T", and "?" every way.
-  2. Runtime in raw mode: store and listener, element bindings, register() and remover,
-     matching and silence, sequences, prefix rule, scope, first-wins. Demo: a fixture where T
-     clicks a button, "g c" and "g" coexist, and nothing fires in a field, on repeat, under a
-     modal, or when disabled. Includes the keys-fire and keys-sequence events and the
-     outside-module indicator fixture (behavior 9a).
-  3. Modes and aria: leader and activator wrapping, data-keys-mode, stored settings read at
-     each press, derived aria-keyshortcuts. Demo: one fixture pressed in all three modes.
-  4. T moves to keys. Demo: the served specimen's T opens the menu and, while open, saves.
-  5. Help dialog and settings. Demo: a fixture's dialog lists its bindings; switching modes or
-     the off switch changes what fires, in this tab and another.
-  6. Specimen bindings. Demo: the served workbench driven from the keyboard in each mode.
-  ── REVIEW STOP (after slice 6): the architect compares raw keys, leader chords, and
-     activator combinations on the served workbench (`mise run serve`), with the help dialog
-     and its settings, before any tag; redirects go to Decisions ── (held: raw only)
-  6b. Review-stop simplification: remove modes (grammar wrap and its constants, data-keys-mode,
-      mode resolution, the reader's mode, leader, and activator settings, the help dialog's
-      controls and note sentence for them, keys-fire's mode); storage {enabled?, wait?}.
-      Demo: the served workbench; every test green. A second look follows. ──
-  7. Package and budgets: three exports, budgets, consumer test. Demo: size report lists them.
-  8. Docs and pin: README, STANDARDS.md, goal record, v0.6.0 pinned page, pin check. Demo:
-     the pinned page's keys and help dialog work from file:// under interception.
-  9. Escape releases a field (behavior 18). Demo: Esc in the specimen's field restores j.
-  10. Surfaces (behavior 19): profiles, contract, rules, specimen, probes, contrast, docs.
-      Demo: the served workbench in each profile and scheme.
-  ── REVIEW STOP 3 (after slice 10): the architect views the surfaces on the served workbench
-     before the reviews run again ──
+  1. The ./conformance module, v0.7.0's probes, and package.json at 0.7.0.
+     Demo: the four profiles conform; the broken fixtures fail by name.
+  2. The extension fixture package with the hermetic git-tag install.
+     Demo: the served fixture page lists its profile in the theme menu,
+     applies it, and passes conformance.
+  3. The package and budgets: the export, its budget, and the size
+     report's comparison figures. Demo: mise run size.
+  4. Live proofs: mise run pin gains the install from GitHub, and the
+     measurement task runs. Demo: both against v0.6.0, all six tags pinned,
+     the figures recorded. The CSS is unchanged at v0.7.0, so v0.6.0's
+     chain figures stand for it.
+  5. Docs, pinned page, and answer: the README with "The answer",
+     STANDARDS.md, pinned/v0.7.0, and the answer section in pending edits.
+     Demo: the answer reads in full; v0.7.0's pinned page passes its
+     hermetic test.
 
-Out of scope  leader and activator modes (removed at the review stop); per-binding remapping;
-              a page setting the wait; a shipped sequence-pending indicator
-              (an outside module builds it through 9a); bindings in shadow roots (spike-html-components); section
-              tree and reading progress (spike-html-hosting); the Keyboard Map API; focusgroup
-              for the menu; verifying JAWS, Narrator, VoiceOver; layouts beyond US and one
-              non-Latin, tested; Firefox and Safari, tested; validate's items.
-Door          one-way for tag v0.6.0: exports ./keys, ./keys/grammar, ./keys/help; the grammar
-              and its @github/hotkey differences; register()'s signature and remover; the
-              matching, sequence, prefix, dropped-press, and first-wins rules; the 1500 ms
-              default wait; Escape releasing a field; the surface tokens --bg, --bg-1, --bg-2
-              and their order (--bg-0 removed); data-keys and data-keys-list; keys owning aria-keyshortcuts on bound elements; the keys-fire and
-              keys-sequence events and their details; the store key and
-              shape; storage key spike-html-design.keys and its JSON (renaming drops readers'
-              settings); preferences.js without T. Two-way: specimen bindings, help wording.
-Release       v0.6.0
+Out of scope  A release build or bundling; a bun build consumer; conformance for
+              space and type profiles; trimming what a git install carries (bun
+              ignores "files"); Firefox and Safari; the harness's /tmp profile
+              leak; the graduation decision (the intake's).
+Door          One-way for tag v0.7.0: the ./conformance export, its function's
+              name, arguments, and failure list, and the contract it enforces.
+              Two-way: the fixtures, the measurement task, the README, and the
+              answer's wording.
+Release       v0.7.0
 
 ## Progress
+
+slices 0/5 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -981,6 +908,23 @@ Release       v0.6.0
   keys-grammar.js 3,500, keys-help.js 13,200 B brotli); budgets mean little until later spikes
   settle the build process and how the web infrastructure is structured and served. v0.6.0
   releases.
+- plan validate: the conformance test ships as the package export ./conformance, released in
+  v0.7.0; a test helper kept inside the repository was rejected, since an outside package can
+  use it by version only once a tag holds it.
+- plan validate: conformance holds a color profile to the facet contract alone, checked by
+  computed values so it runs from file:// and cross-origin; the provenance rules (credit comment,
+  upstream swatches) stay this repository's own standard. @property "<color>" registration was
+  rejected: it resolves light-dark() where declared, breaking nested data-scheme.
+- plan validate: conformance covers the color facet only; space and type can join later without
+  breaking anything.
+- plan validate: the @import chain's cost is measured live from jsDelivr through chromium's
+  network events (Resource Timing hides a cross-origin sheet's imports), as medians, in a
+  read-only networked task; the check asserts hop and file counts only; the size report adds
+  one-file and comment-stripped brotli figures, reported and not enforced.
+- plan validate: no release build; the answer records the measured costs and options for the
+  experiment.html intake.
+- plan validate: the git-tag install is proven by a no-build page only; bun build's rewrite of
+  light-dark() into --buncss-* variables is recorded as a fact for spike-html-apps.
 
 ## Pending edits
 
