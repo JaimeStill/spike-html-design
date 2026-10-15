@@ -59,12 +59,12 @@ Its packaging, a git-tag package that other packages extend, is also an input to
    a stored one applies is measured. Profiles come from a JS registry that extension packages
    add to.
 7. Keys: a shortcut library of three modules (grammar, runtime, help) that binds no shortcut
-   itself. A page binds its own, in one store per page. Keys is silent in fields, on repeats,
-   and while an input method composes; writes aria-keyshortcuts; has an off switch; and fills
-   the page's ? help dialog with the page's bindings. The specimen binds T, ?, j, k, and g
-   through it. One convention holds: every binding is pressed as written, with chords and
-   combinations spelled out. The keys review stop tried leader and activator modes on the
-   specimen and found this convention enough.
+   itself. A page binds its own, in one store per page. Keys runs no binding in fields, on
+   repeats, or while an input method composes, and Escape releases a field. It writes
+   aria-keyshortcuts, has an off switch, and fills the page's ? help dialog with the page's
+   bindings. The specimen binds T, ?, j, k, and g through it. One convention holds: every
+   binding is pressed as written, with chords and combinations spelled out. The keys review
+   stop tried leader and activator modes on the specimen and found this convention enough.
 8. Consumption by version, two ways:
    - an install by git tag with bun, with CSS imported from node_modules;
    - a pinned jsDelivr URL, rendering the same from `file://`, a local server, and Pages.
@@ -99,9 +99,10 @@ Its packaging, a git-tag package that other packages extend, is also an input to
 
 Each entry names the task that builds it. Each tag keeps its own names on its own pinned page:
 v0.1.0 and v0.2.0 have flat layers, Primer-derived themes with the `data-theme` hook, role
-tokens, and component classes; v0.3.0 has `--border-3`; and v0.4.0 has flat profile export
-keys, `./profiles/<name>`; and v0.5.0's `<theme-menu>` binds its own T, Shift included. "Using
-v0.6.0", below, describes the interface a page uses now.
+tokens, and component classes; v0.3.0 has `--border-3`; v0.4.0 has flat profile export keys,
+`./profiles/<name>`; v0.4.0 and v0.5.0 have a pane surface, `--bg-0`, darker than the page in
+both schemes; and v0.5.0's `<theme-menu>` binds its own T, Shift included. "Using v0.6.0",
+below, describes the interface a page uses now.
 
 - **Layers** (facets): one top-level layer named for the package holds tokens, with color,
   space, and type sub-layers, then reset, elements, and tools.
@@ -115,10 +116,10 @@ v0.6.0", below, describes the interface a page uses now.
   older than Firefox 155 and Safari 26, lose fluid sizing: the space tokens and the fluid text
   steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
   their unset values.
-- **Profiles** (profiles, preferences): the color interface is sixteen tokens, with a pane
-  surface, `--bg-0`, and two border steps; keys (v0.6.0) drops `--bg-0` and steps the surfaces
-  from `--bg` toward the text, as the color interface below describes. Four profiles fill it,
-  Flexoki, Primer, Catppuccin, and Everforest, each light and dark in its own file, with a contrast record per profile and
+- **Profiles** (profiles, preferences, keys): the color interface is sixteen tokens, with three
+  surfaces and two border steps (profiles); the surfaces step from `--bg` toward the text, as
+  "The color interface" describes (keys). Four profiles fill it, Flexoki, Primer, Catppuccin,
+  and Everforest, each light and dark in its own file, with a contrast record per profile and
   scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any element's
   subtree, so a preview container renders as its profile renders at the root. Space has two
   profiles, regular and compact, and type two, mono and sans, which `data-space` and `data-type`
@@ -245,8 +246,10 @@ specificity: a consumer's later layer beats every profile.
 ### The color profiles
 
 Each color profile is its own file under `layers/tokens/color/`, whose heading comment credits its
-source. Its contrast in each scheme, every text token and hue over every surface, is recorded
-in the specimen and not corrected.
+source. Its contrast in each scheme, every text token and hue over `--bg`, `--bg-1`, `--bg-2`,
+`--border`, and `--border-2`, is recorded in the specimen and not corrected. A profile whose
+upstream swatches don't fall in the surfaces' order takes them in lightness order: Everforest
+light's `--bg`, `--bg-1`, and `--bg-2` are bg0, bg1, and bg_dim.
 
 | `data-palette` | Light / dark | Source | License | Version |
 | --- | --- | --- | --- | --- |
@@ -471,11 +474,17 @@ to format a binding as keys does.
 ### Matching, sequences, and scope
 
 A press matches by `event.key`, with Control, Alt, and Meta exact: a bare binding doesn't match
-with one of them held. Keys is silent while focus is in a field (input, textarea, select, or
-contenteditable), even for a combination; while an input method composes (`isComposing`, or
+with one of them held. Keys runs no binding while focus is in a field (input, textarea, select,
+or contenteditable), even a combination; while an input method composes (`isComposing`, or
 `keyCode` 229); on "Dead" and "Process"; with AltGraph held; on a repeat; on an event already
 handled; and on a modifier pressed alone. A press keys acts on, or that starts or continues a
 sequence, is marked handled.
+
+Escape releases a field. Outside an open modal, an Escape pressed in a field blurs the field, so
+the page's shortcuts work again, unless another listener handled it, an input method is
+composing, or it is a repeat. Keys doesn't mark it handled, so the field's own Escape still
+runs: a search field clears. Inside an open modal the dialog keeps Escape. The release is no
+binding: the off switch doesn't cover it, it fires no `keys-fire`, and it ends no sequence.
 
 In a sequence, each press must follow the last within the wait, 1500 ms by default. A press that
 doesn't continue the sequence ends it and is dropped, not tried as a new start. When one binding
@@ -519,7 +528,10 @@ every later open the module fills the element before the dialog shows. It fills 
   `kbd` elements, "+" within a combination and "then" between presses, and its action, a button
   that closes the dialog and runs the binding, so every binding has a visible control. The
   action's label is the bound element's `aria-label`, else its text without its `kbd`, else a
-  field's `<label>`, else `register()`'s label.
+  field's `<label>`, else `register()`'s label. The last row is fixed: `Esc`, "Leave a field",
+  for the Escape that releases a field. Its action is plain text, not a button, since it has
+  nothing to run from the dialog, and it is never marked off. The table always has this row, so
+  it is never empty.
 - the reader's settings: an off switch, on by default, and the sequence wait, 1000, 1500, 3000, or
   5000 ms.
 - a note on passing a key through a screen reader: NVDA+F2, JAWS+3, Narrator+3, or VO+Tab.
@@ -590,8 +602,8 @@ export is not an entry; its size counts in the entry that imports it.
 | `modules/keys-grammar.js` | 3,500 |
 | `modules/keys-help.js` | 13,200 |
 
-v0.6.0's keys entries total 9,275, 3,066, and 11,834 bytes, leaving 1,025, 434, and 1,366 bytes
-of headroom. `keys.js` is about three times @github/hotkey's 2,872 bytes, the precedent's
+v0.6.0's keys entries total 9,661, 3,066, and 12,351 bytes, leaving 639, 434, and 849 bytes of
+headroom. `keys.js` is about three times @github/hotkey's 2,872 bytes, the precedent's
 runtime; comments are 53–56% of the keys modules' brotli size, left as written for validate's
 holistic size strategy.
 

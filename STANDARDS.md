@@ -76,7 +76,8 @@ restating it.
 - The package binds no shortcut. A page binds its own, with `data-keys` on a control or
   `register()` for a handler, and its specimen's bindings are specimen code, never the package's.
 - Every shortcut has a visible control that does the same thing: the bound button, or the help
-  dialog's row button for a `register()` binding.
+  dialog's row button for a `register()` binding. Escape releasing a field is no shortcut, so
+  its help row has no button.
 - A page never writes `aria-keyshortcuts` on an element carrying `data-keys`; keys derives it.
   A component's own keys inside its open dialog, such as the theming menu's T, are the
   component's, with its hand-written attribute.

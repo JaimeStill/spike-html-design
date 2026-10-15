@@ -191,7 +191,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slice 9 b79526e, slice 10 1b34cd9 · review stop 3 accepted
+slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slice 9 b79526e, slice 10 1b34cd9 · review stop 3 accepted · standards 2 (8583349, 503447c) · spec 2 (docs gap, closed by editor) · editor 2 done
 
 ## Decisions
 
@@ -492,7 +492,8 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   color: every text token (--fg, --fg-2, --fg-3) and every hue against every surface (--bg,
   --bg-2, --border, --border-2, --border-3), in each scheme. Surfaces get no ratio of their own.
   Amends behavior 15; rejected grading surfaces against --bg with text thresholds. From profiles
-  the surfaces are --bg-0, --bg, --bg-2, --border, and --border-2.
+  the surfaces are --bg-0, --bg, --bg-2, --border, and --border-2. From keys they are --bg,
+  --bg-1, --bg-2, --border, and --border-2 (keys session-brief redirect).
 - facets (BUILD, architect): display tests are framed by aspect ratio, not by any one monitor:
   21:9, 16:9, 16:10, 4:3, 1:1, and their portrait mirrors down to 9:21, each at a small and a
   large size. Amends behavior 7's "including 3440×1440".
@@ -587,9 +588,11 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - plan profiles: inline code is a --bg-2 chip in elements, text through --code-color with fallback
   --fg. Superseded by profiles review stop 1: green text, no chip.
 - plan profiles: --bg-2 steps toward the text in both schemes (lighter in dark).
-- plan profiles: pane token --bg-0, darker than --bg in both schemes.
+- plan profiles: pane token --bg-0, darker than --bg in both schemes. Superseded by the keys
+  session-brief redirect: --bg-0 is gone, and --bg-1 is one step from --bg toward the text.
 - plan profiles: Flexoki's ladder shifts one step so the pane is distinct; supersedes the Flexoki
-  tiers confirmed at the facets review stop.
+  tiers confirmed at the facets review stop. Superseded by the keys session-brief redirect: with
+  no pane, dark's --bg is black again and --bg-1 base-950; light keeps paper, base-50, base-100.
 - plan profiles: two border steps: --border (dividers, containers, hover fills) and --border-2
   (control boundaries, replacing --border-3); rejected keeping an unread middle step.
 - plan profiles: controls take a colored border on hover only; active and focus keep their
@@ -645,7 +648,8 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   `dialog > :is(form, menu, footer):last-child:not(:first-child)` in the elements layer, so
   every consumer's `method="dialog"` form gets the space.
 - profiles BUILD: Everforest pinned at v0.3.0; its `--border` is bg3 light (bg2 light equals
-  bg_dim, the pane) and bg2 dark. Its magenta is its purple, which fills the ANSI magenta slots.
+  bg_dim, the pane; from keys bg_dim is light's --bg-2) and bg2 dark. Its magenta is its purple,
+  which fills the ANSI magenta slots.
 - profiles BUILD: Primer pinned at github-vscode-theme v6.3.5, resolving @primer/primitives 7.10.0
   with the theme's src/colors.js overrides; every new hex was checked against upstream, 64 of 64.
 - profiles BUILD: the specimen's banners are `--text-2xl`, `--text-xl`, and `--text-l`, since
@@ -947,6 +951,7 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - keys editor: after the spec review fixes and the editor's doc-comment edits, the entries are
   keys.js 9,275 B, keys-grammar.js 3,066 B, and keys-help.js 11,834 B brotli; the budgets above
   leave headroom of about 11.1%, 14.2%, and 11.5% of each size. BUDGETS is unchanged.
+  Superseded by the redirect's sizes below.
 - keys: notes outside the task: every `mise run check` leaves its headless chromium profile, about
   133 MB, at `/tmp/.<hex>-00000000.bun-chrome`, one per run; 428 of them (9.7 GB) filled /tmp and
   blocked the check this session. The harness should remove its profile; not fixed here.
@@ -970,6 +975,10 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   text. --bg-1 leaves the retired-names list; --bg-0 joins a dropped-names guard.
 - keys review stop 3 (architect): accepted the surfaces and the Escape release on the served
   workbench.
+- keys editor (redirect): after slices 9 and 10 and the standards fixes (8583349, 503447c), the
+  entries are keys.js 9,661 of 10,300, keys-grammar.js 3,066 of 3,500, keys-help.js 12,351 of
+  13,200, baseline.css 13,657 of 14,000, and full.css 17,533 of 18,000 B brotli. BUDGETS is
+  unchanged.
 
 ## Pending edits
 
@@ -977,9 +986,11 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   faceted baseline: layers, facets, profiles, elements and tools, and packaging (facets onward;
   replaces the layers and themes edits to "Style baseline", "Palette", and "Themes"). From
   profiles it covers the sixteen-token color interface, `data-palette` and `data-scheme` scopes
-  on any element, the five color profiles, the hooks (`--interaction-color`, `--code-color`,
+  on any element, the four color profiles, the hooks (`--interaction-color`, `--code-color`,
   `--kbd-color`, `--button-color`, `--table-stripe`), and the lean and full entries with their
-  enforced brotli budgets.
+  enforced brotli budgets. From keys it describes the surfaces: --bg is the base, --bg-1 and
+  --bg-2 step toward the text (lightest to darkest in light, darkest to lightest in dark), and
+  dialogs sit on --bg-1.
 - coordinator · roadmap.toml, preferences summary: gains a second space and a second type
   profile, and the data-space and data-type scopes (plan profiles).
 - coordinator · roadmap.toml, keys summary: drop "plus key-hint styling"; keys is the
@@ -999,7 +1010,8 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
 - coordinator · html-artifacts.md, "Keyboard": rewrite: keys is a module family (grammar,
   runtime, help) binding keys, chords, and combinations as written through a data-keys
   behavior attribute, writing aria-keyshortcuts from it; the package binds no
-  shortcuts; the reader's off switch and settings; key-hint styling stays with elements (keys).
+  shortcuts; the reader's off switch and settings; Escape in a field, outside an open modal,
+  blurs it so shortcuts work again; key-hint styling stays with elements (keys).
 - coordinator · roadmap.toml, keys summary: names the module family and data-keys with written
   chords and combinations; the leader-key question was tried and dropped at the keys review
   stop (supersedes the plan preferences keys edit's leader question) (keys).
