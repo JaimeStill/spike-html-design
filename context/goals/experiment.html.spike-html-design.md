@@ -172,7 +172,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 4/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1) · review stop — · standards — · spec — · editor —
+slices 5/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -883,6 +883,14 @@ slices 4/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   focused component's key outside the off switch. theme-menu.js's accept() export is removed.
 - keys BUILD: Shift+T no longer opens the menu: "t" matches either case with Shift up (caps lock
   works); v0.5.0 allowed Shift.
+- keys BUILD: keys.js exports bindings(dialog) for the help module; only the listening copy loads
+  keys-help.js, on the first beforetoggle of a dialog holding [data-keys-list], and fills it
+  synchronously on later opens. A row's run() dispatches no keys-fire (no key was pressed).
+- keys BUILD: labels drop kbd and the text between sibling kbd ("then", "+"); a field with no text
+  takes its <label>'s text; an unlabeled binding shows its keys. A row the off switch covers gets
+  data-keys-off and a visible "off", not aria-disabled, since its button still works.
+- keys BUILD: the theme menu ignores repeated T and Escape, so holding the T that opened it doesn't
+  save it; held move keys still repeat. Provisional keys-help budget 15,100 B (entry 13,338 B).
 
 ## Pending edits
 
