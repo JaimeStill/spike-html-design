@@ -5,7 +5,12 @@
 // specimen.js, too; and the tag's pinned page renders the same from file://, a local server, and
 // GitHub Pages, in light and in dark, from v0.5.0 its menu opens and applies a profile from each
 // of them, and from v0.6.0 its keys open the menu and the help dialog and move focus from each.
-// It reads the network and writes nothing.
+// From v0.6.0, the first tag holding every module the extension fixture package's page loads, it
+// installs that package with bun, its dependency on the baseline by git tag pointed at the tag on
+// GitHub, and checks that the installed package's published files are byte-equal to the tag's
+// and that the package's page, served, renders as the tag's pinned page renders; an earlier tag
+// skips the install with the reason. It reads the network and writes only temporary directories,
+// the install's, which it removes.
 //
 // Usage: bun scripts/pin.js <tag>   (mise run pin <tag>)
 //
@@ -13,12 +18,15 @@
 // "<tag> not published" when the tag is missing locally or on origin. It is a plain script, not
 // a *.test.js file, so the hermetic `bun test` in `mise run check` never collects it.
 
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { GITHUB, install, PACKAGE, rendered, required } from "../test/extension.js";
 import { fileUrl, openPage, serve } from "../test/harness.js";
 import { layersLoaded, loaded } from "../test/layers.js";
 import { applyFromMenu } from "../test/menu.js";
 import { driveKeys } from "../test/shortcuts.js";
-import { git, modules, pageScripts, stylesheets, tagExists } from "../test/tags.js";
+import { git, modules, pageScripts, show, stylesheets, tagExists } from "../test/tags.js";
 
 const REPO = "JaimeStill/spike-html-design";
 const PAGES = "https://jaimestill.github.io/spike-html-design/";
@@ -176,6 +184,85 @@ try {
   }
 } finally {
   server.stop();
+}
+
+// The extension fixture package, installed from GitHub at the tag as a consumer installs it: bun
+// fetches github:JaimeStill/spike-html-design#<tag> from GitHub, unrewritten, into a temporary
+// directory with a cache of its own, so no earlier install answers.
+const published = [...FILES, ...MODULES, ...PAGE_SCRIPTS];
+const absent = required().filter((path) => !published.includes(path));
+if (absent.length) {
+  console.log(
+    `– the install from GitHub is skipped: ${tag} holds no ${absent.join(", ")}, which the extension fixture package's page loads`,
+  );
+} else {
+  const scratch = mkdtempSync(join(tmpdir(), "spike-html-design-pin-"));
+  const project = join(scratch, "extension-package");
+  const installed = join(project, "node_modules", PACKAGE);
+  let fixture;
+  try {
+    const result = install(scratch, project, { source: GITHUB, tag });
+    check(
+      result.exitCode === 0,
+      `the extension fixture package installs ${GITHUB}#${tag} with bun`,
+      result.stderr.trim(),
+    );
+    if (result.exitCode === 0) {
+      // bun names what it resolved the tag to, abbreviated: GitHub's ref, which for an annotated
+      // tag is the tag object, not its commit. Either is the tag's.
+      const ref = git("rev-parse", tag).stdout.toString().trim();
+      const commit = git("rev-parse", `${tag}^{commit}`).stdout.toString().trim();
+      const named = result.stdout.match(new RegExp(`${PACKAGE}@${GITHUB}#([0-9a-f]+)`))?.[1];
+      check(
+        Boolean(named) && (ref.startsWith(named) || commit.startsWith(named)),
+        `bun resolves ${tag} to ${named}, the tag's own`,
+        `bun named ${named ?? "nothing"}; ${tag} is ${ref.slice(0, 7)}, commit ${commit.slice(0, 7)}`,
+      );
+      const pkg = JSON.parse(readFileSync(join(installed, "package.json"), "utf8"));
+      check(
+        pkg.name === PACKAGE && pkg.version === tag.slice(1),
+        `it installs ${PACKAGE} ${tag.slice(1)}`,
+        `got ${pkg.name} ${pkg.version}`,
+      );
+      const differ = published.filter((path) => {
+        try {
+          return !readFileSync(join(installed, path)).equals(show(tag, path));
+        } catch {
+          return true;
+        }
+      });
+      check(
+        differ.length === 0,
+        `its ${published.length} published files are byte-equal to ${tag}'s`,
+        `differ or missing: ${differ.join(", ")}`,
+      );
+      // The package's page, served, against the tag's pinned page from file:// through jsDelivr:
+      // the header's elements and every token on the root compute alike.
+      fixture = serve(project);
+      for (const scheme of ["light", "dark"]) {
+        let pinned;
+        let opened;
+        try {
+          pinned = await openPage(origins["file://"], { scheme });
+          opened = await openPage(fixture.url, { scheme });
+          // Compared as values, not as JSON: the order chromium lists the root's custom properties
+          // in differs between the two pages.
+          check(
+            Bun.deepEquals(await rendered(pinned), await rendered(opened)),
+            `the installed package's page renders as ${page} renders, in ${scheme}`,
+          );
+        } catch (error) {
+          check(false, `the installed package's page renders, in ${scheme}`, error.message);
+        } finally {
+          pinned?.close();
+          opened?.close();
+        }
+      }
+    }
+  } finally {
+    fixture?.stop();
+    rmSync(scratch, { recursive: true, force: true });
+  }
 }
 
 console.log(failures ? `${failures} failed` : `${tag} is published and pinned`);

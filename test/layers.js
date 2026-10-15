@@ -124,10 +124,28 @@ export const PROBES = {
     ["#prose h1", "font-weight", "600"],
     ["#tools .scroll-x", "overflow-x", "auto"],
   ],
-  // The working tree, to be cut as v0.6.0: keys adds modules and no layer file, and renames the
-  // surfaces so --bg is the base and --bg-1 and --bg-2 step toward the text. Dark takes the old
-  // pane as --bg, so each profile's --bg probe reads its new pair; every other probe is v0.5.0's.
+  // keys adds modules and no layer file, and renames the surfaces so --bg is the base and --bg-1
+  // and --bg-2 step toward the text. Dark takes the old pane as --bg, so each profile's --bg
+  // probe reads its new pair; every other probe is v0.5.0's.
   "v0.6.0": [
+    [":root", "color-scheme", "light dark"],
+    [":root", "--bg", "light-dark(#fffcf0, #100f0f)"],
+    ['[data-palette="primer"]', "--bg", "light-dark(#ffffff, #1c2128)"],
+    ['[data-palette="catppuccin"]', "--bg", "light-dark(#eff1f5, #181825)"],
+    ['[data-palette="everforest"]', "--bg", "light-dark(#fffbef, #1e2326)"],
+    [":root", "--radius-full", "9999px"],
+    [":root", "--line-s", "1px"],
+    ['[data-space="compact"]', "--radius-base", "0.25rem"],
+    [":root", "--text-m", "1rem"],
+    [":root", "--leading-ui", "1.25"],
+    ['[data-type="sans"]', "--font-heading", SANS],
+    ["body", "box-sizing", "border-box"],
+    ["#prose h1", "font-weight", "600"],
+    ["#tools .scroll-x", "overflow-x", "auto"],
+  ],
+  // The working tree, to be cut as v0.7.0: validate adds the conformance module and changes no
+  // layer file, so every probe is v0.6.0's.
+  "v0.7.0": [
     [":root", "color-scheme", "light dark"],
     [":root", "--bg", "light-dark(#fffcf0, #100f0f)"],
     ['[data-palette="primer"]', "--bg", "light-dark(#ffffff, #1c2128)"],

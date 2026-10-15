@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spike-html-design extension fixture</title>
+    <!-- The extension package's page, as a consumer that installed the baseline with bun by git
+         tag serves it: the full entry linked from node_modules, the package's own Harbor profile
+         after it, and the modules loaded from node_modules through the import map, by the
+         package's export names. Its header is the pinned v0.6.0 page's, so the two render alike.
+         It needs a server: chromium runs no module script from node_modules over file://. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "spike-html-design/registry": "./node_modules/spike-html-design/modules/registry.js",
+          "spike-html-design/register/full": "./node_modules/spike-html-design/modules/register-full.js",
+          "spike-html-design/preferences": "./node_modules/spike-html-design/modules/preferences.js",
+          "spike-html-design/keys": "./node_modules/spike-html-design/modules/keys.js"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="./node_modules/spike-html-design/full.css" />
+    <link rel="stylesheet" href="./harbor.css" />
+    <!-- In document order, each before first paint: the baseline's profiles, then Harbor, then
+         the stored choice, which may name Harbor. -->
+    <script type="module" blocking="render">
+      import "spike-html-design/register/full";
+    </script>
+    <script type="module" blocking="render" src="./register.js"></script>
+    <script type="module" blocking="render">
+      import "spike-html-design/preferences";
+    </script>
+    <script type="module">
+      import "spike-html-design/keys";
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1 tabindex="-1">spike-html-design</h1>
+      <button type="button" commandfor="theme" command="--open" data-keys="t">
+        Theme <kbd>T</kbd>
+      </button>
+      <button type="button" commandfor="help" command="show-modal" data-keys="?">
+        Help <kbd>?</kbd>
+      </button>
+      <p>
+        This page extends the baseline with the Harbor color profile, <code>harbor.css</code>.
+        The Theme button or <kbd>T</kbd> opens a menu that lists it beside the built-in profiles.
+      </p>
+    </header>
+
+    <main>
+      <section id="harbor" data-palette="harbor">
+        <h2>Harbor</h2>
+        <p>This section applies Harbor by <code>data-palette</code>, whatever the page's choice.</p>
+      </section>
+    </main>
+    <theme-menu id="theme"></theme-menu>
+    <dialog id="help" class="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard shortcuts</h2>
+      <div data-keys-list></div>
+      <footer>
+        <button type="button" commandfor="help" command="close" data-keys="?">
+          Close <kbd>?</kbd>
+        </button>
+      </footer>
+    </dialog>
+  </body>
+</html>

@@ -1,6 +1,6 @@
 {
   "name": "spike-html-design",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A native, layered CSS and JS baseline for human-facing HTML artifacts",
   "style": "./baseline.css",
   "exports": {
@@ -21,6 +21,7 @@
     "./register/full": "./modules/register-full.js",
     "./keys": "./modules/keys.js",
     "./keys/grammar": "./modules/keys-grammar.js",
-    "./keys/help": "./modules/keys-help.js"
+    "./keys/help": "./modules/keys-help.js",
+    "./conformance": "./modules/conformance.js"
   }
 }

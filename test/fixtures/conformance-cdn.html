@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>conformance CDN fixture</title>
+    <!-- The entry from a CDN, as a pinned page links it: from file:// its sheets are cross-origin,
+         so chromium hides their rules, and only computed values can be read. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/example/fixture@v0.7.0/full.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/gh/example/fixture@v0.7.0/modules/register-full.js"></script>
+  </head>
+  <body>
+    <h1>conformance CDN fixture</h1>
+    <p>The full entry and its registration module from a CDN, opened from file://. The tests import the conformance check from the same CDN and run it on each built-in color profile.</p>
+  </body>
+</html>

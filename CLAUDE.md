@@ -12,8 +12,10 @@ jsDelivr, and extend it. The repository is managed with the marathon workflow; s
   chromium is missing. The tests open pages through `test/harness.js`.
 - **Size budgets:** `BUDGETS` in `scripts/size.js`; `mise run size` reports each entry against
   its budget, and the check fails when one is over.
-- **Live pin check:** `mise run pin <tag>` checks a published tag against jsDelivr and Pages; it
-  reads the network, so the check never runs it.
+- **Live checks:** `mise run pin <tag>` checks a published tag against jsDelivr and Pages and,
+  from v0.6.0, installs the extension fixture, `test/fixtures/extension-package/`, from GitHub by
+  the tag. `mise run chain <tag>` measures the entries' import chains from jsDelivr. Both read
+  the network, so the check never runs them.
 - **Goals:** this spike's tasks live in the coordinator's roadmap,
   `standards-lab/context/roadmap.toml`, under `experiment.html.spike-html-design`. Its goal
   record is `context/goals/experiment.html.spike-html-design.md`.

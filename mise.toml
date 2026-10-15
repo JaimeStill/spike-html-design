@@ -23,9 +23,17 @@ description = "Report every mise tool and workflow action pin behind its latest;
 run = "scripts/currency.sh"
 
 [tasks.pin]
-description = "Check a published tag live: jsDelivr serves every stylesheet, module, and page script file it publishes immutable and byte-equal, and its pinned page renders the same, and its menu and keys work, from file://, a local server, and GitHub Pages; reads the network, writes nothing"
+description = "Check a published tag live: jsDelivr serves every stylesheet, module, and page script file it publishes immutable and byte-equal, and its pinned page renders the same, and its menu and keys work, from file://, a local server, and GitHub Pages, and from v0.6.0 the extension fixture package installs it from GitHub by tag, byte-equal, and renders as its pinned page; reads the network, writes only temporary directories"
 usage = 'arg "<tag>" help="The published tag to check, as in v0.1.0"'
 run = 'bun "$MISE_PROJECT_ROOT/scripts/pin.js" "$usage_tag"'
+
+[tasks.chain]
+description = "Measure a published tag's import chains live from jsDelivr: for baseline.css, full.css, and keys.js, the files and hops, and the median over the runs of the span from the entry's response to its last import's and of first paint, with the date and the edge; reads the network, writes nothing"
+usage = '''
+arg "<tag>" help="The published tag to measure, as in v0.6.0"
+flag "--runs <runs>" default="5" help="The runs each figure is the median of"
+'''
+run = 'bun "$MISE_PROJECT_ROOT/scripts/chain.js" "$usage_tag" "$usage_runs"'
 
 [tasks.size]
 description = "Report each CSS and JS entry's files with their raw and brotli-11 sizes, the totals, and its brotli budget and headroom; fails when an entry is over budget, writes nothing"

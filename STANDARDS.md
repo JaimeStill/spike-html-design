@@ -40,6 +40,12 @@ The architecture pages that apply, in the architecture repository:
 - A profile sets its own facet's tokens only: a color profile color tokens, a space profile
   space tokens, a type profile type tokens.
 
+## Conformance
+
+- A color profile an extension package ships must pass `check("color", name)` from
+  `./conformance`. The contract is its seven rules, `RULES.color`, and nothing more; the credit
+  comment and upstream swatches above stay this repository's own rules for its own profiles.
+
 ## Hooks
 
 A hook is a custom property a layer reads so that a consumer can extend a treatment without

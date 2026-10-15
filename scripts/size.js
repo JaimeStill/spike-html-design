@@ -11,8 +11,10 @@
 // the sum of each file's size, not the size of the files compressed together. Each entry has a
 // budget for that brotli total, in BUDGETS below, and the report gives each entry's budget and
 // headroom; the script exits 1 when an entry is over its budget or has none, so the check fails.
-// Raw sizes are reported, not budgeted. It reads the working tree and writes nothing but its
-// report.
+// Raw sizes are reported, not budgeted. Beside each entry's per-file totals, the report gives what
+// the entry would weigh as one file, its import chain inlined, and as that file with its comments
+// stripped: an estimate of what a release build would save, reported and never budgeted, so it
+// never fails the check. It reads the working tree and writes nothing but its report.
 //
 // Usage: bun scripts/size.js   (mise run size; mise run check runs it after the tests)
 //
@@ -28,7 +30,8 @@ const root = dirname(import.meta.dir);
 // reach: the one place the budgets live, read by the report, the check, and the tests. The CSS
 // entries come first, then the JS modules, in the exports map's order. Each JS budget is its
 // v0.5.0 brotli total with about 13% headroom, rounded up to a clear figure, but the keys
-// modules', which are their v0.6.0 totals with about 13% headroom, rounded the same way.
+// modules', which are their v0.6.0 totals, and the conformance module's, its v0.7.0 total, each
+// with about 13% headroom, rounded the same way.
 export const BUDGETS = {
   "baseline.css": 14_000,
   "full.css": 18_000,
@@ -40,6 +43,7 @@ export const BUDGETS = {
   "modules/keys.js": 10_300,
   "modules/keys-grammar.js": 3_500,
   "modules/keys-help.js": 13_200,
+  "modules/conformance.js": 4_000,
 };
 
 // entries returns the package's entries, as repository paths: every target its exports map names
@@ -85,9 +89,99 @@ export function brotli(bytes) {
   return brotliCompressSync(bytes, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length;
 }
 
+// commentRanges returns the [start, end) offsets of a stylesheet's comments, /* to */, skipping
+// any "/*" inside a quoted string, so a url or content string that holds one is kept whole.
+export function commentRanges(css) {
+  const ranges = [];
+  let quote = "";
+  for (let i = 0; i < css.length; i++) {
+    const char = css[i];
+    if (quote) {
+      if (char === "\\") i++;
+      else if (char === quote) quote = "";
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === "/" && css[i + 1] === "*") {
+      const close = css.indexOf("*/", i + 2);
+      const end = close === -1 ? css.length : close + 2;
+      ranges.push([i, end]);
+      i = end - 1;
+    }
+  }
+  return ranges;
+}
+
+// strip returns text without its comments, by path's extension. A stylesheet loses every /* */
+// comment outside a string. A module loses only the comments that are safe to find without
+// parsing JS: a /* */ block that opens a line and every whole-line // comment, so no string,
+// regular expression, or template literal is ever cut; a comment after code on its line is kept.
+// This package's modules have no comment after code, so for them it strips every comment.
+export function strip(path, text) {
+  if (path.endsWith(".js")) {
+    return text.replace(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*\n?/gm, "").replace(/^[ \t]*\/\/.*\n?/gm, "");
+  }
+  let kept = "";
+  let from = 0;
+  for (const [start, end] of commentRanges(text)) {
+    kept += text.slice(from, start);
+    from = end;
+  }
+  return kept + text.slice(from);
+}
+
+// concatenate returns entry as one file, its static import chain inlined, each file once, for the
+// report's size estimate; it is not a build, and nothing ships it. A stylesheet's @import rule,
+// outside a comment, becomes the imported file's text in its place, wrapped in an @layer block
+// when the rule names a layer, as the browser cascades it; a media or supports condition on the
+// rule is dropped, since this package's imports carry none. A module's imported modules come
+// first, depth first, as a bundler orders them, and each module's static import and export-from
+// statements of a relative path are dropped; the export keywords stay, so the text estimates
+// size and is not meant to run.
+export async function concatenate(entry, dir = root) {
+  const seen = new Set();
+  const read = (path) => Bun.file(join(dir, path)).text();
+  if (entry.endsWith(".js")) {
+    const parts = [];
+    const visit = async (path) => {
+      if (seen.has(path)) return;
+      seen.add(path);
+      const text = await read(path);
+      for (const imported of imports(path, text)) await visit(imported);
+      parts.push(
+        text.replace(
+          /^\s*(?:import|export)\s*(?:[\w*{}\s,$]+?\s*from\s*)?["'](\.{1,2}\/[^"']+)["'];?/gm,
+          "",
+        ),
+      );
+    };
+    await visit(entry);
+    return parts.join("\n");
+  }
+  const inline = async (path) => {
+    seen.add(path);
+    const text = await read(path);
+    const comments = commentRanges(text);
+    const rule =
+      /@import\s+(?:url\(\s*["']?([^"')\s]+)["']?\s*\)|["']([^"']+)["'])\s*(?:layer\(\s*([^)\s]+)\s*\))?[^;]*;/g;
+    let out = "";
+    let from = 0;
+    for (const match of text.matchAll(rule)) {
+      if (comments.some(([start, end]) => match.index >= start && match.index < end)) continue;
+      const [whole, url, quoted, layer] = match;
+      const imported = normalize(join(dirname(path), url ?? quoted));
+      const body = seen.has(imported) ? "" : await inline(imported);
+      out += text.slice(from, match.index) + (layer ? `@layer ${layer} {\n${body}\n}` : body);
+      from = match.index + whole.length;
+    }
+    return out + text.slice(from);
+  };
+  return inline(entry);
+}
+
 // measure returns entry's report: its files, the entry first, then each file it imports in the
 // order the imports name them, depth first, each once; each with its raw and brotli sizes, and
-// the totals of both.
+// the totals of both; and the raw and brotli sizes of the entry as one file (oneFile) and as that
+// file with its comments stripped (noComments).
 export async function measure(entry, dir = root) {
   const files = [];
   const seen = new Set();
@@ -100,16 +194,33 @@ export async function measure(entry, dir = root) {
   };
   await visit(entry);
   const sum = (key) => files.reduce((total, file) => total + file[key], 0);
-  return { entry, files, raw: sum("raw"), brotli: sum("brotli") };
+  const encoder = new TextEncoder();
+  const sizes = (text) => {
+    const bytes = encoder.encode(text);
+    return { raw: bytes.length, brotli: brotli(bytes) };
+  };
+  const one = await concatenate(entry, dir);
+  return {
+    entry,
+    files,
+    raw: sum("raw"),
+    brotli: sum("brotli"),
+    oneFile: sizes(one),
+    noComments: sizes(strip(entry, one)),
+  };
 }
 
-// table renders a report as aligned plain text: a header, one row per file, and the total, then,
-// when the report carries a budget, the budget and the headroom left under it, both of brotli.
-export function table({ entry, files, raw, brotli, budget, headroom }) {
+// table renders a report as aligned plain text: a header, one row per file, and the total; then
+// the entry as one file and as one file without comments, both estimates the header marks as
+// unbudgeted; then, when the report carries a budget, the budget and the headroom left under it,
+// both of brotli. A module's header says which comments its no-comments row strips.
+export function table({ entry, files, raw, brotli, oneFile, noComments, budget, headroom }) {
   const rows = [
     ["file", "raw", "brotli"],
     ...files.map((file) => [file.path, file.raw, file.brotli]),
     ["total", raw, brotli],
+    ["one file", oneFile.raw, oneFile.brotli],
+    ["one file, no comments", noComments.raw, noComments.brotli],
     ...(budget === undefined
       ? []
       : [
@@ -120,9 +231,11 @@ export function table({ entry, files, raw, brotli, budget, headroom }) {
   const widths = [0, 1, 2].map((i) => Math.max(...rows.map((row) => row[i].length)));
   const line = ([path, ...sizes]) =>
     `  ${path.padEnd(widths[0])}  ${sizes.map((size, i) => size.padStart(widths[i + 1])).join("  ")}`;
-  return [`size: ${entry} (bytes; brotli is quality 11, per file, summed)`, ...rows.map(line)].join(
-    "\n",
-  );
+  const stripped = entry.endsWith(".js")
+    ? "; no comments strips line-leading /* */ and // only"
+    : "";
+  const header = `size: ${entry} (bytes; brotli is quality 11, per file, summed; one file rows are estimates, not budgeted${stripped})`;
+  return [header, ...rows.map(line)].join("\n");
 }
 
 // audit measures every entry the package in dir exports against its budget in budgets, and

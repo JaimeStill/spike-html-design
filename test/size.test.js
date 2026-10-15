@@ -1,6 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { dirname, join } from "node:path";
-import { audit, BUDGETS, brotli, entries, imports, measure, table } from "../scripts/size.js";
+import {
+  audit,
+  BUDGETS,
+  brotli,
+  concatenate,
+  entries,
+  imports,
+  measure,
+  strip,
+  table,
+} from "../scripts/size.js";
 import { ENTRIES } from "./layers.js";
 
 const root = dirname(import.meta.dir);
@@ -18,6 +28,7 @@ const MODULES = {
   "modules/keys.js": ["modules/keys-grammar.js"],
   "modules/keys-grammar.js": [],
   "modules/keys-help.js": ["modules/keys.js", "modules/keys-grammar.js"],
+  "modules/conformance.js": [],
 };
 
 // FIXTURE is a one-entry package, entry.css importing part.css, that the budget tests audit
@@ -57,15 +68,97 @@ describe("size report", () => {
     });
   }
 
-  test("renders a row per file and a total row", async () => {
+  test("renders a row per file, a total row, and the one-file rows", async () => {
     const report = await measure("baseline.css");
     const lines = table(report).split("\n");
-    expect(lines).toHaveLength(report.files.length + 3);
-    expect(lines.at(-1).trim().split(/\s+/)).toEqual([
-      "total",
-      `${report.raw}`,
-      `${report.brotli}`,
+    expect(lines).toHaveLength(report.files.length + 5);
+    expect(lines.slice(-3).map((line) => line.trim().split(/\s{2,}/))).toEqual([
+      ["total", `${report.raw}`, `${report.brotli}`],
+      ["one file", `${report.oneFile.raw}`, `${report.oneFile.brotli}`],
+      ["one file, no comments", `${report.noComments.raw}`, `${report.noComments.brotli}`],
     ]);
+  });
+
+  test("says in a module's header which comments its no-comments row strips", async () => {
+    expect(table(await measure("modules/keys.js")).split("\n")[0]).toContain(
+      "no comments strips line-leading /* */ and // only",
+    );
+    expect(table(await measure("baseline.css")).split("\n")[0]).not.toContain("line-leading");
+  });
+
+  for (const entry of Object.keys(BUDGETS)) {
+    test(`weighs ${entry} as one file and without comments, each no more than the last`, async () => {
+      const { raw, brotli: total, oneFile, noComments } = await measure(entry);
+      const one = await concatenate(entry);
+      const bare = strip(entry, one);
+      expect(oneFile).toEqual({ raw: new TextEncoder().encode(one).length, brotli: brotli(one) });
+      expect(noComments).toEqual({
+        raw: new TextEncoder().encode(bare).length,
+        brotli: brotli(bare),
+      });
+      expect(oneFile.raw).toBeLessThanOrEqual(raw);
+      expect(oneFile.brotli).toBeLessThanOrEqual(total);
+      expect(noComments.raw).toBeLessThan(oneFile.raw);
+      expect(noComments.brotli).toBeLessThan(oneFile.brotli);
+    });
+  }
+
+  for (const [entry, imported] of Object.entries(ENTRIES)) {
+    test(`inlines every file ${entry} imports into its layer, in order, leaving no @import`, async () => {
+      const one = await concatenate(entry);
+      expect(imports(entry, one)).toEqual([]);
+      let from = 0;
+      for (const [layer, path] of imported) {
+        const text = await Bun.file(join(root, path)).text();
+        const at = one.indexOf(`@layer spike-html-design.${layer} {\n${text}\n}`, from);
+        expect([path, at >= from]).toEqual([path, true]);
+        from = at + text.length;
+      }
+    });
+  }
+
+  for (const [entry, imported] of Object.entries(MODULES)) {
+    test(`inlines ${entry}'s modules before it, without their relative imports`, async () => {
+      const one = await concatenate(entry);
+      expect(imports(entry, one)).toEqual([]);
+      const order = [...imported].reverse().concat(entry);
+      const at = [];
+      for (const path of order) {
+        const lines = (await Bun.file(join(root, path)).text()).split("\n");
+        for (const line of lines.filter((line) => !/^import .* from "\.\//.test(line))) {
+          expect([path, one.includes(line)]).toEqual([path, true]);
+        }
+        at.push(one.indexOf(lines.slice(0, 3).join("\n")));
+      }
+      expect(at.every((index, i) => index >= 0 && (i === 0 || index > at[i - 1]))).toBe(true);
+    });
+  }
+
+  test("strips a stylesheet's comments but not a string that holds a comment's mark", () => {
+    const css = `/* gone */\na::after { content: "/* kept */"; } /* gone,\n too */b { c: 'd' }`;
+    expect(strip("x.css", css)).toBe(`\na::after { content: "/* kept */"; } b { c: 'd' }`);
+  });
+
+  test("strips a module's line-leading block and whole-line comments, and nothing after code", () => {
+    const js = [
+      "/**",
+      " * gone",
+      " */",
+      "// gone",
+      "  // gone",
+      'const a = "/* kept */"; // kept, after code',
+      "const b = /\\/\\//; /* kept, after code */",
+    ].join("\n");
+    expect(strip("x.js", js)).toBe(js.split("\n").slice(5).join("\n"));
+  });
+
+  test("leaves every module parseable once its comments are stripped", async () => {
+    const transpiler = new Bun.Transpiler({ loader: "js" });
+    for (const entry of Object.keys(MODULES)) {
+      const bare = strip(entry, await Bun.file(join(root, entry)).text());
+      expect(() => transpiler.transformSync(bare)).not.toThrow();
+      expect([entry, /^\s*(\/\/|\/\*)/m.test(bare)]).toEqual([entry, false]);
+    }
   });
 
   test("renders an audited report's budget and headroom under its total", async () => {
@@ -130,6 +223,18 @@ describe("size budget", () => {
     expect((await audit({ "entry.css": total }, FIXTURE)).failures).toEqual([]);
   });
 
+  test("budgets the per-file total, never the one-file figures", async () => {
+    const { brotli: total, oneFile, noComments } = await measure("entry.css", FIXTURE);
+    expect(oneFile.brotli).toBeLessThan(total);
+    const over = await audit({ "entry.css": oneFile.brotli }, FIXTURE);
+    expect(over.failures).toHaveLength(1);
+    expect((await audit({ "entry.css": total }, FIXTURE)).reports[0]).toMatchObject({
+      oneFile,
+      noComments,
+      headroom: 0,
+    });
+  });
+
   test("fails an entry with no budget", async () => {
     expect((await audit({}, FIXTURE)).failures).toEqual(["entry.css has no budget"]);
   });
@@ -144,5 +249,9 @@ describe("size budget", () => {
       expect(out).toContain(`size: ${entry}`);
     }
     expect(out.match(/^\s+headroom\s+\d+$/gm)).toHaveLength(Object.keys(BUDGETS).length);
+    expect(out.match(/^\s+one file\s+\d+\s+\d+$/gm)).toHaveLength(Object.keys(BUDGETS).length);
+    expect(out.match(/^\s+one file, no comments\s+\d+\s+\d+$/gm)).toHaveLength(
+      Object.keys(BUDGETS).length,
+    );
   });
 });

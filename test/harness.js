@@ -3,7 +3,8 @@
 // use: open a URL, evaluate in the page, read a computed style, fingerprint a page's resolved
 // styles, emulate media features such as prefers-color-scheme and the viewport's size, and answer
 // a request URL prefix from a local file, with the CORS header a CDN sends and, optionally, its
-// latency. serve() is a static server for pages that must load over http://.
+// latency, and send the tab raw CDP commands and hear its events, as the chain measurement does
+// with the Network domain's. serve() is a static server for pages that must load over http://.
 //
 // Bun.WebView spawns one chromium per bun process and opens each view as a tab in it, so the
 // first openPage() fixes the browser for the whole test run.
@@ -21,9 +22,10 @@ export function fileUrl(path) {
 // `scheme` emulates prefers-color-scheme ("dark" or "light"), `viewport` emulates the viewport's
 // size in CSS px, as in { width: 1440, height: 900 }, and `intercept` maps URL prefixes to the
 // local files that answer them, as in { "https://cdn.example/x.css": "x.css" }, or to
-// { path, delay } to answer after delay ms, as a slow CDN would. It throws when
-// chromium is not on PATH or won't start.
-export async function openPage(url, { scheme, viewport, intercept } = {}) {
+// { path, delay } to answer after delay ms, as a slow CDN would. `setup`, an async function of the
+// Page, runs last, as in enabling a CDP domain with page.cdp() and listening with page.on(). It
+// throws when chromium is not on PATH or won't start.
+export async function openPage(url, { scheme, viewport, intercept, setup } = {}) {
   const page = new Page(spawnView());
   try {
     // about:blank first: a view has no CDP session until its first navigation, and emulation
@@ -35,6 +37,7 @@ export async function openPage(url, { scheme, viewport, intercept } = {}) {
       const { path, delay } = typeof answer === "string" ? { path: answer } : answer;
       await page.intercept(prefix, path, { delay });
     }
+    if (setup) await setup(page);
     await page.goto(url);
   } catch (error) {
     page.close();
@@ -202,6 +205,18 @@ class Page {
       ],
       body: found ? Buffer.from(await file.arrayBuffer()).toString("base64") : "",
     });
+  }
+
+  // cdp sends a raw CDP command to this tab, as in ("Network.enable", {}), in turn with the
+  // harness's own, and resolves to its result.
+  cdp(method, params = {}) {
+    return this.#cdp(method, params);
+  }
+
+  // on calls listener with each CDP event named event this tab receives, as in
+  // ("Network.responseReceived", (params) => …), once its domain is enabled with cdp().
+  on(event, listener) {
+    this.view.addEventListener(event, (message) => listener(message.data));
   }
 
   // #cdp serializes raw CDP commands: a view allows one cdp() in flight, and paused requests
