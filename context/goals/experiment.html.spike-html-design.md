@@ -191,7 +191,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slice 9 b79526e, slice 10 1b34cd9 · review stop 3 pending
+slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slice 9 b79526e, slice 10 1b34cd9 · review stop 3 accepted
 
 ## Decisions
 
@@ -968,6 +968,8 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   :where(dialog); its sheet's one var(--bg) is the preview, a sample page, and stays. The order
   check reads chromium's resolved colors per profile and scheme and requires --bg-2 short of the
   text. --bg-1 leaves the retired-names list; --bg-0 joins a dropped-names guard.
+- keys review stop 3 (architect): accepted the surfaces and the Escape release on the served
+  workbench.
 
 ## Pending edits
 
