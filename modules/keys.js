@@ -120,8 +120,9 @@
 // The copy that listens loads keys-help.js, beside itself, the first time such a dialog fires
 // beforetoggle to open, however it opens (a show-modal invoker, showModal(), or show()), and
 // from then on has it fill the dialog's marked elements at each open, before the dialog shows.
-// A load that fails is warned of on the console and tried again at the next open; until one
-// succeeds, the dialog opens as the page wrote it.
+// A load that fails is warned of on the console and imported again at the next open; chromium
+// keeps a failed module in the document, so a reload is what recovers. Until then the dialog
+// opens as the page wrote it.
 import { keyshortcuts, matches, normalize, parse, problem, stringify } from "./keys-grammar.js";
 
 const KEY = Symbol.for("spike-html-design.keys");
