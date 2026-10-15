@@ -116,7 +116,7 @@ Release       v0.7.0
 
 ## Progress
 
-slices 1/5 committed (c4ada3d) · standards — · spec — · editor —
+slices 2/5 committed (c4ada3d, 7d6e288) · standards — · spec — · editor —
 
 ## Decisions
 
