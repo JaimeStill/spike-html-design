@@ -65,11 +65,28 @@ restating it.
   button treatment.
 - The reset changes only its listed allowances.
 - The specimen's arrangement lives in its own layer: composition, not baseline.
-- `kbd` styling, including every key hint, belongs to the elements layer. The keys module binds
-  keys and styles nothing.
+- `kbd` styling, including every key hint, belongs to the elements layer. The keys modules bind
+  keys and add no CSS; the help dialog's table and controls take the elements layer's styling.
 - The modules add nothing to the baseline's layers. A component's CSS, such as the theming
   menu's, is one constructed sheet the component adopts, in the layer
   `spike-html-design.<component>`, under every consumer layer; it reads only tokens.
+
+## Keys
+
+- The package binds no shortcut. A page binds its own, with `data-keys` on a control or
+  `register()` for a handler, and its specimen's bindings are specimen code, never the package's.
+- Every shortcut has a visible control that does the same thing: the bound button, or the help
+  dialog's row button for a `register()` binding.
+- A page never writes `aria-keyshortcuts` on an element carrying `data-keys`; keys derives it.
+  A component's own keys inside its open dialog, such as the theming menu's T, are the
+  component's, with its hand-written attribute.
+- Prefer a bare key, then a written chord ("g c"), then a combination ("Mod+k"); every binding is
+  pressed as written, with no mode that rewrites it.
+- One owner per key on a page: a component never listens for a key the page might bind.
+- A page that binds keys places the help dialog, with `data-keys-list`, and opens it from a
+  visible button.
+- Keys grows through its events and its grammar module, by outside modules, rather than by
+  features of its own.
 
 ## Whitespace
 
