@@ -98,6 +98,7 @@ function table(dialog) {
   const listed = bindings(dialog);
   if (listed.length === 0) {
     const none = document.createElement("p");
+    none.dataset.keysNone = "";
     none.textContent = "This page has no keyboard shortcuts.";
     return none;
   }
@@ -158,10 +159,8 @@ function form() {
 
 // render replaces list's table with one drawn now.
 function render(list, dialog) {
-  list.querySelector(":scope > [data-keys-table], :scope > p[data-keys-none]")?.remove();
-  const drawn = table(dialog);
-  if (drawn.localName === "p") drawn.dataset.keysNone = "";
-  list.prepend(drawn);
+  list.querySelector(":scope > :is([data-keys-table], [data-keys-none])")?.remove();
+  list.prepend(table(dialog));
 }
 
 // wire installs list's listeners once: a row button closes dialog and runs its binding, and a

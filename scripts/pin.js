@@ -4,7 +4,8 @@
 // immutable, byte-equal JavaScript file, and from v0.6.0 the specimen's own scripts at its root,
 // specimen.js, too; and the tag's pinned page renders the same from file://, a local server, and
 // GitHub Pages, in light and in dark, from v0.5.0 its menu opens and applies a profile from each
-// of them, and from v0.6.0 its keys open the menu and the help dialog and move focus from each. It reads the network and writes nothing.
+// of them, and from v0.6.0 its keys open the menu and the help dialog and move focus from each.
+// It reads the network and writes nothing.
 //
 // Usage: bun scripts/pin.js <tag>   (mise run pin <tag>)
 //

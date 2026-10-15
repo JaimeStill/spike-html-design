@@ -389,8 +389,8 @@ function onbeforetoggle(event) {
 }
 
 // onkey reads the settings and the bindings in effect and matches the press against them, after
-// the presses pending. A complete match with no longer one waiting fires at once; a longer one waiting
-// starts or continues the sequence; nothing matching drops the sequence in progress.
+// the presses pending. A complete match with no longer one waiting fires at once; a longer one
+// waiting starts or continues the sequence; nothing matching drops the sequence in progress.
 function onkey(event) {
   if (silent(event)) return;
   const presses = [...(pending?.presses ?? []), snapshot(event)];
