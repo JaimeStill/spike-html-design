@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>conformance fixture</title>
+    <link rel="stylesheet" href="../../full.css" />
+    <style>
+      /* The fixture profiles an extension would add, each breaking one rule of the color facet's
+         contract, imported into the color layer as a page adds a profile beyond its entry. */
+      @import url(./conformance/missing.css) layer(spike-html-design.tokens.color);
+      @import url(./conformance/specific.css) layer(spike-html-design.tokens.color);
+      @import url(./conformance/surfaces.css) layer(spike-html-design.tokens.color);
+      @import url(./conformance/unregistered.css) layer(spike-html-design.tokens.color);
+      @import url(./conformance/spacing.css) layer(spike-html-design.tokens.color);
+    </style>
+    <!-- Linked on its own, so its block is unlayered. -->
+    <link rel="stylesheet" href="./conformance/unlayered.css" />
+    <script type="module">
+      import { register } from "../../modules/registry.js";
+      import "../../modules/register-full.js";
+
+      // Every fixture profile is registered but unregistered.
+      for (const name of ["missing", "unlayered", "specific", "surfaces", "spacing"]) {
+        register("color", name);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>conformance fixture</h1>
+    <p>The full entry's four color profiles, and one fixture profile per rule of the color facet's contract that breaks that rule alone. The tests run the conformance check on each name.</p>
+  </body>
+</html>

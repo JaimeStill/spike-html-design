@@ -28,7 +28,8 @@ const root = dirname(import.meta.dir);
 // reach: the one place the budgets live, read by the report, the check, and the tests. The CSS
 // entries come first, then the JS modules, in the exports map's order. Each JS budget is its
 // v0.5.0 brotli total with about 13% headroom, rounded up to a clear figure, but the keys
-// modules', which are their v0.6.0 totals with about 13% headroom, rounded the same way.
+// modules', which are their v0.6.0 totals, and the conformance module's, its v0.7.0 total, each
+// with about 13% headroom, rounded the same way.
 export const BUDGETS = {
   "baseline.css": 14_000,
   "full.css": 18_000,
@@ -40,6 +41,7 @@ export const BUDGETS = {
   "modules/keys.js": 10_300,
   "modules/keys-grammar.js": 3_500,
   "modules/keys-help.js": 13_200,
+  "modules/conformance.js": 4_000,
 };
 
 // entries returns the package's entries, as repository paths: every target its exports map names

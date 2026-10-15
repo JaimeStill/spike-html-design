@@ -33,6 +33,7 @@ const MODULES = {
   "./keys": "./modules/keys.js",
   "./keys/grammar": "./modules/keys-grammar.js",
   "./keys/help": "./modules/keys-help.js",
+  "./conformance": "./modules/conformance.js",
 };
 
 describe("package", () => {

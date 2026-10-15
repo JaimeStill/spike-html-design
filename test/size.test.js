@@ -18,6 +18,7 @@ const MODULES = {
   "modules/keys.js": ["modules/keys-grammar.js"],
   "modules/keys-grammar.js": [],
   "modules/keys-help.js": ["modules/keys.js", "modules/keys-grammar.js"],
+  "modules/conformance.js": [],
 };
 
 // FIXTURE is a one-entry package, entry.css importing part.css, that the budget tests audit
