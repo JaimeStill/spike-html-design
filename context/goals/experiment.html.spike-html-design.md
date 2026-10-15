@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
-- **Task:** validate
-- **Branch:** validate
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -12,7 +12,7 @@
 4. [x] profiles
 5. [x] preferences
 6. [x] keys
-7. [ ] validate
+7. [x] validate
 
 ## Task brief · experiment.html.spike-html-design · validate
 
@@ -115,8 +115,6 @@ Door          One-way for tag v0.7.0: the ./conformance export, its function's
 Release       v0.7.0
 
 ## Progress
-
-slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards ✓ (e2b827a, 23dcecd) · spec ✓ (gaps closed b1833a7) · editor ✓
 
 ## Decisions
 
@@ -962,6 +960,8 @@ slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards 
 - validate BUILD: v0.7.0's live pin runs at its release and its result is recorded at SHIP; the
   README states that it runs at release, rather than the brief's v0.1.0 through v0.7.0 run
   before SHIP (68b64a5, b1833a7).
+- validate SHIP (architect): accepted the session brief and the conformance.js budget (4,000 B
+  brotli; 3,542 measured). v0.7.0 releases.
 
 ## Pending edits
 
