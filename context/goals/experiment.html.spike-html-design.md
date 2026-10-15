@@ -191,7 +191,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slices 9–10 —
+slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slice 9 b79526e, slice 10 —
 
 ## Decisions
 
@@ -958,8 +958,12 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   lightest in dark. Flexoki light: paper, base-50, base-100. Rules keep reading --bg; the dialog
   and theme menu panel read --bg-1. No alias for --bg-0 (each tag freezes its own names).
   Supersedes the color contract's "--bg-0 the pane, darker than the page in both schemes".
-- keys session-brief redirect: Everforest light's upstream swatches take lightness order (bg0,
+- keys session-brief redirect (architect concurred): Everforest light takes lightness order (bg0,
   bg1, bg_dim), since bg1 is lighter than bg_dim; values stay upstream's, only the steps move.
+- keys BUILD (slice 9): Escape blurs without preventDefault, so a field's own Escape (search's
+  clear) still runs, and only while the field still holds focus; the help dialog's Esc row is a
+  plain fixed row (data-keys-fixed), and the "no shortcuts" paragraph is gone since the table
+  always has that row.
 
 ## Pending edits
 
