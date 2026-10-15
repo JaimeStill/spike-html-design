@@ -172,7 +172,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 5/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa) · review stop — · standards — · spec — · editor —
+slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454) · review stop pending · standards — · spec — · editor —
 
 ## Decisions
 
@@ -891,6 +891,11 @@ slices 5/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   data-keys-off and a visible "off", not aria-disabled, since its button still works.
 - keys BUILD: the theme menu ignores repeated T and Escape, so holding the T that opened it doesn't
   save it; held move keys still repeat. Provisional keys-help budget 15,100 B (entry 13,338 B).
+- keys BUILD: j and k step the specimen's 19 sections with an id (31 <section>s, 12 cells without
+  ids; corrects the plan's "31"), from the innermost section holding focus, else from the
+  viewport's top edge; no wrap. The specimen's bindings live in specimen.js (external, so the
+  pinned page's markup normalizes); slice 8 adds it to the pinned page's mocked files and the pin
+  check. From file:// the native Help button still opens the dialog, with fallback text.
 
 ## Pending edits
 
