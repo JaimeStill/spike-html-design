@@ -163,7 +163,7 @@ try {
         const result = await driveKeys(opened);
         const listed = result.help.map(([keys]) => keys).join(",");
         check(
-          listed === "T,?,J,K,G" && result.focused === "tokens",
+          listed === "T,?,J,K,G,Esc" && result.focused === "tokens",
           `${page} from ${name}: T opens the menu, ? lists ${listed}, j focuses #${result.focused}`,
           JSON.stringify(result),
         );
