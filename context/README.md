@@ -83,9 +83,9 @@ Its packaging, a git-tag package that other packages extend, is also an input to
   its CSS entry points, and from preferences on its JS modules, with no dependencies. A
   consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, as
   "Extending with a package" shows. The lean entry point holds the foundation and the default
-  profiles, and the full one every profile; "Entries and exports", below, lists v0.7.0's exports. Each entry's
-  size, raw and brotli, is reported from facets on, and its brotli size is held to a budget from
-  profiles on.
+  profiles, and the full one every profile; "Entries and exports", below, lists v0.7.0's
+  exports. Each entry's size, raw and brotli, is reported from facets on, and its brotli size is
+  held to a budget from profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
   tested secondary channel: `cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@vX.Y.Z/...`.
 - **Releases.** One minor tag per task, v0.1.0 to v0.7.0. A tag is never changed or re-cut. The
