@@ -1,0 +1,39 @@
+/*
+ * harbor.css, the Harbor profile of the color facet, an extension's own: an original palette made
+ * for this fixture, a cool harbor blue-grey, light by day and dark by night. One zero-specificity
+ * block, applied by data-palette="harbor" on any element to its subtree, declaring the sixteen
+ * color tokens as light-dark() pairs, light / dark, and nothing else, as the baseline's built-in
+ * profiles do. The surfaces step toward the text in each scheme: lighter to darker in light,
+ * darker to lighter in dark.
+ *
+ * Unlike a built-in profile file, which an entry imports with layer(), this file is linked on its
+ * own, so it places itself in the color layer. Linked after the baseline's entry, the layer is
+ * already in the package's order, and a consumer's later layer beats it.
+ */
+
+@layer spike-html-design.tokens.color {
+  :where([data-palette="harbor"]) {
+    /* Surfaces: the base, the first elevated surface, the element surface, the border and the
+       control boundary. */
+    --bg: light-dark(#f7f9fb, #0d1620);
+    --bg-1: light-dark(#eef2f6, #142130);
+    --bg-2: light-dark(#e3e9ef, #1b2b3d);
+    --border: light-dark(#d5dde5, #24364a);
+    --border-2: light-dark(#c2ccd6, #33485f);
+
+    /* Text, from the strongest down. */
+    --fg: light-dark(#14212e, #dde6ef);
+    --fg-2: light-dark(#44566a, #a9b8c7);
+    --fg-3: light-dark(#6b7c8f, #7c8da0);
+
+    /* Hues: one token per color, named for the color, never for a meaning. */
+    --red: light-dark(#b3261e, #ef6b62);
+    --orange: light-dark(#b5530f, #f08c4a);
+    --yellow: light-dark(#8f6a00, #e0b54a);
+    --green: light-dark(#2e7d4f, #5fbf86);
+    --cyan: light-dark(#0f7c86, #4cc3cc);
+    --blue: light-dark(#1f5fae, #6aa4ec);
+    --purple: light-dark(#6346a8, #a48ced);
+    --magenta: light-dark(#a3307a, #e07ab8);
+  }
+}

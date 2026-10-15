@@ -1,0 +1,14 @@
+{
+  "name": "spike-html-design-harbor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A test fixture: an extension package that depends on spike-html-design by git tag and adds the Harbor color profile",
+  "type": "module",
+  "exports": {
+    "./profiles/color/harbor": "./harbor.css",
+    "./register": "./register.js"
+  },
+  "dependencies": {
+    "spike-html-design": "github:JaimeStill/spike-html-design#v0.6.0"
+  }
+}
