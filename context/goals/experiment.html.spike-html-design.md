@@ -22,10 +22,10 @@ Problem       v0.5.0 has one shortcut, T, which <theme-menu> binds itself. There
               character-key shortcuts. Evidence 7 needs a shortcut library: one registry per
               page, silent in fields, declared to assistive technology, and listed in a ? help
               dialog with each page's own keys. The architect ruled that the library binds no
-              shortcuts itself and supports raw keys, leader chords, and an activator
-              combination, with @github/hotkey as the precedent. This task builds keys as a
-              family of three modules, moves T off <theme-menu>, and gives the specimen a help
-              dialog and bindings in every convention. (Evidence 7, restated; 8's pinned page;
+              shortcuts itself and supports raw keys, chords, and combinations, each written
+              into its binding, with @github/hotkey as the precedent (amended at the review
+              stop: no modes). This task builds keys as a family of three modules, moves T off
+              <theme-menu>, and gives the specimen a help dialog and bindings. (Evidence 7, restated; 8's pinned page;
               11's budgets.)
 
 Behaviors
@@ -36,8 +36,7 @@ Behaviors
      those keys. A letter written without Shift matches either case while Shift is up (caps
      lock doesn't defeat it), and "Shift+T" requires Shift. A symbol is written as the
      character typed ("?"), Shift ignored. A malformed string binds nothing.
-  2. The grammar module has no DOM: it parses and normalizes a binding, wraps a bare binding
-     for a mode, and formats one for display and for aria-keyshortcuts. A symbol is declared
+  2. The grammar module has no DOM: it parses and normalizes a binding and formats one for display and for aria-keyshortcuts. A symbol is declared
      by its US physical key ("?" as "Shift+/"); a sequence declares nothing.
 
   Runtime
@@ -55,18 +54,17 @@ Behaviors
      A press that doesn't continue the sequence ends it and is dropped. When one binding is a
      prefix of another ("g" and "g c"), keys waits for the next press and runs the shorter
      when the wait ends.
-  6. Modes: a bare binding (one press with no modifier other than Shift) is pressed as written
-     in raw mode, after the leader in leader mode, and with the activator held in activator
-     mode. Bindings that spell out a sequence or combination are used as written in every
-     mode. Defaults: raw mode, leader g, activator Alt (Option). A page sets its default mode
-     with data-keys-mode on <html>; a mode the reader chose overrides it.
+  6. One convention: every binding is pressed as written. Chords and combinations are
+     spelled out in the binding ("g c", "Mod+k"). (Amended at the review stop: leader and
+     activator modes, data-keys-mode, and the reader's mode, leader, and activator settings
+     are removed.)
   7. Scope: while a modal dialog is open, only element bindings inside it are active and
      register() bindings pause; otherwise an element binding is active unless disabled,
      inside [inert], or not visible. keys reads the page at each press. When two active
      bindings share keys, the first wins: elements in document order, then register()
      bindings in registration order.
-  8. keys writes aria-keyshortcuts on every element carrying data-keys from the binding in
-     effect ("T", "Alt+T", "Shift+/"), rewrites it when the mode or settings change, and
+  8. keys writes aria-keyshortcuts on every element carrying data-keys from its binding
+     ("T", "Alt+T", "Shift+/"), rewrites it when data-keys or the off switch changes, and
      leaves it off for a sequence and while the off switch covers that binding.
   9. One store per page, at globalThis[Symbol.for("spike-html-design.keys")], shared by every
      copy of keys from any URL or tag, with one document listener, so a key never fires
@@ -75,7 +73,7 @@ Behaviors
   9a. Extension: keys is extensible by outside modules rather than growing features itself.
      The runtime dispatches two events, their names and detail shapes public API frozen with
      v0.6.0. keys-fire, cancelable, on the bound element (or document for a register()
-     binding) before it acts, with the binding, the keys pressed, and the mode; cancelling it
+     binding) before it acts, with the binding and the keys pressed; cancelling it
      stops the action. keys-sequence on document as a sequence starts, continues, and ends
      (fired, timed out, or dropped), with the presses so far. The grammar module is exported
      for formatting. A test fixture builds a pending-sequence indicator as an outside module
@@ -86,18 +84,17 @@ Behaviors
       with a visible button through show-modal. The help module loads on the dialog's first
       open. Each time it opens, the module fills the marked element with a table of the
       bindings active with the dialog closed, each row a button that closes the dialog and
-      runs the binding; keys in the current mode as sibling kbd ("+" in a combination, "then"
+      runs the binding; its keys as sibling kbd ("+" in a combination, "then"
       between presses); labels from aria-label, else text without kbd, else register()'s
       label; the reader's settings; and a screen-reader note. keys adds no CSS.
-  11. Settings: an off switch, on by default, that turns off character-key shortcuts (raw and
-      leader) while combinations stay on, its rows listed and marked inactive; the mode (raw,
-      leader, activator); the leader (g, comma, backslash, Space); the activator (Alt,
-      Control, Meta, Alt+Shift), noting Control+T, W, N never reach a page; the wait (1000,
-      1500, 3000, 5000 ms). Only changed settings are stored, as JSON under localStorage key
+  11. Settings: an off switch, on by default, that turns off character-key shortcuts (single
+      characters and chords of them) while combinations with Control, Alt, or Meta stay on,
+      its rows listed and marked inactive; and the wait (1000, 1500, 3000, 5000 ms). (Amended
+      at the review stop: mode, leader, and activator settings removed.) Only changed settings are stored, as JSON under localStorage key
       spike-html-design.keys, per origin; keys reads them at each press, so another tab's
       change applies at once.
   12. The note tells screen-reader users how to pass a key through (NVDA+F2, JAWS+3,
-      Narrator+3, VO+Tab) and that activator mode reaches NVDA's browse mode.
+      Narrator+3, VO+Tab).
 
   T
   13. <theme-menu> no longer listens for T. A page binds T with data-keys on its Theme button
@@ -105,12 +102,11 @@ Behaviors
       inside the modal. --open and the menu's own keys are unchanged; v0.5.0 keeps its T.
 
   Specimen and pins
-  14. The specimen loads keys and states no mode. Its header holds the Theme button (T) and a
+  14. The specimen loads keys. Its header holds the Theme button (T) and a
       Help button (?) opening a native help dialog; inside it a Close button carries ?, and
       Escape closes it natively. register() binds j and k, moving focus to the next or
-      previous of the 31 sections with an id (tabindex="-1", a focus style in the specimen
-      layer), and g to the top (g g in leader mode, Alt+g in activator mode). Served and on
-      Pages all work in every mode and the dialog lists them. From file:// the working-tree
+      previous of the 19 sections with an id (tabindex="-1", a focus style in the specimen
+      layer), and g to the top. Served and on Pages all work and the dialog lists them. From file:// the working-tree
       specimen has no keys, as it has no menu (recorded).
   15. A v0.6.0 pinned page is the specimen linking the @v0.6.0 jsDelivr full entry and
       modules; from file:// its keys work through jsDelivr's CORS header. Its hermetic test
@@ -124,9 +120,9 @@ Behaviors
       within 14,000 B, full within 18,000 B.
   17. README, STANDARDS.md, and the goal record describe v0.6.0: the grammar and its
       differences from @github/hotkey; register(); matching and silence; sequences, wait,
-      prefix rule; modes and defaults; scope and conflicts; derived aria-keyshortcuts; the
-      store; the help dialog, settings, and storage; T's move; evidence 7 restated. The
-      organization's convention stays an open question for v1.client.
+      prefix rule; scope and conflicts; derived aria-keyshortcuts; the
+      store; the help dialog, settings, and storage; T's move; evidence 7 restated; the
+      review stop's finding that bare keys plus written chords and combinations suffice.
 
 Test seams    the harness page in headless chromium, read for focus, attributes, storage,
               dialog state, and scroll position after real presses (view.press) or CDP
@@ -149,22 +145,25 @@ Slices
   6. Specimen bindings. Demo: the served workbench driven from the keyboard in each mode.
   ── REVIEW STOP (after slice 6): the architect compares raw keys, leader chords, and
      activator combinations on the served workbench (`mise run serve`), with the help dialog
-     and its settings, before any tag; redirects go to Decisions ──
+     and its settings, before any tag; redirects go to Decisions ── (held: raw only)
+  6b. Review-stop simplification: remove modes (grammar wrap and its constants, data-keys-mode,
+      mode resolution, the reader's mode, leader, and activator settings, the help dialog's
+      controls and note sentence for them, keys-fire's mode); storage {enabled?, wait?}.
+      Demo: the served workbench; every test green. A second look follows. ──
   7. Package and budgets: three exports, budgets, consumer test. Demo: size report lists them.
   8. Docs and pin: README, STANDARDS.md, goal record, v0.6.0 pinned page, pin check. Demo:
      the pinned page's keys and help dialog work from file:// under interception.
 
-Out of scope  choosing the organization's convention (v1.client); per-binding remapping; a
-              page setting leader, activator, or wait; a shipped sequence-pending indicator
+Out of scope  leader and activator modes (removed at the review stop); per-binding remapping;
+              a page setting the wait; a shipped sequence-pending indicator
               (an outside module builds it through 9a); bindings in shadow roots (spike-html-components); section
               tree and reading progress (spike-html-hosting); the Keyboard Map API; focusgroup
               for the menu; verifying JAWS, Narrator, VoiceOver; layouts beyond US and one
               non-Latin, tested; Firefox and Safari, tested; validate's items.
 Door          one-way for tag v0.6.0: exports ./keys, ./keys/grammar, ./keys/help; the grammar
               and its @github/hotkey differences; register()'s signature and remover; the
-              matching, sequence, prefix, dropped-press, and first-wins rules; the modes and
-              defaults (raw, g, Alt, 1500 ms); data-keys, data-keys-list, data-keys-mode and
-              its values; keys owning aria-keyshortcuts on bound elements; the keys-fire and
+              matching, sequence, prefix, dropped-press, and first-wins rules; the 1500 ms
+              default wait; data-keys and data-keys-list; keys owning aria-keyshortcuts on bound elements; the keys-fire and
               keys-sequence events and their details; the store key and
               shape; storage key spike-html-design.keys and its JSON (renaming drops readers'
               settings); preferences.js without T. Two-way: specimen bindings, help wording.
@@ -172,7 +171,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454) · review stop pending · standards — · spec — · editor —
+slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454) · review stop held (simplify: 6b), second look pending · standards — · spec — · editor —
 
 ## Decisions
 
@@ -896,6 +895,15 @@ slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   viewport's top edge; no wrap. The specimen's bindings live in specimen.js (external, so the
   pinned page's markup normalizes); slice 8 adds it to the pinned page's mocked files and the pin
   check. From file:// the native Help button still opens the dialog, with fallback text.
+- keys review stop (architect): simplify: raw is the only convention; chords and combinations are
+  written into each binding ("g c", "Mod+k"). Leader and activator modes, data-keys-mode, and the
+  reader's mode, leader, and activator settings are removed; the help dialog "looks really
+  great" and the shortcuts' behavior is kept. Supersedes plan keys' activation-mode, default
+  leader (g) and activator (Alt), page-mode, and specimen-convention lines. Accepted cost:
+  screen-reader users in browse mode rely on the help rows and the pass-through note, and the
+  off switch is the only WCAG 2.1.4 route (G217 suffices).
+- keys review stop (architect): the reader's wait setting stays (1000, 1500, 3000, 5000 ms); the
+  storage shape is {enabled?, wait?}, changed settings only, under spike-html-design.keys.
 
 ## Pending edits
 
@@ -922,11 +930,9 @@ slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   chromium blocks relative ES module scripts there, so a file:// page loads the modules from
   jsDelivr (CORS); an untagged working-tree page has no modules from file:// (preferences).
 - coordinator · html-artifacts.md, "Keyboard": rewrite: keys is a module family (grammar,
-  runtime, help) supporting raw keys, leader chords, and activator combinations through a
-  data-keys behavior attribute, writing aria-keyshortcuts from it; the package binds no
+  runtime, help) binding keys, chords, and combinations as written through a data-keys
+  behavior attribute, writing aria-keyshortcuts from it; the package binds no
   shortcuts; the reader's off switch and settings; key-hint styling stays with elements (keys).
-- coordinator · roadmap.toml, keys summary: names the module family, the three conventions,
-  leader g and activator Alt; supersedes the plan preferences keys edit's leader question
-  (keys).
-- coordinator · v1.client: open question: which shortcut convention (raw, leader, activator)
-  the organization adopts, informed by the keys review stop (keys).
+- coordinator · roadmap.toml, keys summary: names the module family and data-keys with written
+  chords and combinations; the leader-key question was tried and dropped at the keys review
+  stop (supersedes the plan preferences keys edit's leader question) (keys).
