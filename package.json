@@ -1,6 +1,6 @@
 {
   "name": "spike-html-design",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A native, layered CSS and JS baseline for human-facing HTML artifacts",
   "style": "./baseline.css",
   "exports": {
