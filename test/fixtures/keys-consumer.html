@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>keys consumer fixture</title>
+    <link rel="stylesheet" href="../../full.css" />
+    <!-- A consumer of the keys exports: its import map names each by the package's name and its
+         export key, ./keys, ./keys/grammar, and ./keys/help, to the file the export names, and
+         its module imports the runtime and the grammar by those names alone. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "spike-html-design/keys": "../../modules/keys.js",
+          "spike-html-design/keys/grammar": "../../modules/keys-grammar.js",
+          "spike-html-design/keys/help": "../../modules/keys-help.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import { register } from "spike-html-design/keys";
+      import { keyshortcuts, parse } from "spike-html-design/keys/grammar";
+
+      // log records each action a binding runs, in order, for the tests and the reader.
+      window.log = [];
+      document.addEventListener("click", (event) => {
+        const name = event.target.closest?.("[data-log]")?.dataset.log;
+        if (name) window.log.push(name);
+      });
+      register("j", "Next section", () => window.log.push("j"));
+      window.formatted = keyshortcuts(parse("Alt+t"));
+    </script>
+  </head>
+  <body>
+    <h1>keys consumer fixture</h1>
+    <p>
+      <button type="button" commandfor="help" command="show-modal" data-keys="?">Help <kbd>?</kbd></button>
+      <button type="button" data-keys="t" data-log="t">Theme <kbd>T</kbd></button>
+    </p>
+    <dialog id="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard shortcuts</h2>
+      <div data-keys-list></div>
+      <button type="button" commandfor="help" command="close" data-keys="?">Close <kbd>?</kbd></button>
+    </dialog>
+  </body>
+</html>

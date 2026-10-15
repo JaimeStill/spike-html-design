@@ -1094,3 +1094,63 @@ describe("keys: the specimen", () => {
     ).toContain("opened as a file");
   });
 });
+
+// A package consumer: keys-consumer.html imports the runtime and the grammar by the package's
+// name and their export keys, through an import map naming each key's file, as a consumer
+// resolving the exports map would, and its help dialog loads the module ./keys/help names.
+describe("keys: a package consumer", () => {
+  const CONSUMER = "keys-consumer.html";
+  const EXPORTS = ["./keys", "./keys/grammar", "./keys/help"];
+
+  test("its import map names each keys export's file, as package.json maps it", async () => {
+    const pkg = await Bun.file(join(root, "package.json")).json();
+    const page = await open(CONSUMER);
+    const map = await page.evaluate(
+      `JSON.parse(document.querySelector("script[type=importmap]").textContent).imports`,
+    );
+    expect(map).toEqual(
+      Object.fromEntries(
+        EXPORTS.map((key) => [`${pkg.name}/${key.slice(2)}`, `../../${pkg.exports[key].slice(2)}`]),
+      ),
+    );
+  });
+
+  test("its bindings fire, by element and by register(), and the grammar formats", async () => {
+    const page = await open(CONSUMER);
+    await press(page, "t");
+    await press(page, "j");
+    expect(await log(page)).toEqual(["t", "j"]);
+    expect(await page.evaluate("window.formatted")).toBe("Alt+T");
+    expect(
+      await page.evaluate(
+        `document.querySelector("[data-log=t]").getAttribute("aria-keyshortcuts")`,
+      ),
+    ).toBe("T");
+  });
+
+  test("? opens the help dialog, filled by the module ./keys/help names", async () => {
+    const page = await open(CONSUMER);
+    await press(page, "?", { code: "Slash", shift: true });
+    const rows = await page.evaluate(`new Promise((resolve, reject) => {
+      const end = performance.now() + 2000;
+      const poll = () => {
+        const rows = document.querySelectorAll("#help [data-keys-table] tbody tr");
+        if (document.getElementById("help").open && rows.length > 0) {
+          resolve([...rows].map((row) => row.cells[1].querySelector("button").textContent));
+        } else if (performance.now() > end) reject(new Error("help: not filled"));
+        else setTimeout(poll, 10);
+      };
+      poll();
+    })`);
+    expect(rows).toEqual(["Help", "Theme", "Next section"]);
+    // The help module keys loaded is the file the import map resolves ./keys/help to, one
+    // module, so a consumer importing ./keys/help shares it.
+    const help = await page.evaluate(`(async () => {
+      const url = new URL("../../modules/keys-help.js", location).href;
+      const fetched = performance.getEntriesByType("resource").map(({ name }) => name);
+      const module = await import("spike-html-design/keys/help");
+      return { fetched: fetched.filter((name) => name === url).length, fill: typeof module.fill };
+    })()`);
+    expect(help).toEqual({ fetched: 1, fill: "function" });
+  });
+});
