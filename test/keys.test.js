@@ -67,12 +67,35 @@ async function press(page, key, { code, repeat = false, keyCode, ...held } = {})
 // log resolves to the actions the fixture's bindings ran, in order.
 const log = (page) => page.evaluate("window.log");
 
-// wait resolves after ms, as measured in the page.
+// sleep resolves after ms, as measured in the page.
 const sleep = (page, ms) => page.evaluate(`new Promise((resolve) => setTimeout(resolve, ${ms}))`);
 
 // call runs body with the keys module the page loaded, as keys, and resolves to its result.
 const call = (page, body) =>
   page.evaluate(`import(${JSON.stringify(KEYS)}).then((keys) => ${body})`);
+
+// filled resolves once the help dialog is open and filled, or rejects after 2 s.
+const filled = (page) =>
+  page.evaluate(`new Promise((resolve, reject) => {
+    const end = performance.now() + 2000;
+    const poll = () => {
+      const dialog = document.getElementById("help");
+      if (dialog.open && dialog.querySelector("[data-keys-list] [data-keys-table]")) resolve(true);
+      else if (performance.now() > end) reject(new Error("help: not filled"));
+      else setTimeout(poll, 10);
+    };
+    poll();
+  })`);
+
+// rows resolves to the help table's rows: each [keys, action], keys drawn with each kbd as
+// [name] and an off row ending " off", action the row button's text.
+const rows = (page) =>
+  page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => {
+    const [keys, action] = row.cells;
+    const drawn = [...keys.childNodes].map((node) =>
+      node.localName === "kbd" ? "[" + node.textContent + "]" : node.textContent).join("");
+    return [drawn, action.querySelector("button").textContent];
+  })`);
 
 describe("keys: element bindings", () => {
   test("T clicks its button, running the invoker command, and marks the press handled", async () => {
@@ -697,19 +720,6 @@ describe("keys: the help dialog", () => {
     page.evaluate(`performance.getEntriesByType("resource")
       .some(({ name }) => name.endsWith("/modules/keys-help.js"))`);
 
-  // filled resolves once the help dialog is open and filled, or rejects after 2 s.
-  const filled = (page) =>
-    page.evaluate(`new Promise((resolve, reject) => {
-      const end = performance.now() + 2000;
-      const poll = () => {
-        const dialog = document.getElementById("help");
-        if (dialog.open && dialog.querySelector("[data-keys-list] [data-keys-table]")) resolve(true);
-        else if (performance.now() > end) reject(new Error("help: not filled"));
-        else setTimeout(poll, 10);
-      };
-      poll();
-    })`);
-
   // openHelp opens the dialog from its Help button, a show-modal invoker, and waits for it.
   async function openHelp(page) {
     await page.evaluate(`document.querySelector("button[command=show-modal]").click()`);
@@ -718,16 +728,6 @@ describe("keys: the help dialog", () => {
 
   // closeHelp closes the dialog from script.
   const closeHelp = (page) => page.evaluate(`document.getElementById("help").close()`);
-
-  // rows resolves to the table's rows: each [keys, action], keys drawn with each kbd as [name]
-  // and an off row ending " off", action the row button's text.
-  const rows = (page) =>
-    page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => {
-      const [keys, action] = row.cells;
-      const drawn = [...keys.childNodes].map((node) =>
-        node.localName === "kbd" ? "[" + node.textContent + "]" : node.textContent).join("");
-      return [drawn, action.querySelector("button").textContent];
-    })`);
 
   // choose sets one of the dialog's settings controls, as the reader would, and fires change.
   const choose = (page, name, value) =>
@@ -963,29 +963,6 @@ describe("keys: the specimen", () => {
 
   // at resolves to the focused element's id, else its tag name.
   const at = (page) => focused(page).then(({ at }) => at);
-
-  // filled resolves once the help dialog is open and filled, or rejects after 2 s.
-  const filled = (page) =>
-    page.evaluate(`new Promise((resolve, reject) => {
-      const end = performance.now() + 2000;
-      const poll = () => {
-        const dialog = document.getElementById("help");
-        if (dialog.open && dialog.querySelector("[data-keys-list] [data-keys-table]")) resolve(true);
-        else if (performance.now() > end) reject(new Error("help: not filled"));
-        else setTimeout(poll, 10);
-      };
-      poll();
-    })`);
-
-  // rows resolves to the help table's rows: each [keys, action], keys drawn with each kbd as
-  // [name], action the row button's text.
-  const rows = (page) =>
-    page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => {
-      const [keys, action] = row.cells;
-      const drawn = [...keys.childNodes].map((node) =>
-        node.localName === "kbd" ? "[" + node.textContent + "]" : node.textContent).join("");
-      return [drawn, action.querySelector("button").textContent];
-    })`);
 
   const helpOpen = (page) => page.evaluate(`document.getElementById("help").open`);
   const question = (page) => press(page, "?", { code: "Slash", shift: true });

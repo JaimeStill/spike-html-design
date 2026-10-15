@@ -74,10 +74,11 @@ const TREE_PAGE_SCRIPTS = [
   .sort();
 
 // reference returns the directory holding the specimen, stylesheet, module, and page script files
-// a page pinned to tag is compared against, and those stylesheet, module, and page script files. Once the tag is cut
-// they are the tag's own, read with git show, so later changes to the working tree's tokens,
-// layers, modules, or specimen never reach a pinned page's test; a tag cut before v0.5.0 has no
-// modules, and one cut before v0.6.0 no page scripts. Until then they are the working tree's, since the tag is cut from it after merge.
+// a page pinned to tag is compared against, and those stylesheet, module, and page script files.
+// Once the tag is cut they are the tag's own, read with git show, so later changes to the working
+// tree's tokens, layers, modules, or specimen never reach a pinned page's test; a tag cut before
+// v0.5.0 has no modules, and one cut before v0.6.0 no page scripts. Until then they are the
+// working tree's, since the tag is cut from it after merge.
 function reference(tag) {
   if (!tagExists(tag))
     return {
@@ -175,11 +176,12 @@ for (const name of PINNED) {
   // loads keys and specimen.js from jsDelivr too.
   const keyed = readFileSync(specimenPath, "utf8").includes("data-keys");
 
-  // hermetic answers every stylesheet, module, and page script file the tag publishes at its URL under the same
-  // tag, the pinned entry, the files its imports resolve to, and the modules and specimen.js the page
-  // loads among them, from the reference files, with Access-Control-Allow-Origin as jsDelivr sends it, and
-  // answers every other https:// request 404 from a file that does not exist, so no test of the
-  // pinned page reaches the network. The harness takes the first matching prefix.
+  // hermetic answers every stylesheet, module, and page script file the tag publishes at its URL
+  // under the same tag, the pinned entry, the files its imports resolve to, and the modules and
+  // specimen.js the page loads among them, from the reference files, with
+  // Access-Control-Allow-Origin as jsDelivr sends it, and answers every other https:// request
+  // 404 from a file that does not exist, so no test of the pinned page reaches the network. The
+  // harness takes the first matching prefix.
   const hermetic = {
     ...Object.fromEntries(files.map((path) => [new URL(path, pinned).href, join(dir, path)])),
     "https://": join(import.meta.dir, "fixtures", "absent"),
@@ -255,7 +257,6 @@ for (const name of PINNED) {
         for (const url of [fileUrl(pinnedPath), `${server.url}pinned/${name}`]) {
           const page = await open(url, { scheme: "light", intercept: hermetic });
           expect(await driveKeys(page)).toEqual({
-            menu: true,
             help: [
               ["T", "Theme"],
               ["?", "Help"],

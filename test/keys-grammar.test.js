@@ -229,29 +229,9 @@ describe("keys grammar: formatting", () => {
   });
 
   test("a symbol is declared by its US physical key with Shift", () => {
-    const SHIFTED = {
-      "~": "`",
-      "!": "1",
-      "@": "2",
-      "#": "3",
-      $: "4",
-      "%": "5",
-      "^": "6",
-      "&": "7",
-      "*": "8",
-      "(": "9",
-      ")": "0",
-      _: "-",
-      Plus: "=",
-      "{": "[",
-      "}": "]",
-      "|": "\\",
-      ":": ";",
-      '"': "'",
-      "<": ",",
-      ">": ".",
-      "?": "/",
-    };
+    // A sample across the Shift row, not the whole table: restating every entry would restate
+    // US_SHIFTED itself. Plus is the named key, and the quote and backslash need escaping.
+    const SHIFTED = { "?": "/", "!": "1", Plus: "=", '"': "'", "|": "\\", "~": "`" };
     for (const [symbol, key] of Object.entries(SHIFTED)) {
       expect([symbol, keyshortcuts(parse(symbol))]).toEqual([symbol, `Shift+${key}`]);
     }
