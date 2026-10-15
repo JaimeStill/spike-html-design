@@ -97,8 +97,8 @@
           color: var(--fg-2);
         }
 
-        /* A subsection opens on a lighter banner, on the pane, that its panels hang from; its
-           intro, if any, sits boxed between them. */
+        /* A subsection opens on a banner, on the first elevated surface, that its panels hang
+           from; its intro, if any, sits boxed between them. */
         main > section > section {
           margin-block-start: var(--space-l);
         }
@@ -109,7 +109,7 @@
           padding: var(--space-3xs) var(--space-xs);
           border: var(--line-s) solid var(--border);
           border-block-end: 0;
-          background: var(--bg-0);
+          background: var(--bg-1);
           font-size: var(--text-xl);
           line-height: var(--leading-ui);
           font-variant-caps: all-small-caps;
@@ -306,7 +306,7 @@
           overflow: hidden;
           border: var(--line-s) solid var(--border-2);
           border-radius: var(--radius-sm);
-          background: var(--bg-0);
+          background: var(--bg-1);
         }
 
         .fluid-fill {
@@ -491,7 +491,7 @@
           min-inline-size: 0;
           padding: var(--space-2xs);
           border: var(--line-s) solid var(--border);
-          background: var(--bg-0);
+          background: var(--bg-1);
 
           &.tile-wide {
             grid-column: span 2;
@@ -695,16 +695,16 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <th scope="row"><code>--bg-0</code></th>
-                      <td><div class="swatch" style="--sample: var(--bg-0)"></div></td>
-                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg-0)"></span><span class="hex">#f2f0e5</span></td>
-                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg-0)"></span><span class="hex">#100f0f</span></td>
-                    </tr>
-                    <tr>
                       <th scope="row"><code>--bg</code></th>
                       <td><div class="swatch" style="--sample: var(--bg)"></div></td>
                       <td data-scheme="light"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#fffcf0</span></td>
-                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#1c1b1a</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg)"></span><span class="hex">#100f0f</span></td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>--bg-1</code></th>
+                      <td><div class="swatch" style="--sample: var(--bg-1)"></div></td>
+                      <td data-scheme="light"><span class="dot" style="--sample: var(--bg-1)"></span><span class="hex">#f2f0e5</span></td>
+                      <td data-scheme="dark"><span class="dot" style="--sample: var(--bg-1)"></span><span class="hex">#1c1b1a</span></td>
                     </tr>
                     <tr>
                       <th scope="row"><code>--bg-2</code></th>
@@ -1877,8 +1877,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -1938,8 +1938,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -1999,8 +1999,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2060,8 +2060,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2121,8 +2121,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2182,8 +2182,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2243,8 +2243,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2304,8 +2304,8 @@ const answer = 42;</code></pre>
               </tbody>
             </table>
             <ul class="preview-swatches">
-              <li style="--sample: var(--bg-0)" title="--bg-0"></li>
               <li style="--sample: var(--bg)" title="--bg"></li>
+              <li style="--sample: var(--bg-1)" title="--bg-1"></li>
               <li style="--sample: var(--bg-2)" title="--bg-2"></li>
               <li style="--sample: var(--border)" title="--border"></li>
               <li style="--sample: var(--border-2)" title="--border-2"></li>
@@ -2354,8 +2354,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2364,88 +2364,88 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>16.74 <span>AA</span></td>
                     <td>18.62 <span>AA</span></td>
+                    <td>16.74 <span>AA</span></td>
                     <td>15.00 <span>AA</span></td>
                     <td>13.39 <span>AA</span></td>
                     <td>11.98 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>6.42 <span>AA</span></td>
                     <td>7.14 <span>AA</span></td>
+                    <td>6.42 <span>AA</span></td>
                     <td>5.75 <span>AA</span></td>
                     <td>5.14 <span>AA</span></td>
                     <td>4.59 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>3.22 <span>AA-L</span></td>
                     <td>3.59 <span>AA-L</span></td>
+                    <td>3.22 <span>AA-L</span></td>
                     <td>2.89 <span>fail</span></td>
                     <td>2.58 <span>fail</span></td>
                     <td>2.31 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>5.61 <span>AA</span></td>
                     <td>6.23 <span>AA</span></td>
+                    <td>5.61 <span>AA</span></td>
                     <td>5.02 <span>AA</span></td>
                     <td>4.48 <span>AA-L</span></td>
                     <td>4.01 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>4.22 <span>AA-L</span></td>
                     <td>4.69 <span>AA</span></td>
+                    <td>4.22 <span>AA-L</span></td>
                     <td>3.78 <span>AA-L</span></td>
                     <td>3.37 <span>AA-L</span></td>
                     <td>3.02 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>3.05 <span>AA-L</span></td>
                     <td>3.39 <span>AA-L</span></td>
+                    <td>3.05 <span>AA-L</span></td>
                     <td>2.73 <span>fail</span></td>
                     <td>2.44 <span>fail</span></td>
                     <td>2.18 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>3.87 <span>AA-L</span></td>
                     <td>4.31 <span>AA-L</span></td>
+                    <td>3.87 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
                     <td>3.10 <span>AA-L</span></td>
                     <td>2.77 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>3.99 <span>AA-L</span></td>
                     <td>4.43 <span>AA-L</span></td>
+                    <td>3.99 <span>AA-L</span></td>
                     <td>3.57 <span>AA-L</span></td>
                     <td>3.19 <span>AA-L</span></td>
                     <td>2.85 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>5.72 <span>AA</span></td>
                     <td>6.36 <span>AA</span></td>
+                    <td>5.72 <span>AA</span></td>
                     <td>5.12 <span>AA</span></td>
                     <td>4.57 <span>AA</span></td>
                     <td>4.09 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>6.81 <span>AA</span></td>
                     <td>7.58 <span>AA</span></td>
+                    <td>6.81 <span>AA</span></td>
                     <td>6.11 <span>AA</span></td>
                     <td>5.45 <span>AA</span></td>
                     <td>4.88 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>5.87 <span>AA</span></td>
                     <td>6.53 <span>AA</span></td>
+                    <td>5.87 <span>AA</span></td>
                     <td>5.26 <span>AA</span></td>
                     <td>4.69 <span>AA</span></td>
                     <td>4.20 <span>AA-L</span></td>
@@ -2465,8 +2465,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2576,8 +2576,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2586,88 +2586,88 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>14.84 <span>AA</span></td>
                     <td>15.80 <span>AA</span></td>
+                    <td>14.84 <span>AA</span></td>
                     <td>13.55 <span>AA</span></td>
                     <td>11.65 <span>AA</span></td>
                     <td>10.88 <span>AA</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>4.93 <span>AA</span></td>
                     <td>5.25 <span>AA</span></td>
+                    <td>4.93 <span>AA</span></td>
                     <td>4.50 <span>AA-L</span></td>
                     <td>3.87 <span>AA-L</span></td>
                     <td>3.61 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>4.27 <span>AA-L</span></td>
                     <td>4.55 <span>AA</span></td>
+                    <td>4.27 <span>AA-L</span></td>
                     <td>3.90 <span>AA-L</span></td>
                     <td>3.35 <span>AA-L</span></td>
                     <td>3.13 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>5.03 <span>AA</span></td>
                     <td>5.36 <span>AA</span></td>
+                    <td>5.03 <span>AA</span></td>
                     <td>4.59 <span>AA</span></td>
                     <td>3.95 <span>AA-L</span></td>
                     <td>3.69 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>4.73 <span>AA</span></td>
                     <td>5.03 <span>AA</span></td>
+                    <td>4.73 <span>AA</span></td>
                     <td>4.32 <span>AA-L</span></td>
                     <td>3.71 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>4.57 <span>AA</span></td>
                     <td>4.87 <span>AA</span></td>
+                    <td>4.57 <span>AA</span></td>
                     <td>4.17 <span>AA-L</span></td>
                     <td>3.59 <span>AA-L</span></td>
                     <td>3.35 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>4.77 <span>AA</span></td>
                     <td>5.08 <span>AA</span></td>
+                    <td>4.77 <span>AA</span></td>
                     <td>4.36 <span>AA-L</span></td>
                     <td>3.75 <span>AA-L</span></td>
                     <td>3.50 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>4.63 <span>AA</span></td>
                     <td>4.93 <span>AA</span></td>
+                    <td>4.63 <span>AA</span></td>
                     <td>4.23 <span>AA-L</span></td>
                     <td>3.64 <span>AA-L</span></td>
                     <td>3.40 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>4.88 <span>AA</span></td>
                     <td>5.19 <span>AA</span></td>
+                    <td>4.88 <span>AA</span></td>
                     <td>4.45 <span>AA-L</span></td>
                     <td>3.83 <span>AA-L</span></td>
                     <td>3.57 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>4.74 <span>AA</span></td>
                     <td>5.05 <span>AA</span></td>
+                    <td>4.74 <span>AA</span></td>
                     <td>4.33 <span>AA-L</span></td>
                     <td>3.72 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>4.74 <span>AA</span></td>
                     <td>5.05 <span>AA</span></td>
+                    <td>4.74 <span>AA</span></td>
                     <td>4.33 <span>AA-L</span></td>
                     <td>3.72 <span>AA-L</span></td>
                     <td>3.47 <span>AA-L</span></td>
@@ -2687,8 +2687,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2798,8 +2798,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -2808,88 +2808,88 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>6.57 <span>AA</span></td>
                     <td>7.06 <span>AA</span></td>
+                    <td>6.57 <span>AA</span></td>
                     <td>5.17 <span>AA</span></td>
                     <td>4.39 <span>AA-L</span></td>
                     <td>3.07 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>4.06 <span>AA-L</span></td>
                     <td>4.37 <span>AA-L</span></td>
+                    <td>4.06 <span>AA-L</span></td>
                     <td>3.20 <span>AA-L</span></td>
                     <td>2.72 <span>fail</span></td>
                     <td>1.90 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>2.63 <span>fail</span></td>
                     <td>2.83 <span>fail</span></td>
+                    <td>2.63 <span>fail</span></td>
                     <td>2.07 <span>fail</span></td>
                     <td>1.76 <span>fail</span></td>
                     <td>1.23 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>4.46 <span>AA-L</span></td>
                     <td>4.80 <span>AA</span></td>
+                    <td>4.46 <span>AA-L</span></td>
                     <td>3.52 <span>AA-L</span></td>
                     <td>2.99 <span>fail</span></td>
                     <td>2.09 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>2.45 <span>fail</span></td>
                     <td>2.64 <span>fail</span></td>
+                    <td>2.45 <span>fail</span></td>
                     <td>1.93 <span>fail</span></td>
                     <td>1.64 <span>fail</span></td>
                     <td>1.15 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>2.15 <span>fail</span></td>
                     <td>2.31 <span>fail</span></td>
+                    <td>2.15 <span>fail</span></td>
                     <td>1.70 <span>fail</span></td>
                     <td>1.44 <span>fail</span></td>
                     <td>1.01 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>2.75 <span>fail</span></td>
                     <td>2.96 <span>fail</span></td>
+                    <td>2.75 <span>fail</span></td>
                     <td>2.17 <span>fail</span></td>
                     <td>1.84 <span>fail</span></td>
                     <td>1.28 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>3.08 <span>AA-L</span></td>
                     <td>3.31 <span>AA-L</span></td>
+                    <td>3.08 <span>AA-L</span></td>
                     <td>2.43 <span>fail</span></td>
                     <td>2.06 <span>fail</span></td>
                     <td>1.44 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>4.04 <span>AA-L</span></td>
                     <td>4.34 <span>AA-L</span></td>
+                    <td>4.04 <span>AA-L</span></td>
                     <td>3.18 <span>AA-L</span></td>
                     <td>2.70 <span>fail</span></td>
                     <td>1.89 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>4.45 <span>AA-L</span></td>
                     <td>4.79 <span>AA</span></td>
+                    <td>4.45 <span>AA-L</span></td>
                     <td>3.51 <span>AA-L</span></td>
                     <td>2.98 <span>fail</span></td>
                     <td>2.08 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>2.17 <span>fail</span></td>
                     <td>2.34 <span>fail</span></td>
+                    <td>2.17 <span>fail</span></td>
                     <td>1.71 <span>fail</span></td>
                     <td>1.45 <span>fail</span></td>
                     <td>1.01 <span>fail</span></td>
@@ -2909,8 +2909,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -3020,8 +3020,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>
@@ -3030,89 +3030,89 @@ const answer = 42;</code></pre>
                 <tbody>
                   <tr>
                     <th scope="row"><code>--fg</code></th>
-                    <td>4.84 <span>AA</span></td>
                     <td>5.40 <span>AA</span></td>
                     <td>5.10 <span>AA</span></td>
+                    <td>4.84 <span>AA</span></td>
                     <td>4.62 <span>AA</span></td>
                     <td>3.14 <span>AA-L</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-2</code></th>
-                    <td>2.88 <span>fail</span></td>
                     <td>3.21 <span>AA-L</span></td>
                     <td>3.04 <span>AA-L</span></td>
+                    <td>2.88 <span>fail</span></td>
                     <td>2.75 <span>fail</span></td>
                     <td>1.87 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--fg-3</code></th>
-                    <td>2.39 <span>fail</span></td>
                     <td>2.67 <span>fail</span></td>
                     <td>2.52 <span>fail</span></td>
+                    <td>2.39 <span>fail</span></td>
                     <td>2.28 <span>fail</span></td>
                     <td>1.55 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--red</code></th>
-                    <td>2.84 <span>fail</span></td>
                     <td>3.17 <span>AA-L</span></td>
                     <td>2.99 <span>fail</span></td>
+                    <td>2.84 <span>fail</span></td>
                     <td>2.71 <span>fail</span></td>
                     <td>1.84 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--orange</code></th>
-                    <td>2.32 <span>fail</span></td>
                     <td>2.59 <span>fail</span></td>
                     <td>2.44 <span>fail</span></td>
+                    <td>2.32 <span>fail</span></td>
                     <td>2.22 <span>fail</span></td>
                     <td>1.51 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--yellow</code></th>
-                    <td>1.98 <span>fail</span></td>
                     <td>2.21 <span>fail</span></td>
                     <td>2.09 <span>fail</span></td>
+                    <td>1.98 <span>fail</span></td>
                     <td>1.90 <span>fail</span></td>
                     <td>1.29 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--green</code></th>
-                    <td>2.52 <span>fail</span></td>
                     <td>2.81 <span>fail</span></td>
                     <td>2.65 <span>fail</span></td>
+                    <td>2.52 <span>fail</span></td>
                     <td>2.40 <span>fail</span></td>
                     <td>1.63 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--cyan</code></th>
-                    <td>2.61 <span>fail</span></td>
                     <td>2.91 <span>fail</span></td>
                     <td>2.75 <span>fail</span></td>
+                    <td>2.61 <span>fail</span></td>
                     <td>2.49 <span>fail</span></td>
                     <td>1.70 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--blue</code></th>
-                    <td>2.92 <span>fail</span></td>
                     <td>3.26 <span>AA-L</span></td>
                     <td>3.08 <span>AA-L</span></td>
+                    <td>2.92 <span>fail</span></td>
                     <td>2.79 <span>fail</span></td>
                     <td>1.90 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--purple</code></th>
-                    <td>2.65 <span>fail</span></td>
                     <td>2.96 <span>fail</span></td>
                     <td>2.79 <span>fail</span></td>
+                    <td>2.65 <span>fail</span></td>
                     <td>2.53 <span>fail</span></td>
                     <td>1.72 <span>fail</span></td>
                   </tr>
                   <tr>
                     <th scope="row"><code>--magenta</code></th>
-                    <td>2.65 <span>fail</span></td>
                     <td>2.96 <span>fail</span></td>
                     <td>2.79 <span>fail</span></td>
+                    <td>2.65 <span>fail</span></td>
                     <td>2.53 <span>fail</span></td>
                     <td>1.72 <span>fail</span></td>
                   </tr>
@@ -3131,8 +3131,8 @@ const answer = 42;</code></pre>
                 <thead>
                   <tr>
                     <th scope="col">Text over</th>
-                    <th scope="col"><code>--bg-0</code></th>
                     <th scope="col"><code>--bg</code></th>
+                    <th scope="col"><code>--bg-1</code></th>
                     <th scope="col"><code>--bg-2</code></th>
                     <th scope="col"><code>--border</code></th>
                     <th scope="col"><code>--border-2</code></th>

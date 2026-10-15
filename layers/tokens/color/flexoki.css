@@ -16,9 +16,10 @@
  */
 
 :where(:root, [data-palette="flexoki"]) {
-  /* Surfaces: the pane, the page, the element surface, the border and the control boundary. */
-  --bg-0: light-dark(#f2f0e5, #100f0f); /* base-50 / black */
-  --bg: light-dark(#fffcf0, #1c1b1a); /* paper / base-950 */
+  /* Surfaces: the base, the first elevated surface, the element surface, the border and the
+     control boundary. */
+  --bg: light-dark(#fffcf0, #100f0f); /* paper / black */
+  --bg-1: light-dark(#f2f0e5, #1c1b1a); /* base-50 / base-950 */
   --bg-2: light-dark(#e6e4d9, #282726); /* base-100 / base-900 */
   --border: light-dark(#dad8ce, #343331); /* base-150 / base-850 */
   --border-2: light-dark(#cecdc3, #403e3c); /* base-200 / base-800 */

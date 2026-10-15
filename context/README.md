@@ -116,8 +116,9 @@ v0.6.0", below, describes the interface a page uses now.
   steps fail to compute, so the margins, paddings, and heading sizes that read them fall back to
   their unset values.
 - **Profiles** (profiles, preferences): the color interface is sixteen tokens, with a pane
-  surface, `--bg-0`, and two border steps. Four profiles fill it, Flexoki, Primer, Catppuccin,
-  and Everforest, each light and dark in its own file, with a contrast record per profile and
+  surface, `--bg-0`, and two border steps; keys (v0.6.0) drops `--bg-0` and steps the surfaces
+  from `--bg` toward the text, as the color interface below describes. Four profiles fill it,
+  Flexoki, Primer, Catppuccin, and Everforest, each light and dark in its own file, with a contrast record per profile and
   scheme. `data-palette` and `data-scheme` apply a profile and a scheme to any element's
   subtree, so a preview container renders as its profile renders at the root. Space has two
   profiles, regular and compact, and type two, mono and sans, which `data-space` and `data-type`
@@ -199,13 +200,15 @@ select. A page without keys has no shortcuts, and its buttons still work.
 ### The color interface
 
 The color facet is sixteen tokens. Each holds a light and a dark value, and resolves to the
-scheme of the element that reads it.
+scheme of the element that reads it. The three surfaces step from `--bg` toward the text, each
+raised over the one before: lightest to darkest in light schemes, darkest to lightest in dark,
+in every profile. `--bg-0` is gone since v0.6.0, with no alias.
 
 | Token | Role |
 | --- | --- |
-| `--bg-0` | The pane: a side or tool pane, darker than the page in both schemes. |
-| `--bg` | The page. |
-| `--bg-2` | The element surface, one step from the page toward the text: table headers. |
+| `--bg` | The base background: the page, and the fill of fields. |
+| `--bg-1` | The first elevated surface, one step toward the text: dialogs and panels. |
+| `--bg-2` | The element surface, one more step toward the text: table headers. |
 | `--border` | Dividers, containers, and hover fills. |
 | `--border-2` | Control boundaries: text fields, selects, buttons, dialogs, and `kbd`. |
 | `--fg` | Text, the strongest. |

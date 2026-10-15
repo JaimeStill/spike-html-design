@@ -10,6 +10,8 @@
  * layers/tokens/color.css. Each value's comment names its upstream swatch, light / dark, or the
  * one name both share. Everforest has no magenta of its own: its purple is a pink-magenta and
  * fills the terminal's magenta slot, so --purple and --magenta both take it.
+ * The surfaces step toward the text in lightness order: in light, bg1 is lighter than bg_dim, so
+ * --bg, --bg-1 and --bg-2 take bg0, bg1 and bg_dim; in dark, bg_dim, bg0 and bg1.
  *
  * The package exports this file as ./profiles/everforest. A page that links the lean entry imports
  * it into the color sub-layer, after the entry, and names it with data-palette; <base> is where the
@@ -27,10 +29,11 @@
  */
 
 :where([data-palette="everforest"]) {
-  /* Surfaces: the pane, the page, the element surface, the border and the control boundary. */
-  --bg-0: light-dark(#f2efdf, #1e2326); /* bg_dim */
-  --bg: light-dark(#fffbef, #272e33); /* bg0 */
-  --bg-2: light-dark(#f8f5e4, #2e383c); /* bg1 */
+  /* Surfaces: the base, the first elevated surface, the element surface, the border and the
+     control boundary. */
+  --bg: light-dark(#fffbef, #1e2326); /* bg0 / bg_dim */
+  --bg-1: light-dark(#f8f5e4, #272e33); /* bg1 / bg0 */
+  --bg-2: light-dark(#f2efdf, #2e383c); /* bg_dim / bg1 */
   --border: light-dark(#edeada, #374145); /* bg3 / bg2 */
   --border-2: light-dark(#bec5b2, #4f5b58); /* bg5 */
 
