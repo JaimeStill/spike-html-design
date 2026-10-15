@@ -26,7 +26,7 @@ import { fileUrl, openPage, serve } from "../test/harness.js";
 import { layersLoaded, loaded } from "../test/layers.js";
 import { applyFromMenu } from "../test/menu.js";
 import { driveKeys } from "../test/shortcuts.js";
-import { git, modules, pageScripts, stylesheets, tagExists } from "../test/tags.js";
+import { git, modules, pageScripts, show, stylesheets, tagExists } from "../test/tags.js";
 
 const REPO = "JaimeStill/spike-html-design";
 const PAGES = "https://jaimestill.github.io/spike-html-design/";
@@ -226,7 +226,7 @@ if (absent.length) {
       );
       const differ = published.filter((path) => {
         try {
-          return !readFileSync(join(installed, path)).equals(git("show", `${tag}:${path}`).stdout);
+          return !readFileSync(join(installed, path)).equals(show(tag, path));
         } catch {
           return true;
         }

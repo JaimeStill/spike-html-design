@@ -4,8 +4,8 @@
 // cache disabled, and counts the chain's files and hops from chromium's Network events, as the
 // hermetic chain test counts them. Over several runs it takes the median of two timings: the span,
 // from the entry's response to its last import's, and the page's first paint, from navigation.
-// It prints a table with the date, the runs, and the jsDelivr edges the entries' responses name. It reads
-// the network and writes nothing.
+// It prints a table with the date, the runs, and the jsDelivr edges the entries' responses name.
+// It reads the network and writes nothing.
 //
 // Usage: bun scripts/chain.js <tag> [runs]   (mise run chain <tag> [--runs <n>]; runs default 5)
 //
