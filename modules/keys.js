@@ -18,6 +18,13 @@
 // (defaultPrevented); and on a modifier pressed alone, so holding Shift neither starts nor ends
 // a sequence. A press keys acts on, or that starts or continues a sequence, is marked handled.
 //
+// Escape releases a field: an Escape pressed in a field, with no modal open and on an event no
+// other listener handled, not composing and not a repeat, blurs the field, so the page's
+// shortcuts work again. Only a field, so a reading position j or k left on a section survives.
+// keys doesn't mark it handled, so the field's own Escape still runs: a search input clears.
+// Inside an open modal the dialog keeps Escape, and keys does nothing. It is no binding: the off
+// switch doesn't cover it, it fires no keys-fire, and it ends no sequence.
+//
 // Sequences: each press must follow the last within the wait, 1500 ms by default. A press that
 // doesn't continue the sequence in progress ends it and is dropped, not tried as a new start.
 // When one binding is a prefix of another ("g" and "g c"), keys waits for the next press: one
@@ -308,6 +315,28 @@ function silent(event) {
   );
 }
 
+// release blurs the field event's Escape was pressed in and reports whether it did; see "Escape
+// releases a field". The field must still hold focus, so an Escape whose listener moved focus
+// on, as closing a dialog does, blurs nothing. It leaves the event unhandled, as the field's
+// native Escape runs after it.
+function release(event) {
+  const field = document.activeElement;
+  if (
+    event.key !== "Escape" ||
+    event.defaultPrevented ||
+    event.repeat ||
+    event.isComposing ||
+    event.keyCode === 229 ||
+    field !== event.target ||
+    !isField(field) ||
+    document.querySelector(":modal")
+  ) {
+    return false;
+  }
+  field.blur();
+  return true;
+}
+
 // sequenceEvent dispatches keys-sequence on document.
 function sequenceEvent(state, presses, reason) {
   const detail = reason
@@ -405,7 +434,7 @@ function onbeforetoggle(event) {
 // the presses pending. A complete match with no longer one waiting fires at once; a longer one
 // waiting starts or continues the sequence; nothing matching drops the sequence in progress.
 function onkey(event) {
-  if (silent(event)) return;
+  if (release(event) || silent(event)) return;
   const presses = [...(pending?.presses ?? []), snapshot(event)];
   const n = presses.length;
   const current = settings();

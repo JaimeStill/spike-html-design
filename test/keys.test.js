@@ -89,14 +89,18 @@ const filled = (page) =>
   })`);
 
 // rows resolves to the help table's rows: each [keys, action], keys drawn with each kbd as
-// [name] and an off row ending " off", action the row button's text.
+// [name] and an off row ending " off", action the row button's text, or, for the fixed Escape
+// row, which has no button, the cell's text.
 const rows = (page) =>
   page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => {
     const [keys, action] = row.cells;
     const drawn = [...keys.childNodes].map((node) =>
       node.localName === "kbd" ? "[" + node.textContent + "]" : node.textContent).join("");
-    return [drawn, action.querySelector("button").textContent];
+    return [drawn, (action.querySelector("button") ?? action).textContent];
   })`);
+
+// ESCAPE is the help table's fixed last row, Escape releasing a field.
+const ESCAPE = ["[Esc]", "Leave a field"];
 
 describe("keys: element bindings", () => {
   test("T clicks its button, running the invoker command, and marks the press handled", async () => {
@@ -353,6 +357,85 @@ describe("keys: scope", () => {
     expect(await page.evaluate(`document.getElementById("modal").open`)).toBe(false);
     await press(page, "r");
     expect(await log(page)).toEqual(["m", "r"]);
+  });
+});
+
+// Behavior 18: Escape in a field, outside an open modal and unhandled, blurs the field, so the
+// page's shortcuts work again.
+describe("keys: Escape releases a field", () => {
+  const FIELDS = ["text", "notes", "pick", "editable", "search"];
+  const pressEscape = (page, init) =>
+    press(page, "Escape", { code: "Escape", keyCode: 27, ...init });
+  const active = (page) =>
+    page.evaluate("document.activeElement.id || document.activeElement.localName");
+
+  test("Escape in an input, textarea, select, or contenteditable blurs it, and j fires again", async () => {
+    const page = await open();
+    await call(page, `keys.register("j", "j", () => window.log.push("j"))`);
+    for (const id of FIELDS) {
+      await page.evaluate(`document.getElementById(${JSON.stringify(id)}).focus()`);
+      await press(page, "j");
+      expect(await active(page)).toBe(id);
+      await pressEscape(page);
+      expect(await active(page)).toBe("body");
+      await press(page, "j");
+    }
+    expect(await log(page)).toEqual(FIELDS.map(() => "j"));
+    // It is no binding: only the j presses fired keys-fire.
+    expect((await page.evaluate("window.fired")).map(({ binding }) => binding)).toEqual(
+      FIELDS.map(() => "j"),
+    );
+  });
+
+  test("a search input's native Escape still clears it as keys blurs it", async () => {
+    const page = await open();
+    await page.evaluate(`(() => {
+      const search = document.getElementById("search");
+      search.value = "query";
+      search.focus();
+    })()`);
+    await pressEscape(page);
+    expect(await page.evaluate(`document.getElementById("search").value`)).toBe("");
+    expect(await active(page)).toBe("body");
+  });
+
+  test("the off switch doesn't cover it", async () => {
+    const page = await open();
+    await call(page, "keys.changeSettings({ enabled: false })");
+    await page.evaluate(`document.getElementById("text").focus()`);
+    await pressEscape(page);
+    expect(await active(page)).toBe("body");
+  });
+
+  test("a handled, repeated, or composing Escape blurs nothing", async () => {
+    const page = await open();
+    await page.evaluate(`document.getElementById("text").focus()`);
+    await pressEscape(page, { repeat: true });
+    await pressEscape(page, { keyCode: 229 });
+    expect(await active(page)).toBe("text");
+    await page.evaluate(`document.getElementById("text").addEventListener("keydown",
+      (event) => event.preventDefault())`);
+    await pressEscape(page);
+    expect(await active(page)).toBe("text");
+  });
+
+  test("inside an open modal the dialog keeps Escape: keys blurs nothing and it closes", async () => {
+    const page = await open();
+    await page.evaluate(`(() => {
+      const modal = document.getElementById("modal");
+      const field = document.createElement("input");
+      field.id = "inside";
+      modal.append(field);
+      modal.showModal();
+      field.focus();
+      // A document listener added after keys's sees where focus is once keys has run.
+      document.addEventListener("keydown", () => (window.after = document.activeElement.id));
+      // The page's own Escape binding inside the modal is removed, so the native close runs.
+      modal.querySelector("[data-keys=Escape]").remove();
+    })()`);
+    await pressEscape(page);
+    expect(await page.evaluate("window.after")).toBe("inside");
+    expect(await page.evaluate(`document.getElementById("modal").open`)).toBe(false);
   });
 });
 
@@ -691,6 +774,23 @@ describe("keys: T and the theme menu", () => {
     expect(await page.evaluate(`document.querySelector("theme-menu dialog")`)).toBeNull();
   });
 
+  test("Escape on a field inside the open menu cancels it once, and keys leaves it alone", async () => {
+    const page = await openMenuPage();
+    await press(page, "t");
+    expect(await menuOpen(page, true)).toBe(true);
+    // Focus sits on the first row's checked radio, a field.
+    expect(await page.evaluate(`document.activeElement.localName`)).toBe("input");
+    await page.evaluate(`(() => {
+      window.cancels = 0;
+      document.querySelector("theme-menu dialog").addEventListener("close", () => window.cancels++);
+    })()`);
+    await press(page, "Escape", { code: "Escape", keyCode: 27 });
+    expect(await menuOpen(page, false)).toBe(false);
+    await sleep(page, 100);
+    expect(await page.evaluate("window.cancels")).toBe(1);
+    expect(await page.evaluate("window.writes")).toBe(0);
+  });
+
   test("holding T opens the menu and its repeats save nothing; a repeated Escape cancels nothing", async () => {
     const page = await openMenuPage();
     await press(page, "t");
@@ -771,7 +871,7 @@ describe("keys: the help dialog", () => {
     await openHelp(page);
     expect(await fetchedHelp(page)).toBe(true);
     expect(await page.evaluate(`document.getElementById("help").matches(":modal")`)).toBe(true);
-    expect(await rows(page)).toEqual(ROWS.slice(0, -1));
+    expect(await rows(page)).toEqual([...ROWS.slice(0, -1), ESCAPE]);
   });
 
   test("a failed load leaves the dialog usable, warns, and imports again at the next open", async () => {
@@ -829,7 +929,7 @@ describe("keys: the help dialog", () => {
     await page.evaluate(`document.querySelector("[data-keys-list]").replaceChildren()`);
     await press(page, "?", { code: "Slash", shift: true });
     await filled(page);
-    expect(await rows(page)).toEqual(ROWS.slice(0, -1));
+    expect(await rows(page)).toEqual([...ROWS.slice(0, -1), ESCAPE]);
   });
 
   test("lists each active binding once, as the one that fires, with its label by the rule", async () => {
@@ -838,7 +938,7 @@ describe("keys: the help dialog", () => {
     await openHelp(page);
     // Second F and the registered f lose to First; Disabled, Inert, Hidden, and the dialog's own
     // Close are left out; A's label is its aria-label, Search's its <label>'s text.
-    expect(await rows(page)).toEqual(ROWS);
+    expect(await rows(page)).toEqual([...ROWS, ESCAPE]);
     // Each open lists the page as it is then.
     await closeHelp(page);
     await page.evaluate(`(document.querySelector("[data-keys=d]").disabled = false,
@@ -920,6 +1020,8 @@ describe("keys: the help dialog", () => {
       ["Contents", true],
       ["Command", false],
       ["Search", true],
+      // The fixed Escape row is no binding: the off switch never covers it.
+      ["Leave a field", false],
     ]);
     expect((await rows(page))[1]).toEqual(["[T] off", "Theme"]);
     // An off row's button still runs its action: a click is no character-key shortcut.
@@ -931,6 +1033,21 @@ describe("keys: the help dialog", () => {
     await press(page, "c");
     await press(page, "k", { ctrl: true });
     expect(await log(page)).toEqual(["t", "Control+k"]);
+  });
+
+  test("lists Escape's fixed row last, never off, and Escape on its controls closes it natively", async () => {
+    const page = await open(HELP);
+    await openHelp(page);
+    await choose(page, "enabled", false);
+    const fixed = await page.evaluate(`(() => {
+      const row = document.querySelector("#help [data-keys-table] tbody tr:last-child");
+      return [row.hasAttribute("data-keys-fixed"), row.hasAttribute("data-keys-off"),
+        row.cells[0].innerHTML, row.cells[1].textContent, row.querySelector("button")];
+    })()`);
+    expect(fixed).toEqual([true, false, "<kbd>Esc</kbd>", "Leave a field", null]);
+    await page.evaluate(`document.querySelector("#help [data-keys-settings] [name=wait]").focus()`);
+    await press(page, "Escape", { code: "Escape", keyCode: 27 });
+    expect(await page.evaluate(`document.getElementById("help").open`)).toBe(false);
   });
 
   test("carries the screen-reader note", async () => {
@@ -1049,6 +1166,7 @@ describe("keys: the specimen", () => {
       ["[J]", "Next section"],
       ["[K]", "Previous section"],
       ["[G]", "Top"],
+      ESCAPE,
     ]);
     await question(page);
     expect(await helpOpen(page)).toBe(false);
@@ -1090,6 +1208,17 @@ describe("keys: the specimen", () => {
     await page.evaluate(`document.getElementById("tokens").focus()`);
     await press(page, "k");
     expect(await at(page)).toBe("tokens");
+  });
+
+  test("in a form field j does nothing; Escape leaves the field and j moves to a section", async () => {
+    const page = await openSpecimen();
+    await page.evaluate(`document.getElementById("form-text").focus()`);
+    await press(page, "j");
+    expect(await at(page)).toBe("form-text");
+    await press(page, "Escape", { code: "Escape", keyCode: 27 });
+    expect(await at(page)).toBe("body");
+    await press(page, "j");
+    expect(await page.evaluate(`document.activeElement.matches("section[id]")`)).toBe(true);
   });
 
   test("g goes to the top: the title takes focus and the page scrolls to its start", async () => {
@@ -1159,13 +1288,13 @@ describe("keys: a package consumer", () => {
       const poll = () => {
         const rows = document.querySelectorAll("#help [data-keys-table] tbody tr");
         if (document.getElementById("help").open && rows.length > 0) {
-          resolve([...rows].map((row) => row.cells[1].querySelector("button").textContent));
+          resolve([...rows].map((row) => (row.cells[1].querySelector("button") ?? row.cells[1]).textContent));
         } else if (performance.now() > end) reject(new Error("help: not filled"));
         else setTimeout(poll, 10);
       };
       poll();
     })`);
-    expect(rows).toEqual(["Help", "Theme", "Next section"]);
+    expect(rows).toEqual(["Help", "Theme", "Next section", "Leave a field"]);
     // The help module keys loaded is the file the import map resolves ./keys/help to, one
     // module, so a consumer importing ./keys/help shares it.
     const help = await page.evaluate(`(async () => {

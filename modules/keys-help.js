@@ -22,7 +22,10 @@
 //     field, its <label>'s text so read, else its keys as written; a register() binding's is
 //     register()'s label. A row the off switch covers stays listed, marked data-keys-off with a
 //     visible "off" after its keys; its button still runs the action, since a click is not a
-//     character-key shortcut.
+//     character-key shortcut. Last comes a fixed row, marked data-keys-fixed: <kbd>Esc</kbd>,
+//     "Leave a field", keys.js's Escape that releases a field. It is always listed and never
+//     marked off, since it is no binding, and its action is plain text, not a button: it has
+//     nothing to run from the dialog.
 //   - the reader's settings, written through keys.js's changeSettings(): the off switch for
 //     character-key shortcuts and the sequence wait, each a native control in one fieldset. A
 //     change re-renders the table at once.
@@ -93,15 +96,23 @@ function keysOf(sequences) {
   return nodes;
 }
 
-// table returns the bindings table for dialog.
+// escapeRow returns the fixed row for Escape releasing a field.
+function escapeRow() {
+  const row = document.createElement("tr");
+  row.dataset.keysFixed = "";
+  const keys = document.createElement("td");
+  const kbd = document.createElement("kbd");
+  kbd.textContent = "Esc";
+  keys.append(kbd);
+  const action = document.createElement("td");
+  action.textContent = "Leave a field";
+  row.append(keys, action);
+  return row;
+}
+
+// table returns the bindings table for dialog, the fixed Escape row last.
 function table(dialog) {
   const listed = bindings(dialog);
-  if (listed.length === 0) {
-    const none = document.createElement("p");
-    none.dataset.keysNone = "";
-    none.textContent = "This page has no keyboard shortcuts.";
-    return none;
-  }
   const el = document.createElement("table");
   el.dataset.keysTable = "";
   el.innerHTML = `<thead><tr><th scope="col">Keys</th><th scope="col">Action</th></tr></thead><tbody></tbody>`;
@@ -124,6 +135,7 @@ function table(dialog) {
     row.append(keys, action);
     el.tBodies[0].append(row);
   }
+  el.tBodies[0].append(escapeRow());
   return el;
 }
 
@@ -159,7 +171,7 @@ function form() {
 
 // render replaces list's table with one drawn now.
 function render(list, dialog) {
-  list.querySelector(":scope > :is([data-keys-table], [data-keys-none])")?.remove();
+  list.querySelector(":scope > [data-keys-table]")?.remove();
   list.prepend(table(dialog));
 }
 

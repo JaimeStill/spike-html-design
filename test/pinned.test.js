@@ -263,6 +263,7 @@ for (const name of PINNED) {
               ["J", "Next section"],
               ["K", "Previous section"],
               ["G", "Top"],
+              ["Esc", "Leave a field"],
             ],
             focused: "tokens",
           });

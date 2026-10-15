@@ -25,7 +25,7 @@ function until(page, label, expression, timeout) {
 // driveKeys waits for specimen.js to register its three bindings, then presses T, which opens the
 // theme menu, and Escape, which cancels it; ?, which opens the help dialog, and Escape, which
 // closes it; and j, which moves focus to the first section. It resolves to what the reader would
-// see: the help table's rows as [keys, label], and the id of the element j focused. It rejects
+// see: the help table's rows as [keys, label], the fixed Escape row's label its cell's text, and the id of the element j focused. It rejects
 // when a step does not happen within timeout ms, so the menu opening and closing needs no field.
 export async function driveKeys(page, timeout = 5000) {
   await until(page, "bindings", `${STORE}?.registered.length === 3`, timeout);
@@ -45,7 +45,7 @@ export async function driveKeys(page, timeout = 5000) {
   const help = await page.evaluate(
     `[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => [
       [...row.cells[0].querySelectorAll("kbd")].map((kbd) => kbd.textContent).join(" "),
-      row.cells[1].querySelector("button").textContent,
+      (row.cells[1].querySelector("button") ?? row.cells[1]).textContent,
     ])`,
   );
   await page.view.press("Escape");
