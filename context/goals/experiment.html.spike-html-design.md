@@ -171,7 +171,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986) · review stop held, 6b committed, second look accepted · standards — · spec — · editor —
+slices 7/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103) · review stop held, 6b committed, second look accepted · standards — · spec — · editor —
 
 ## Decisions
 
@@ -906,6 +906,10 @@ slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   storage shape is {enabled?, wait?}, changed settings only, under spike-html-design.keys.
 - keys review stop 2 (architect): accepted slice 6b, one convention with written chords and
   combinations, on the served workbench.
+- keys BUILD: final keys budgets, totals plus about 13% rounded up to the hundred: keys.js 10,300
+  (9,097), keys-grammar.js 3,500 (3,066), keys-help.js 13,200 (11,668), for approval at the session
+  brief. Comments are 53–56% of the keys modules' brotli size (the keys.js entry is 4,117 B
+  without them); left as written, for the holistic size strategy.
 
 ## Pending edits
 
