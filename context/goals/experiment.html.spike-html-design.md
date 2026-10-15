@@ -116,7 +116,7 @@ Release       v0.7.0
 
 ## Progress
 
-slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards — · spec — · editor —
+slices 5/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43, 68b64a5) · standards ✓ (e2b827a, 23dcecd) · spec — · editor —
 
 ## Decisions
 
