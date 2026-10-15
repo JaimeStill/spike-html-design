@@ -300,13 +300,16 @@ const snapshot = ({ key, code, shiftKey, altKey, ctrlKey, metaKey }) => ({
   metaKey,
 });
 
+// passed reports whether event is one keys never acts on, a binding or Escape releasing a field:
+// one another listener handled, a repeat, or a press while an input method composes.
+function passed(event) {
+  return event.defaultPrevented || event.repeat || event.isComposing || event.keyCode === 229;
+}
+
 // silent reports whether keys leaves event alone.
 function silent(event) {
   return (
-    event.defaultPrevented ||
-    event.repeat ||
-    event.isComposing ||
-    event.keyCode === 229 ||
+    passed(event) ||
     event.key === "Dead" ||
     event.key === "Process" ||
     MODIFIER_KEYS.has(event.key) ||
@@ -323,10 +326,7 @@ function release(event) {
   const field = document.activeElement;
   if (
     event.key !== "Escape" ||
-    event.defaultPrevented ||
-    event.repeat ||
-    event.isComposing ||
-    event.keyCode === 229 ||
+    passed(event) ||
     field !== event.target ||
     !isField(field) ||
     document.querySelector(":modal")

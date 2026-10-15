@@ -419,6 +419,17 @@ describe("keys: Escape releases a field", () => {
     expect(await active(page)).toBe("text");
   });
 
+  test("an Escape whose listener moved focus on blurs nothing", async () => {
+    const page = await open();
+    await page.evaluate(`(() => {
+      const text = document.getElementById("text");
+      text.addEventListener("keydown", () => document.getElementById("notes").focus());
+      text.focus();
+    })()`);
+    await pressEscape(page);
+    expect(await active(page)).toBe("notes");
+  });
+
   test("inside an open modal the dialog keeps Escape: keys blurs nothing and it closes", async () => {
     const page = await open();
     await page.evaluate(`(() => {
@@ -1288,7 +1299,8 @@ describe("keys: a package consumer", () => {
       const poll = () => {
         const rows = document.querySelectorAll("#help [data-keys-table] tbody tr");
         if (document.getElementById("help").open && rows.length > 0) {
-          resolve([...rows].map((row) => (row.cells[1].querySelector("button") ?? row.cells[1]).textContent));
+          const action = (cell) => (cell.querySelector("button") ?? cell).textContent;
+          resolve([...rows].map((row) => action(row.cells[1])));
         } else if (performance.now() > end) reject(new Error("help: not filled"));
         else setTimeout(poll, 10);
       };
