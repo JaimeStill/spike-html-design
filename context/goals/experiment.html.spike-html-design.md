@@ -1,8 +1,8 @@
 # goal · experiment.html.spike-html-design
 
-- **State:** brief ready
-- **Task:** keys
-- **Branch:** keys
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -11,7 +11,7 @@
 3. [x] facets
 4. [x] profiles
 5. [x] preferences
-6. [ ] keys
+6. [x] keys
 7. [ ] validate
 
 ## Task brief · experiment.html.spike-html-design · keys
@@ -190,8 +190,6 @@ Door          one-way for tag v0.6.0: exports ./keys, ./keys/grammar, ./keys/hel
 Release       v0.6.0
 
 ## Progress
-
-slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986, package 08c2103, pin 7fa9e8e, docs dcd52d1) · review stop held, 6b committed, second look accepted · standards done (05a4736, 12f3011) · spec done (10f59ad, re-check no gaps) · editor done · redirect: slice 9 b79526e, slice 10 1b34cd9 · review stop 3 accepted · standards 2 (8583349, 503447c) · spec 2 (docs gap, closed by editor) · editor 2 done
 
 ## Decisions
 
@@ -979,6 +977,10 @@ slices 8/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1
   entries are keys.js 9,661 of 10,300, keys-grammar.js 3,066 of 3,500, keys-help.js 12,351 of
   13,200, baseline.css 13,657 of 14,000, and full.css 17,533 of 18,000 B brotli. BUDGETS is
   unchanged.
+- keys SHIP (architect): accepted the session brief and the keys budgets (keys.js 10,300,
+  keys-grammar.js 3,500, keys-help.js 13,200 B brotli); budgets mean little until later spikes
+  settle the build process and how the web infrastructure is structured and served. v0.6.0
+  releases.
 
 ## Pending edits
 
