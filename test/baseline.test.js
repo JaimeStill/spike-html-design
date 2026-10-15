@@ -3257,22 +3257,25 @@ describe("specimen", () => {
       const box = header.getBoundingClientRect();
       return {
         rule: getComputedStyle(header).borderBottomWidth,
-        // Each of the header's blocks spans it, but the Theme button, which sits on a line of
-        // its own beneath the title and above the intro: nothing sits beside the title.
+        // Each of the header's blocks spans it, but the Theme and Help buttons, which sit side
+        // by side on a line of their own beneath the title and above the intro: nothing sits
+        // beside the title.
         spans: [...header.children].filter((el) => el.localName !== "button")
           .map((el) => Math.round(el.getBoundingClientRect().width - box.width)),
         order: [...header.children].map((el) => el.localName),
-        button: (() => {
-          const [title, button, intro] = [...header.children].map((el) => el.getBoundingClientRect());
-          return button.top >= title.bottom && intro.top >= button.bottom;
+        buttons: (() => {
+          const [title, theme, help, intro] = [...header.children]
+            .map((el) => el.getBoundingClientRect());
+          return theme.top >= title.bottom && intro.top >= theme.bottom &&
+            help.top === theme.top && help.left >= theme.right;
         })(),
         gap: document.querySelector("#tokens h2").getBoundingClientRect().top - box.bottom,
       };
     })()`);
     expect(header.rule).toBe("0px");
     expect(new Set(header.spans)).toEqual(new Set([0]));
-    expect(header.order).toEqual(["h1", "button", "p"]);
-    expect(header.button).toBe(true);
+    expect(header.order).toEqual(["h1", "button", "button", "p"]);
+    expect(header.buttons).toBe(true);
     expect(header.gap).toBeLessThanOrEqual(await resolveToken(page, "--space-l", "length"));
   });
 

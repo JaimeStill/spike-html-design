@@ -12,11 +12,14 @@
          fetches beside them rather than after them, so first paint waits one round trip, not
          two. Relative module scripts run served and on Pages; from file://, chromium blocks
          them, and the page renders its defaults with no menu. keys follows as a plain module
-         script, since no shortcut is pressed before first paint; it binds the Theme button's T. -->
+         script, since no shortcut is pressed before first paint; it binds the Theme button's T
+         and the Help button's ?. The specimen's own script, specimen.js, follows it and
+         registers the page's j, k, and g. -->
     <link rel="modulepreload" href="./modules/registry.js" />
     <script type="module" blocking="render" src="./modules/register-full.js"></script>
     <script type="module" blocking="render" src="./modules/preferences.js"></script>
     <script type="module" src="./modules/keys.js"></script>
+    <script type="module" src="./specimen.js"></script>
     <style>
       /* The specimen layer arranges this page as a console: a compact header, each section
          under its heading, a full-width banner over each subsection, and the samples in panels,
@@ -45,9 +48,10 @@
           padding-block-end: var(--space-2xl);
         }
 
-        /* The header: the title, then the Theme button on a line of its own beneath it, then
-           the intro, close above the first section. Nothing sits beside the title. Text spans
-           the column: a reading measure belongs to a prose layout, and this page is a console. */
+        /* The header: the title, then the Theme and Help buttons on a line of their own beneath
+           it, then the intro, close above the first section. Nothing sits beside the title. Text
+           spans the column: a reading measure belongs to a prose layout, and this page is a
+           console. */
         body > header {
           padding-block-start: var(--space-l);
 
@@ -73,6 +77,19 @@
 
         main > section:first-child {
           margin-block-start: var(--space-m);
+        }
+
+        /* j and k move focus from section to section, and g to the title (specimen.js): each
+           section with an id, and the title, take focus from script and, so focused, open the
+           view a --space-s below its top edge, the elements layer's focus outline set off around
+           them. */
+        section[id],
+        body > header > h1 {
+          scroll-margin-block-start: var(--space-s);
+        }
+
+        section[id]:focus-visible {
+          outline-offset: var(--space-2xs);
         }
 
         main > section > header > :is(p, dl) {
@@ -591,6 +608,24 @@
           }
         }
 
+        /* The help dialog, sized and set out as the theme menu is: a column capped inside the
+           viewport's gutters, its heading flush with its top, and Close at the end of its footer.
+           What keys fills it with, the table, the settings, and the note, is the elements
+           layer's. */
+        .help {
+          inline-size: min(100% - 2 * var(--space-s), 40rem);
+          max-block-size: calc(100% - 2 * var(--space-s));
+
+          & > h2 {
+            margin-block: 0 var(--space-s);
+          }
+
+          & > footer {
+            display: flex;
+            justify-content: end;
+          }
+        }
+
         /* The contrast legend: each mark beside its meaning. */
         #contrast-legend {
           display: grid;
@@ -607,9 +642,12 @@
   </head>
   <body>
     <header>
-      <h1>spike-html-design</h1>
+      <h1 tabindex="-1">spike-html-design</h1>
       <button type="button" commandfor="theme" command="--open" data-keys="t">
         Theme <kbd>T</kbd>
+      </button>
+      <button type="button" commandfor="help" command="show-modal" data-keys="?">
+        Help <kbd>?</kbd>
       </button>
       <p>
         This page renders every token, element and tool class in the baseline with the full
@@ -617,12 +655,14 @@
         <code>data-scheme</code> or <code>data-palette</code> on any element to force a scheme or
         apply a color profile to its subtree, and <code>data-space</code> or
         <code>data-type</code> to apply a space or type profile. Served, the Theme button or
-        <kbd>T</kbd> opens a menu to choose them for every page on this site.
+        <kbd>T</kbd> opens a menu to choose them for every page on this site, and the Help button
+        or <kbd>?</kbd> lists the page's shortcuts: <kbd>J</kbd> and <kbd>K</kbd> move through
+        its sections and <kbd>G</kbd> goes to the top, in the mode chosen there.
       </p>
     </header>
 
     <main>
-      <section id="tokens">
+      <section id="tokens" tabindex="-1">
         <header>
           <h2>Tokens</h2>
           <p>
@@ -631,7 +671,7 @@
           </p>
         </header>
 
-        <section id="color">
+        <section id="color" tabindex="-1">
           <header>
             <h3>Color</h3>
             <p>
@@ -797,7 +837,7 @@
           </div>
         </section>
 
-        <section id="space">
+        <section id="space" tabindex="-1">
           <header>
             <h3>Space</h3>
             <p>
@@ -919,7 +959,7 @@
           </div>
         </section>
 
-        <section id="type">
+        <section id="type" tabindex="-1">
           <header>
             <h3>Type</h3>
             <p>
@@ -1045,7 +1085,7 @@
         </section>
       </section>
 
-      <section id="elements">
+      <section id="elements" tabindex="-1">
         <header>
           <h2>Elements</h2>
           <p>
@@ -1056,7 +1096,7 @@
           </p>
         </header>
 
-        <section id="prose">
+        <section id="prose" tabindex="-1">
           <h3>Prose</h3>
           <div class="cells">
             <div class="cell">
@@ -1156,7 +1196,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="text">
+        <section id="text" tabindex="-1">
           <h3>Text-level</h3>
           <div class="cells">
             <div class="cell">
@@ -1225,7 +1265,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="grouping">
+        <section id="grouping" tabindex="-1">
           <h3>Grouping</h3>
           <div class="cells">
             <div class="cell">
@@ -1281,7 +1321,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="tables">
+        <section id="tables" tabindex="-1">
           <h3>Tables</h3>
           <div class="cells">
             <div class="cell">
@@ -1365,7 +1405,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="forms">
+        <section id="forms" tabindex="-1">
           <h3>Forms</h3>
           <form class="cells">
             <div class="cell">
@@ -1473,7 +1513,7 @@ const answer = 42;</code></pre>
           </form>
         </section>
 
-        <section id="embedded">
+        <section id="embedded" tabindex="-1">
           <header>
             <h3>Embedded</h3>
             <p>Every sample is inline or a data: URL; nothing loads from the network.</p>
@@ -1593,7 +1633,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="interactive">
+        <section id="interactive" tabindex="-1">
           <h3>Interactive</h3>
           <div class="cells">
             <div class="cell">
@@ -1628,7 +1668,7 @@ const answer = 42;</code></pre>
         </section>
       </section>
 
-      <section id="tools">
+      <section id="tools" tabindex="-1">
         <header>
           <h2>Tools</h2>
           <p>
@@ -1638,7 +1678,7 @@ const answer = 42;</code></pre>
           </p>
         </header>
 
-        <section id="buttons">
+        <section id="buttons" tabindex="-1">
           <h3>Buttons</h3>
           <div class="cells">
             <div class="cell">
@@ -1682,7 +1722,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="scroll">
+        <section id="scroll" tabindex="-1">
           <h3>Scroll</h3>
           <div class="cells">
             <div class="cell">
@@ -1705,7 +1745,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="fields">
+        <section id="fields" tabindex="-1">
           <h3>Forms</h3>
           <div class="cells">
             <div class="cell">
@@ -1732,7 +1772,7 @@ const answer = 42;</code></pre>
           </div>
         </section>
 
-        <section id="tables-tools">
+        <section id="tables-tools" tabindex="-1">
           <h3>Tables</h3>
           <div class="cells">
             <div class="cell">
@@ -1785,7 +1825,7 @@ const answer = 42;</code></pre>
         </section>
       </section>
 
-      <section id="profiles">
+      <section id="profiles" tabindex="-1">
         <header>
           <h2>Profiles</h2>
           <p>
@@ -2285,7 +2325,7 @@ const answer = 42;</code></pre>
         </div>
       </section>
 
-      <section id="contrast">
+      <section id="contrast" tabindex="-1">
         <header>
           <h2>Contrast</h2>
           <p>
@@ -3195,6 +3235,22 @@ const answer = 42;</code></pre>
       </section>
     </main>
     <theme-menu id="theme"></theme-menu>
+    <!-- The help dialog: keys fills its marked element with the page's shortcuts and the reader's
+         settings when it opens, replacing what the markup holds there. ? opens it from the
+         header and closes it from its Close button; Escape closes it natively. From file://,
+         where keys doesn't run, the Help button still opens it, and it says why it lists
+         nothing. -->
+    <dialog id="help" class="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard shortcuts</h2>
+      <div data-keys-list>
+        <p>Served, this dialog lists the page's shortcuts; opened as a file, the page has none.</p>
+      </div>
+      <footer>
+        <button type="button" commandfor="help" command="close" data-keys="?">
+          Close <kbd>?</kbd>
+        </button>
+      </footer>
+    </dialog>
     <script type="module">
       // The color tables' Light and Dark cells force their scheme and inherit the root's palette,
       // so their dots paint the current profile's values with no script. This specimen-only

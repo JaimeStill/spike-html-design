@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
-import { dirname } from "node:path";
-import { openPage, serve } from "./harness.js";
+import { dirname, join } from "node:path";
+import { fileUrl, openPage, serve } from "./harness.js";
 
 const root = dirname(import.meta.dir);
 // The repository served at the root, so a fixture imports the modules by relative URL; chromium
@@ -1069,5 +1069,243 @@ describe("keys: the help dialog", () => {
     await press(two, "t");
     await press(two, "k", { ctrl: true });
     expect(await log(two)).toEqual(["Control+k"]);
+  });
+});
+
+// Behavior 14, the specimen: served, it loads keys and states no mode, its header's Help button
+// and ? open the help dialog, and specimen.js registers j and k, which move focus through the
+// sections with an id, and g, which goes to the top, each wrapped by the reader's mode.
+describe("keys: the specimen", () => {
+  // DESKTOP is a viewport tall enough to show several sections, short enough that the page
+  // scrolls through every one the tests reach.
+  const DESKTOP = { width: 1280, height: 900 };
+
+  // openSpecimen opens the served specimen with the wait set to WAIT, and resolves once
+  // specimen.js has registered its three bindings.
+  async function openSpecimen() {
+    const page = await openPage(`${server.url}index.html`, { viewport: DESKTOP });
+    pages.push(page);
+    await page.evaluate(`new Promise((resolve, reject) => {
+      const end = performance.now() + 2000;
+      const poll = () => {
+        const store = globalThis[Symbol.for("spike-html-design.keys")];
+        if (store?.registered.length === 3) {
+          store.wait = ${WAIT};
+          resolve(true);
+        } else if (performance.now() > end) reject(new Error("specimen: no bindings"));
+        else setTimeout(poll, 10);
+      };
+      poll();
+    })`);
+    return page;
+  }
+
+  // focused resolves to where focus is: the focused element's id, else its tag name, whether
+  // it shows the elements layer's focus outline, and whether it opens the view, its top a scroll
+  // margin below the viewport's top edge.
+  const focused = (page) =>
+    page.evaluate(`(() => {
+      const el = document.activeElement;
+      const style = getComputedStyle(el);
+      const margin = parseFloat(style.scrollMarginBlockStart) || 0;
+      return {
+        at: el.id || el.localName,
+        outlined: el.matches(":focus-visible") && style.outlineStyle === "solid",
+        top: Math.abs(el.getBoundingClientRect().top - margin) < 2,
+      };
+    })()`);
+
+  // at resolves to the focused element's id, else its tag name.
+  const at = (page) => focused(page).then(({ at }) => at);
+
+  // filled resolves once the help dialog is open and filled, or rejects after 2 s.
+  const filled = (page) =>
+    page.evaluate(`new Promise((resolve, reject) => {
+      const end = performance.now() + 2000;
+      const poll = () => {
+        const dialog = document.getElementById("help");
+        if (dialog.open && dialog.querySelector("[data-keys-list] [data-keys-table]")) resolve(true);
+        else if (performance.now() > end) reject(new Error("help: not filled"));
+        else setTimeout(poll, 10);
+      };
+      poll();
+    })`);
+
+  // rows resolves to the help table's rows: each [keys, action], keys drawn with each kbd as
+  // [name], action the row button's text.
+  const rows = (page) =>
+    page.evaluate(`[...document.querySelectorAll("#help [data-keys-table] tbody tr")].map((row) => {
+      const [keys, action] = row.cells;
+      const drawn = [...keys.childNodes].map((node) =>
+        node.localName === "kbd" ? "[" + node.textContent + "]" : node.textContent).join("");
+      return [drawn, action.querySelector("button").textContent];
+    })`);
+
+  const helpOpen = (page) => page.evaluate(`document.getElementById("help").open`);
+  const question = (page, held = {}) => press(page, "?", { code: "Slash", shift: true, ...held });
+
+  test("states no mode, so raw applies, and its Help button opens the help dialog by show-modal", async () => {
+    const page = await openSpecimen();
+    expect(
+      await page.evaluate(`(() => {
+        const help = document.querySelector("body > header > button + button");
+        const close = document.querySelector("#help button[command=close]");
+        return {
+          mode: document.documentElement.hasAttribute("data-keys-mode"),
+          help: [help.textContent.replace(/\\s+/g, " ").trim(), help.getAttribute("data-keys"),
+            help.getAttribute("aria-keyshortcuts"), help.getAttribute("command"),
+            help.getAttribute("commandfor")],
+          close: [close.getAttribute("data-keys"), close.getAttribute("commandfor")],
+          sections: document.querySelectorAll("section[id]").length,
+          focusable: [...document.querySelectorAll("section[id]")].every((s) => s.tabIndex === -1),
+        };
+      })()`),
+    ).toEqual({
+      mode: false,
+      help: ["Help ?", "?", "Shift+/", "show-modal", "help"],
+      close: ["?", "help"],
+      sections: 19,
+      focusable: true,
+    });
+    await page.evaluate(`document.querySelector("body > header > button + button").click()`);
+    await filled(page);
+    expect(await page.evaluate(`document.getElementById("help").matches(":modal")`)).toBe(true);
+  });
+
+  test("? opens the help dialog listing T, ?, j, k, and g; ? on Close closes it, and so does Escape", async () => {
+    const page = await openSpecimen();
+    await question(page);
+    await filled(page);
+    expect(await rows(page)).toEqual([
+      ["[T]", "Theme"],
+      ["[?]", "Help"],
+      ["[J]", "Next section"],
+      ["[K]", "Previous section"],
+      ["[G]", "Top"],
+    ]);
+    await question(page);
+    expect(await helpOpen(page)).toBe(false);
+    await question(page);
+    await filled(page);
+    await press(page, "Escape", { code: "Escape", keyCode: 27 });
+    expect(await helpOpen(page)).toBe(false);
+  });
+
+  test("j and k move focus through the sections in document order, each shown with its outline", async () => {
+    const page = await openSpecimen();
+    // From the top, with focus on the page, j reaches the first section.
+    await press(page, "j");
+    expect(await focused(page)).toEqual({ at: "tokens", outlined: true, top: true });
+    // Nested sections count in document order.
+    const order = ["color", "space", "type", "elements", "prose"];
+    for (const id of order) {
+      await press(page, "j");
+      expect(await focused(page)).toEqual({ at: id, outlined: true, top: true });
+    }
+    await press(page, "k");
+    expect(await focused(page)).toEqual({ at: "elements", outlined: true, top: true });
+    await press(page, "k");
+    expect(await at(page)).toBe("type");
+  });
+
+  test("with focus outside every section, j and k step from the scroll position", async () => {
+    const page = await openSpecimen();
+    // #prose opens the view, the page focused: j goes past it to #text, k back to #elements,
+    // the last section starting above the view.
+    await page.evaluate(`document.getElementById("prose").scrollIntoView({ block: "start" })`);
+    await press(page, "j");
+    expect(await at(page)).toBe("text");
+    await page.evaluate(`document.activeElement.blur()`);
+    await page.evaluate(`document.getElementById("prose").scrollIntoView({ block: "start" })`);
+    await press(page, "k");
+    expect(await at(page)).toBe("elements");
+    // At the first section, k goes nowhere further back.
+    await page.evaluate(`document.getElementById("tokens").focus()`);
+    await press(page, "k");
+    expect(await at(page)).toBe("tokens");
+  });
+
+  test("g goes to the top: the title takes focus and the page scrolls to its start", async () => {
+    const page = await openSpecimen();
+    for (const _ of [1, 2, 3, 4, 5]) await press(page, "j");
+    expect(await page.evaluate("scrollY")).toBeGreaterThan(0);
+    await press(page, "g");
+    expect(await at(page)).toBe("h1");
+    expect(await page.evaluate("scrollY")).toBe(0);
+  });
+
+  test("in leader mode, g j, g k, and g g move and go to the top, and the bare keys do nothing", async () => {
+    const page = await openSpecimen();
+    await call(page, `keys.changeSettings({ mode: "leader" })`);
+    await press(page, "j");
+    expect(await at(page)).toBe("body");
+    await press(page, "g");
+    await press(page, "j");
+    expect(await at(page)).toBe("tokens");
+    await press(page, "g");
+    await press(page, "j");
+    await press(page, "g");
+    await press(page, "k");
+    expect(await at(page)).toBe("tokens");
+    await press(page, "g");
+    await press(page, "g");
+    expect(await at(page)).toBe("h1");
+    expect(await page.evaluate("scrollY")).toBe(0);
+    await press(page, "g");
+    await question(page);
+    await filled(page);
+    expect(await rows(page)).toEqual([
+      ["[G] then [T]", "Theme"],
+      ["[G] then [?]", "Help"],
+      ["[G] then [J]", "Next section"],
+      ["[G] then [K]", "Previous section"],
+      ["[G] then [G]", "Top"],
+    ]);
+  });
+
+  test("in activator mode, chosen in the help dialog, Alt+j, Alt+k, and Alt+g work", async () => {
+    const page = await openSpecimen();
+    await question(page);
+    await filled(page);
+    await page.evaluate(`(() => {
+      const control = document.querySelector("#help [data-keys-settings] [name=mode]");
+      control.value = "activator";
+      control.dispatchEvent(new Event("change", { bubbles: true }));
+    })()`);
+    expect((await rows(page)).map(([keys]) => keys)).toEqual([
+      "[Alt]+[T]",
+      "[Alt]+[?]",
+      "[Alt]+[J]",
+      "[Alt]+[K]",
+      "[Alt]+[G]",
+    ]);
+    // The dialog's own Close takes ? with the activator held, as every bare binding does.
+    await question(page, { alt: true });
+    expect(await helpOpen(page)).toBe(false);
+    await press(page, "∆", { code: "KeyJ", alt: true });
+    expect(await at(page)).toBe("tokens");
+    await press(page, "∆", { code: "KeyJ", alt: true });
+    await press(page, "˚", { code: "KeyK", alt: true });
+    expect(await at(page)).toBe("tokens");
+    await press(page, "j");
+    expect(await at(page)).toBe("tokens");
+    await press(page, "©", { code: "KeyG", alt: true });
+    expect(await at(page)).toBe("h1");
+  });
+
+  test("from file://, it has no keys, and its help dialog says why it lists nothing", async () => {
+    // Chromium runs no relative module script from file://, so neither keys nor specimen.js
+    // runs: j moves nothing and ? opens nothing. The Help button's show-modal is native, so it
+    // still opens the dialog, which keeps its markup's explanation.
+    const page = await openPage(fileUrl(join(root, "index.html")), { viewport: DESKTOP });
+    pages.push(page);
+    await press(page, "j");
+    await question(page);
+    expect({ at: await at(page), open: await helpOpen(page) }).toEqual({ at: "body", open: false });
+    await page.evaluate(`document.querySelector("body > header > button + button").click()`);
+    expect(await helpOpen(page)).toBe(true);
+    expect(
+      await page.evaluate(`document.querySelector("#help [data-keys-list]").textContent.trim()`),
+    ).toContain("opened as a file");
   });
 });
