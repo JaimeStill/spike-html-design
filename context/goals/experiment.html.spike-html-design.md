@@ -172,7 +172,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 1/8 committed (grammar ec54ae1) · review stop — · standards — · spec — · editor —
+slices 2/8 committed (grammar ec54ae1, runtime c08b39c) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
@@ -858,6 +858,16 @@ slices 1/8 committed (grammar ec54ae1) · review stop — · standards — · sp
 - plan keys: assumed: bare means one press with no modifier but Shift; register() throws a
   TypeError on a malformed string, and a malformed data-keys binds nothing and warns once; keys
   is silent in fields even for combinations; presses continuing a sequence are marked handled.
+- keys BUILD: the ./keys and ./keys/grammar exports moved into slice 2 with provisional budgets
+  (8,300 and 4,250 B brotli), since the pinned test requires every tracked module to be an
+  export; slice 7 sets the final figures, approved at the session brief.
+- keys BUILD: the store is { registered, wait, listening }; the first copy installs one
+  bubble-phase document listener, so a page handler can prevent a key first.
+- keys BUILD: a press that doesn't continue a pending sequence drops it, even when a shorter
+  binding ("g" beside "g c") was waiting; lone modifier presses are ignored, so Shift on the way
+  to a "g Shift+T" doesn't drop it.
+- keys BUILD: a register() handler receives the keys-fire event; keys-sequence goes out only when
+  a press leaves a longer binding pending.
 
 ## Pending edits
 
