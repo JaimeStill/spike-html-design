@@ -734,9 +734,10 @@ design, `app/client/design`, and its presentation palette,
 with swappable profiles, over elements and tools layers) be consumed by version, as a git-tag
 package and through a pinned CDN URL, and extended by other packages?
 
-**The answer:** Yes: seven immutable tags, v0.1.0 to v0.7.0, are consumed by pinned jsDelivr URL
-and by bun's git-tag install, and an extension package adds a color profile that passes the
-exported conformance check; the open cost is size, most of it comments, left to the intake.
+**The answer:** Yes: each tag, v0.1.0 to v0.6.0, is consumed unchanged by pinned jsDelivr URL,
+v0.6.0 also by bun's git-tag install, and v0.7.0 releases under the same checks; an extension
+package adds a color profile that passes the exported conformance check; the open cost is size,
+most of it comments, left to the intake.
 
 ### The evidence, and where it is proven
 
@@ -806,7 +807,9 @@ comments:
 | `modules/keys-help.js` | 12,351 (13,200) | 11,610 | 5,268 |
 | `modules/conformance.js` | 3,542 (4,000) | 3,542 | 2,115 |
 
-Comments are about 80% of the CSS's brotli size as served, and 40–67% of each module's.
+Comments are about 80% of the CSS's brotli size as served (the per-file total; 75% as one file),
+and 40–70% of each module's as served (40–67% as one file), from `conformance.js` at 40% to
+`register.js` at 70%.
 
 `mise run chain v0.6.0`, on 2026-10-15 (19:06:32Z), from jsDelivr's Cloudflare edge in Atlanta,
 the median of five runs with the cache disabled over a warm connection. v0.7.0's CSS is unchanged
