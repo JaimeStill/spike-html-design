@@ -1,6 +1,6 @@
 // keys-grammar: the binding grammar keys reads, with no DOM: it parses and normalizes a binding,
-// wraps a bare binding for the reader's mode, matches a press against a keydown, and formats a
-// binding for display and for aria-keyshortcuts. It touches no global and loads nothing, so the
+// matches a press against a keydown, and formats a binding for display and for
+// aria-keyshortcuts. It touches no global and loads nothing, so the
 // runtime, the help module, and an outside module share it.
 //
 // A binding is a string in @github/hotkey's grammar:
@@ -20,8 +20,8 @@
 // A malformed string parses to null and binds nothing: an empty string or alternative, an empty
 // press around a "+", an unknown or repeated modifier, a modifier alone, two keys in one
 // combination, or a multi-letter key that isn't Plus, Space, or a named key. problem() says
-// which, for the runtime's TypeError and warning. A "," always separates, so the comma key is
-// reachable only as the comma leader, which wrap() builds from a parsed press.
+// which, for the runtime's TypeError and warning. A "," always separates, so the comma key can't
+// be bound.
 //
 // A parsed binding is an array of alternatives, each a sequence: an array of presses, each
 //
@@ -36,25 +36,10 @@
 //   problem(binding)          why binding is malformed, or null when it parses.
 //   stringify(parsed)         a parsed binding, sequence, or press as its normal string.
 //   normalize(binding, opts)  stringify(parse(binding, opts)), or null when it is malformed.
-//   isBare(sequence)          whether a sequence is one character press with no modifier but Shift.
-//   wrap(binding, mode, settings, opts)
-//                             binding, a string or parsed, as pressed in mode; null if malformed.
 //   matches(press, event)     whether a keydown-like { key, code, shiftKey, altKey, ctrlKey,
 //                             metaKey } is press.
 //   labels(sequence)          a sequence for display, as presses of key labels.
 //   keyshortcuts(binding)     a parsed binding's aria-keyshortcuts value, or null for none.
-//   MODES, LEADERS, ACTIVATORS, DEFAULTS
-//                             the modes, the leader and activator choices, and their defaults.
-
-export const MODES = Object.freeze(["raw", "leader", "activator"]);
-
-// LEADERS are the leader keys the reader can choose, as written in a binding.
-export const LEADERS = Object.freeze(["g", ",", "\\", "Space"]);
-
-// ACTIVATORS are the activator modifiers the reader can choose, as written in a binding.
-export const ACTIVATORS = Object.freeze(["Alt", "Control", "Meta", "Alt+Shift"]);
-
-export const DEFAULTS = Object.freeze({ mode: "raw", leader: "g", activator: "Alt" });
 
 // MODIFIERS are the modifier names in their normal order, each to its press field.
 const MODIFIERS = { Control: "control", Alt: "alt", Meta: "meta", Shift: "shift" };
@@ -176,38 +161,6 @@ export function stringify(value) {
 export function normalize(binding, options) {
   const result = parse(binding, options);
   return result && stringify(result);
-}
-
-// isBare holds for one press of a character key, a letter, digit, or symbol, with no modifier
-// but Shift: the presses a mode wraps. A named key, Space included, is not a character key.
-export function isBare(sequence) {
-  if (sequence.length !== 1) return false;
-  const [press] = sequence;
-  return (
-    !press.control && !press.alt && !press.meta && [...press.key].length === 1 && press.key !== " "
-  );
-}
-
-// wrap returns binding as pressed in mode: in raw mode as written; in leader mode each bare
-// alternative becomes the leader then its press ("g" becomes "g g"); in activator mode each bare
-// alternative holds the activator's modifiers too. An alternative that spells out a sequence or a
-// combination is as written in every mode. An unknown mode, leader, or activator, as storage can
-// hold, reads as its default.
-export function wrap(binding, mode, settings = {}, options) {
-  const alternatives = typeof binding === "string" ? parse(binding, options) : binding;
-  if (!alternatives) return null;
-  const leader = LEADERS.includes(settings.leader) ? settings.leader : DEFAULTS.leader;
-  const activator = ACTIVATORS.includes(settings.activator)
-    ? settings.activator
-    : DEFAULTS.activator;
-  return alternatives.map((sequence) => {
-    if (!isBare(sequence) || mode === "raw" || !MODES.includes(mode)) return sequence;
-    if (mode === "leader") return [pressOf(leader, false), sequence[0]];
-    const press = { ...sequence[0] };
-    for (const modifier of activator.split("+")) press[MODIFIERS[modifier]] = true;
-    if (isSymbol(press.key)) press.shift = false;
-    return [press];
-  });
 }
 
 // matches compares by event.key, with the modifiers exact: Control, Alt, and Meta are held iff

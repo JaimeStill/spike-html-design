@@ -14,18 +14,18 @@
 // A marked element is filled, in order, with:
 //
 //   - a table of the bindings that would be active with the dialog closed, keys.js's bindings(),
-//     one row per binding: its keys in the current mode, each press's labels (keys-grammar's
-//     labels()) drawn as sibling <kbd> elements with "+" between a combination's and "then"
-//     between presses, and "or" between alternatives; then its action, a button that closes the
-//     dialog and runs the binding as a press would. The button's text is the bound element's
-//     aria-label, else its text with its <kbd> elements left out, and the joiners between two
-//     of them ("+", "then"), else, for a field, its <label>'s text so read, else its keys as
-//     written; a register() binding's is register()'s label. A row the off switch covers stays
-//     listed, marked data-keys-off with a visible "off" after its keys; its button still runs
-//     the action, since a click is not a character-key shortcut.
+//     one row per binding: its keys, each press's labels (keys-grammar's labels()) drawn as
+//     sibling <kbd> elements with "+" between a combination's and "then" between presses, and "or"
+//     between alternatives; then its action, a button that closes the dialog and runs the binding
+//     as a press would. The button's text is the bound element's aria-label, else its text with
+//     its <kbd> elements left out, and the joiners between two of them ("+", "then"), else, for a
+//     field, its <label>'s text so read, else its keys as written; a register() binding's is
+//     register()'s label. A row the off switch covers stays listed, marked data-keys-off with a
+//     visible "off" after its keys; its button still runs the action, since a click is not a
+//     character-key shortcut.
 //   - the reader's settings, written through keys.js's changeSettings(): the off switch for
-//     character-key shortcuts, the mode, the leader, the activator, and the sequence wait, each
-//     a native control in one fieldset. A change re-renders the table at once.
+//     character-key shortcuts and the sequence wait, each a native control in one fieldset. A
+//     change re-renders the table at once.
 //   - a note for screen-reader users on passing a key through.
 //
 // It adds no CSS: the baseline's elements layer styles the table, the controls, and kbd.
@@ -33,52 +33,15 @@
 // markup.
 
 import { bindings, changeSettings, settings } from "./keys.js";
-import { ACTIVATORS, LEADERS, labels, MODES } from "./keys-grammar.js";
+import { labels } from "./keys-grammar.js";
 
-// CHOICES are the settings the reader picks from a list: each name with its label and its
-// options, each a value with the text shown for it.
-const CHOICES = [
-  [
-    "mode",
-    "Mode",
-    MODES.map((mode) => [
-      mode,
-      { raw: "Raw keys", leader: "Leader, then the key", activator: "Activator held with the key" }[
-        mode
-      ],
-    ]),
-  ],
-  [
-    "leader",
-    "Leader",
-    LEADERS.map((leader) => [
-      leader,
-      { g: "G", ",": "Comma (,)", "\\": "Backslash (\\)", Space: "Space" }[leader],
-    ]),
-  ],
-  [
-    "activator",
-    "Activator",
-    ACTIVATORS.map((activator) => [
-      activator,
-      { Alt: "Alt (Option)", Control: "Control", Meta: "Meta (Command)", "Alt+Shift": "Alt+Shift" }[
-        activator
-      ],
-    ]),
-  ],
-  [
-    "wait",
-    "Wait between presses",
-    [1000, 1500, 3000, 5000].map((wait) => [wait, `${wait / 1000} s`]),
-  ],
-];
+// WAITS are the sequence waits the reader picks from, in ms.
+const WAITS = [1000, 1500, 3000, 5000];
 
 // NOTE is the screen-reader note, fixed English text.
 const NOTE =
   "Screen readers: a screen reader may take a key before the page does. To pass the next key " +
-  "through, press NVDA+F2 in NVDA, JAWS+3 in JAWS, Narrator+3 in Narrator, or VO+Tab in " +
-  "VoiceOver. In activator mode a shortcut is a combination, which reaches the page in NVDA's " +
-  "browse mode without passing it through.";
+  "through, press NVDA+F2 in NVDA, JAWS+3 in JAWS, Narrator+3 in Narrator, or VO+Tab in VoiceOver.";
 
 // runs holds each row button's binding runner.
 const runs = new WeakMap();
@@ -163,22 +126,16 @@ function table(dialog) {
   return el;
 }
 
-// control returns a label holding a select for one of CHOICES, at value. A value it doesn't
-// list, as a page's store.wait can be, shows as a first option whose empty value removes the
-// reader's setting.
-function control([name, text, options], value) {
+// waitControl returns a label holding the wait's select, at wait. A wait it doesn't list, as a
+// page's store.wait can be, shows as a first option whose empty value removes the reader's.
+function waitControl(wait) {
   const label = document.createElement("label");
   const select = document.createElement("select");
-  select.name = name;
-  if (!options.some(([option]) => option === value)) {
-    select.append(
-      new Option(name === "wait" ? `${value / 1000} s` : String(value), "", false, true),
-    );
-  }
-  for (const [option, shown] of options) {
-    select.append(new Option(shown, String(option), false, option === value));
-  }
-  label.append(`${text} `, select);
+  select.name = "wait";
+  const shown = (ms) => `${ms / 1000} s`;
+  if (!WAITS.includes(wait)) select.append(new Option(shown(wait), "", false, true));
+  for (const ms of WAITS) select.append(new Option(shown(ms), String(ms), false, ms === wait));
+  label.append("Wait between presses ", select);
   return label;
 }
 
@@ -193,18 +150,9 @@ function form() {
   const enabled = document.createElement("input");
   Object.assign(enabled, { type: "checkbox", name: "enabled", checked: current.enabled });
   on.append(enabled, " Character-key shortcuts (combinations with Control, Alt, or Meta stay on)");
-  fieldset.append(legend, on);
-  for (const choice of CHOICES) {
-    const p = document.createElement("p");
-    p.append(control(choice, current[choice[0]]));
-    if (choice[0] === "activator") {
-      const note = document.createElement("small");
-      note.textContent =
-        " Control+T, Control+W, and Control+N never reach a page: the browser keeps them.";
-      p.append(note);
-    }
-    fieldset.append(p);
-  }
+  const p = document.createElement("p");
+  p.append(waitControl(current.wait));
+  fieldset.append(legend, on, p);
   return fieldset;
 }
 
@@ -231,9 +179,8 @@ function wire(list, dialog) {
   list.addEventListener("change", (event) => {
     const { name, type, checked, value } = event.target;
     if (!name) return;
-    let setting = value === "" ? null : value;
-    if (type === "checkbox") setting = checked;
-    else if (name === "wait" && setting !== null) setting = Number(setting);
+    let setting = checked;
+    if (type !== "checkbox") setting = value === "" ? null : Number(value);
     changeSettings({ [name]: setting });
     render(list, dialog);
   });

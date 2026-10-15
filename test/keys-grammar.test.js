@@ -1,18 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
-  ACTIVATORS,
-  DEFAULTS,
-  isBare,
   keyshortcuts,
-  LEADERS,
   labels,
-  MODES,
   matches,
   normalize,
   parse,
   problem,
   stringify,
-  wrap,
 } from "../modules/keys-grammar.js";
 
 // press builds a parsed press: key, then the modifiers it holds.
@@ -126,73 +120,6 @@ describe("keys grammar: stringify", () => {
   });
 });
 
-describe("keys grammar: bare and modes", () => {
-  test("bare is one character press with no modifier but Shift", () => {
-    for (const binding of ["t", "Shift+T", "?", "1", "Plus"]) {
-      expect([binding, isBare(parse(binding)[0])]).toEqual([binding, true]);
-    }
-    for (const binding of [
-      "g t",
-      "Alt+t",
-      "Control+k",
-      "Meta+k",
-      "Escape",
-      "Space",
-      "Shift+Enter",
-    ]) {
-      expect([binding, isBare(parse(binding)[0])]).toEqual([binding, false]);
-    }
-  });
-
-  test("the modes, leaders, and activators, with raw, g, and Alt the defaults", () => {
-    expect(MODES).toEqual(["raw", "leader", "activator"]);
-    expect(LEADERS).toEqual(["g", ",", "\\", "Space"]);
-    expect(ACTIVATORS).toEqual(["Alt", "Control", "Meta", "Alt+Shift"]);
-    expect(DEFAULTS).toEqual({ mode: "raw", leader: "g", activator: "Alt" });
-  });
-
-  test("raw mode leaves a binding as written", () => {
-    expect(stringify(wrap("t, Shift+T, ?", "raw"))).toBe("t, Shift+T, ?");
-  });
-
-  test("leader mode puts the leader before each bare press, so g becomes g g", () => {
-    expect(stringify(wrap("t, Shift+T, ?", "leader"))).toBe("g t, g Shift+T, g ?");
-    expect(stringify(wrap("g", "leader"))).toBe("g g");
-    expect(stringify(wrap("t", "leader", { leader: "Space" }))).toBe("Space t");
-    expect(stringify(wrap("t", "leader", { leader: "\\" }))).toBe("\\ t");
-    // The comma key can't be written in a binding, since "," separates alternatives, so the
-    // comma leader is checked parsed.
-    expect(wrap("t", "leader", { leader: "," })).toEqual([[press(","), press("t")]]);
-  });
-
-  test("activator mode holds the activator's modifiers with each bare press", () => {
-    expect(stringify(wrap("t, Shift+T, ?", "activator"))).toBe("Alt+t, Alt+Shift+T, Alt+?");
-    expect(stringify(wrap("t", "activator", { activator: "Control" }))).toBe("Control+t");
-    expect(stringify(wrap("t", "activator", { activator: "Meta" }))).toBe("Meta+t");
-    expect(stringify(wrap("t, ?", "activator", { activator: "Alt+Shift" }))).toBe(
-      "Alt+Shift+T, Alt+?",
-    );
-  });
-
-  test("a sequence, a combination, or a named key is as written in every mode", () => {
-    const written = "g c, Control+k, Alt+t, Meta+Shift+P, Escape, Space";
-    for (const mode of MODES) {
-      expect([mode, stringify(wrap(written, mode))]).toEqual([mode, written]);
-    }
-  });
-
-  test("wrap takes a parsed binding, and returns null for a malformed one", () => {
-    expect(stringify(wrap(parse("t"), "leader"))).toBe("g t");
-    expect(wrap("a+b", "leader")).toBeNull();
-  });
-
-  test("an unknown mode reads as raw, and an unknown leader or activator as its default", () => {
-    expect(stringify(wrap("t", "chord"))).toBe("t");
-    expect(stringify(wrap("t", "leader", { leader: "x" }))).toBe("g t");
-    expect(stringify(wrap("t", "activator", { activator: "Hyper" }))).toBe("Alt+t");
-  });
-});
-
 describe("keys grammar: matches", () => {
   test("a letter matches either case while Shift is up, so caps lock doesn't defeat it", () => {
     expect(pressed("t", event("t"))).toBe(true);
@@ -258,28 +185,22 @@ describe("keys grammar: matches", () => {
 });
 
 describe("keys grammar: formatting", () => {
-  // The demo: "g t", "Alt+T", and "?" in every form, in every mode.
+  // The demo: "g t", "Alt+T", and "?" in every form.
   const FORMATS = {
     "g t": {
       normal: "g t",
       labels: [[["G"], ["T"]]],
       keyshortcuts: null,
-      leader: "g t",
-      activator: "g t",
     },
     "Alt+T": {
       normal: "Alt+t",
       labels: [[["Alt", "T"]]],
       keyshortcuts: "Alt+T",
-      leader: "Alt+t",
-      activator: "Alt+t",
     },
     "?": {
       normal: "?",
       labels: [[["?"]]],
       keyshortcuts: "Shift+/",
-      leader: "g ?",
-      activator: "Alt+?",
     },
   };
   for (const [binding, expected] of Object.entries(FORMATS)) {
@@ -288,8 +209,6 @@ describe("keys grammar: formatting", () => {
       expect(stringify(parsed)).toBe(expected.normal);
       expect(parsed.map(labels)).toEqual(expected.labels);
       expect(keyshortcuts(parsed)).toBe(expected.keyshortcuts);
-      expect(stringify(wrap(parsed, "leader"))).toBe(expected.leader);
-      expect(stringify(wrap(parsed, "activator"))).toBe(expected.activator);
     });
   }
 
@@ -298,7 +217,6 @@ describe("keys grammar: formatting", () => {
     expect(labels(parse("shift+control+k")[0])).toEqual([["Control", "Shift", "K"]]);
     expect(labels(parse("Space")[0])).toEqual([["Space"]]);
     expect(labels(parse("Control+Plus")[0])).toEqual([["Control", "+"]]);
-    expect(labels(wrap("t", "leader", { leader: "," })[0])).toEqual([[","], ["T"]]);
   });
 
   test("aria-keyshortcuts names physical keys, modifiers first", () => {
@@ -343,7 +261,5 @@ describe("keys grammar: formatting", () => {
   test("alternatives join with a space, and a sequence among them declares nothing", () => {
     expect(keyshortcuts(parse("t, g t, Alt+T, ?"))).toBe("T Alt+T Shift+/");
     expect(keyshortcuts(parse("g t, g c"))).toBeNull();
-    expect(keyshortcuts(wrap("t", "leader"))).toBeNull();
-    expect(keyshortcuts(wrap("t", "activator"))).toBe("Alt+T");
   });
 });

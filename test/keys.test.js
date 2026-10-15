@@ -83,9 +83,7 @@ describe("keys: element bindings", () => {
     await press(page, "t");
     expect(await log(page)).toEqual(["command --theme"]);
     expect(await page.evaluate("window.handled")).toBe(true);
-    expect(await page.evaluate("window.fired")).toEqual([
-      { binding: "t", keys: ["t"], mode: "raw" },
-    ]);
+    expect(await page.evaluate("window.fired")).toEqual([{ binding: "t", keys: ["t"] }]);
     // A single press that fires at once is no sequence.
     expect(await page.evaluate("window.sequences")).toEqual([]);
   });
@@ -149,7 +147,7 @@ describe("keys: register()", () => {
     await press(page, "q");
     expect(await log(page)).toEqual(["one keys-fire"]);
     expect(await page.evaluate("window.fired")).toEqual([
-      { binding: "q", keys: ["q"], mode: "raw", label: "one" },
+      { binding: "q", keys: ["q"], label: "one" },
     ]);
     await page.evaluate("(window.removeOne(), window.removeOne())");
     await press(page, "q");
@@ -366,8 +364,9 @@ describe("keys: extension and the store", () => {
   });
 });
 
-// MODES_FIXTURE is the modes fixture, one set of bindings pressed in every mode.
-const MODES_FIXTURE = "keys-modes.html";
+// SETTINGS_FIXTURE is the settings fixture: a key, a symbol, a chord, two combinations, and a
+// named key, each pressed as written.
+const SETTINGS_FIXTURE = "keys-settings.html";
 
 // declared resolves to each bound button's aria-keyshortcuts, by its data-log, null when absent.
 const declared = (page) =>
@@ -389,138 +388,63 @@ const store = (page, value) => {
 // saved resolves to the reader's stored settings, parsed, or null when none are stored.
 const saved = (page) => page.evaluate(`JSON.parse(localStorage.getItem("spike-html-design.keys"))`);
 
-// pressAll presses T and ? as mode would have them pressed, then g c, Control+K, and Escape,
-// which are as written in every mode.
-async function pressAll(page, mode) {
-  if (mode === "raw") {
-    await press(page, "t");
-    await press(page, "?", { code: "Slash", shift: true });
-  } else if (mode === "leader") {
-    await press(page, "g");
-    await press(page, "t");
-    await press(page, "g");
-    await press(page, "?", { code: "Slash", shift: true });
-  } else {
-    // Option changes the character on macOS, so Alt matches a letter by event.code.
-    await press(page, "†", { code: "KeyT", alt: true });
-    await press(page, "?", { code: "Slash", alt: true, shift: true });
-  }
+// pressAll presses each of the fixture's bindings as written: T, ?, g c, Alt+T (Option changes
+// the character on macOS, so Alt matches a letter by event.code), Control+K, and Escape.
+async function pressAll(page) {
+  await press(page, "t");
+  await press(page, "?", { code: "Slash", shift: true });
   await press(page, "g");
   await press(page, "c");
+  await press(page, "†", { code: "KeyT", alt: true });
   await press(page, "k", { ctrl: true });
   await press(page, "Escape", { code: "Escape" });
 }
 
-const ALL = ["t", "?", "g c", "Control+k", "Escape"];
+const ALL = ["t", "?", "g c", "Alt+t", "Control+k", "Escape"];
 
-// DECLARED is each mode's aria-keyshortcuts for the fixture's buttons.
+// DECLARED is the fixture's aria-keyshortcuts with the off switch on.
 const DECLARED = {
-  raw: { t: "T", "?": "Shift+/", "g c": null, "Control+k": "Control+K", Escape: "Escape" },
-  leader: { t: null, "?": null, "g c": null, "Control+k": "Control+K", Escape: "Escape" },
-  activator: {
-    t: "Alt+T",
-    "?": "Alt+Shift+/",
-    "g c": null,
-    "Control+k": "Control+K",
-    Escape: "Escape",
-  },
+  t: "T",
+  "?": "Shift+/",
+  "g c": null,
+  "Alt+t": "Alt+T",
+  "Control+k": "Control+K",
+  Escape: "Escape",
 };
 
-describe("keys: modes", () => {
-  for (const mode of ["raw", "leader", "activator"]) {
-    test(`the page's ${mode} mode: the fixture's bindings fire as ${mode} presses them, and aria-keyshortcuts follows`, async () => {
-      const page = await open(`${MODES_FIXTURE}?mode=${mode}`);
-      expect(await declared(page)).toEqual(DECLARED[mode]);
-      await pressAll(page, mode);
-      expect(await log(page)).toEqual(ALL);
-      const fired = await page.evaluate("window.fired");
-      expect(fired.map((detail) => detail.mode)).toEqual(ALL.map(() => mode));
-      if (mode !== "raw") {
-        // The raw presses of the bare bindings do nothing in this mode.
-        await press(page, "t");
-        await sleep(page, WAIT + 100);
-        expect(await log(page)).toEqual(ALL);
-      }
-    });
-  }
+// OFF is the fixture's aria-keyshortcuts with the off switch off: character keys declare nothing.
+const OFF = { ...DECLARED, t: null, "?": null };
 
-  test("the reader's mode overrides the page's, in all three, and raw is a choice too", async () => {
-    const page = await open(`${MODES_FIXTURE}?mode=leader`);
-    for (const mode of ["activator", "raw", "leader"]) {
-      await call(page, `keys.changeSettings({ mode: ${JSON.stringify(mode)} })`);
-      expect(await declared(page)).toEqual(DECLARED[mode]);
-      await page.evaluate("window.log = []");
-      await pressAll(page, mode);
-      expect(await log(page)).toEqual(ALL);
-    }
-    expect(await saved(page)).toEqual({ mode: "leader" });
-    // Removing the reader's mode returns to the page's.
-    await call(page, `keys.changeSettings({ mode: null })`);
-    expect(await saved(page)).toBeNull();
-    expect(await call(page, "keys.settings().mode")).toBe("leader");
-  });
-
-  test("an invalid data-keys-mode means raw; changing it on <html> rewrites aria-keyshortcuts", async () => {
-    const page = await open(`${MODES_FIXTURE}?mode=chords`);
-    expect(await call(page, "keys.settings().mode")).toBe("raw");
-    expect(await declared(page)).toEqual(DECLARED.raw);
-    await page.evaluate(`document.documentElement.dataset.keysMode = "activator"`);
-    expect(await declared(page)).toEqual(DECLARED.activator);
-    await page.evaluate(`document.documentElement.removeAttribute("data-keys-mode")`);
-    expect(await declared(page)).toEqual(DECLARED.raw);
-  });
-
-  test("the leader can be g, comma, backslash, or Space", async () => {
-    const page = await open(`${MODES_FIXTURE}?mode=leader`);
-    const leaders = [
-      ["g", "g", "KeyG"],
-      [",", ",", "Comma"],
-      ["\\", "\\", "Backslash"],
-      ["Space", " ", "Space"],
-    ];
-    for (const [leader, key, code] of leaders) {
-      await call(page, `keys.changeSettings({ leader: ${JSON.stringify(leader)} })`);
-      await press(page, key, { code });
-      await press(page, "t");
-    }
-    expect(await log(page)).toEqual(["t", "t", "t", "t"]);
-    // With the comma leader, g alone no longer leads.
-    await call(page, `keys.changeSettings({ leader: "," })`);
-    await press(page, "g");
-    await press(page, "t");
-    await sleep(page, WAIT + 100);
-    expect(await log(page)).toEqual(["t", "t", "t", "t"]);
-  });
-
-  test("the activator can be Alt, Control, Meta, or Alt+Shift; Alt matches a letter by code", async () => {
-    const page = await open(`${MODES_FIXTURE}?mode=activator`);
-    const activators = [
-      ["Alt", "†", { alt: true }, "Alt+T"],
-      ["Control", "t", { ctrl: true }, "Control+T"],
-      ["Meta", "t", { meta: true }, "Meta+T"],
-      ["Alt+Shift", "ˇ", { alt: true, shift: true }, "Alt+Shift+T"],
-    ];
-    for (const [activator, key, held, shortcut] of activators) {
-      await call(page, `keys.changeSettings({ activator: ${JSON.stringify(activator)} })`);
-      expect((await declared(page)).t).toBe(shortcut);
-      await press(page, key, { code: "KeyT", ...held });
-      // The other activators don't fire it.
-      if (activator !== "Alt") await press(page, "†", { code: "KeyT", alt: true });
-      if (activator !== "Control") await press(page, "t", { ctrl: true });
-    }
-    expect(await log(page)).toEqual(["t", "t", "t", "t"]);
-    expect((await page.evaluate("window.fired")).map((detail) => detail.keys)).toEqual([
+describe("keys: bindings as written", () => {
+  test("a key, a symbol, a written chord, written combinations, and a named key all fire", async () => {
+    const page = await open(SETTINGS_FIXTURE);
+    expect(await declared(page)).toEqual(DECLARED);
+    await pressAll(page);
+    expect(await log(page)).toEqual(ALL);
+    expect((await page.evaluate("window.fired")).map(({ keys }) => keys)).toEqual([
+      ["t"],
+      ["?"],
+      ["g", "c"],
       ["Alt+t"],
-      ["Control+t"],
-      ["Meta+t"],
-      ["Alt+Shift+T"],
+      ["Control+k"],
+      ["Escape"],
     ]);
+    // Modifiers are exact: k without Control, and Alt+Shift+T, fire nothing.
+    await page.evaluate("window.log = []");
+    await press(page, "k");
+    await press(page, "†", { code: "KeyT", alt: true, shift: true });
+    expect(await log(page)).toEqual([]);
   });
 });
 
 describe("keys: the reader's settings", () => {
+  test("settings() is { enabled, wait }, the wait the store's by default", async () => {
+    const page = await open(SETTINGS_FIXTURE);
+    expect(await call(page, "keys.settings()")).toEqual({ enabled: true, wait: WAIT });
+  });
+
   test("the stored wait wins over the store's", async () => {
-    const page = await open(MODES_FIXTURE);
+    const page = await open(SETTINGS_FIXTURE);
     await call(page, `keys.register("w e", "we", () => window.log.push("w e"))`);
     // The store's wait, WAIT, has passed.
     await press(page, "w");
@@ -535,129 +459,108 @@ describe("keys: the reader's settings", () => {
     expect(await log(page)).toEqual(["w e"]);
   });
 
-  test("invalid stored values read as defaults, and unparseable JSON as all defaults", async () => {
-    const page = await open(`${MODES_FIXTURE}?mode=activator`);
-    const defaults = {
-      enabled: true,
-      mode: "activator",
-      leader: "g",
-      activator: "Alt",
-      wait: WAIT,
-    };
-    await store(page, {
-      enabled: "no",
-      mode: "chords",
-      leader: "x",
-      activator: "Shift",
-      wait: 20,
-      extra: 1,
-    });
+  test("invalid or unknown stored values read as defaults, and unparseable JSON as all defaults", async () => {
+    const page = await open(SETTINGS_FIXTURE);
+    const defaults = { enabled: true, wait: WAIT };
+    // An earlier build's mode, leader, and activator are ignored.
+    await store(page, { enabled: "no", mode: "leader", leader: ",", activator: "Meta", wait: 20 });
     expect(await call(page, "keys.settings()")).toEqual(defaults);
-    await store(page, { mode: "leader", wait: 7 });
-    expect(await call(page, "keys.settings()")).toEqual({ ...defaults, mode: "leader" });
+    await store(page, { mode: "activator", wait: 3000 });
+    expect(await call(page, "keys.settings()")).toEqual({ ...defaults, wait: 3000 });
     for (const value of ["{", "[]", "null", '"leader"']) {
       await store(page, value);
       expect(await call(page, "keys.settings()")).toEqual(defaults);
     }
-    // keys still fires as the defaults have it.
-    await press(page, "†", { code: "KeyT", alt: true });
+    // keys still fires as written.
+    await press(page, "t");
     expect(await log(page)).toEqual(["t"]);
   });
 
   test("changeSettings() stores only changed settings; a default or null removes one", async () => {
-    const page = await open(MODES_FIXTURE);
-    await call(page, `keys.changeSettings({ leader: ",", wait: 3000 })`);
-    expect(await saved(page)).toEqual({ leader: ",", wait: 3000 });
-    await call(page, `keys.changeSettings({ leader: "g", enabled: false })`);
+    const page = await open(SETTINGS_FIXTURE);
+    await call(page, `keys.changeSettings({ wait: 3000 })`);
+    expect(await saved(page)).toEqual({ wait: 3000 });
+    await call(page, `keys.changeSettings({ enabled: false })`);
     expect(await saved(page)).toEqual({ wait: 3000, enabled: false });
     await call(page, `keys.changeSettings({ wait: null, enabled: true })`);
     expect(await saved(page)).toBeNull();
-    // Invalid values already stored are dropped when the reader next changes something.
-    await store(page, { leader: "x", mode: "activator" });
+    // Invalid values and stale mode keys already stored are dropped on the next change.
+    await store(page, { enabled: 1, mode: "activator", leader: "g", activator: "Alt" });
     await call(page, `keys.changeSettings({ wait: 5000 })`);
-    expect(await saved(page)).toEqual({ mode: "activator", wait: 5000 });
+    expect(await saved(page)).toEqual({ wait: 5000 });
     const thrown = (change) =>
       call(
         page,
         `{ try { keys.changeSettings(${change}); return null; }
            catch (error) { return error.constructor.name; } }`,
       );
-    expect(await thrown(`{ leader: "x" }`)).toBe("TypeError");
-    expect(await thrown(`{ colour: "red" }`)).toBe("TypeError");
-    expect(await saved(page)).toEqual({ mode: "activator", wait: 5000 });
+    for (const change of [
+      `{ mode: "leader" }`,
+      `{ leader: "g" }`,
+      `{ activator: "Alt" }`,
+      `{ wait: 20 }`,
+      `{ colour: "red" }`,
+    ]) {
+      expect([change, await thrown(change)]).toEqual([change, "TypeError"]);
+    }
+    expect(await saved(page)).toEqual({ wait: 5000 });
   });
 
-  test("the off switch turns character-key shortcuts off and leaves combinations on", async () => {
-    const page = await open(MODES_FIXTURE);
+  test("the off switch turns off keys and chords of characters and leaves combinations on", async () => {
+    const page = await open(SETTINGS_FIXTURE);
     await call(page, `keys.register("j", "j", () => window.log.push("j"))`);
     await call(page, `keys.register("Alt+j", "Alt+j", () => window.log.push("Alt+j"))`);
     await call(page, "keys.changeSettings({ enabled: false })");
-    expect(await declared(page)).toEqual({
-      t: null,
-      "?": null,
-      "g c": null,
-      "Control+k": "Control+K",
-      Escape: "Escape",
-    });
-    await pressAll(page, "raw");
+    expect(await declared(page)).toEqual(OFF);
+    await pressAll(page);
     await press(page, "j");
     await press(page, "∆", { code: "KeyJ", alt: true });
-    expect(await log(page)).toEqual(["Control+k", "Escape", "Alt+j"]);
-    // Leader chords are character keys too; activator combinations stay on.
-    await page.evaluate("window.log = []");
-    await call(page, `keys.changeSettings({ mode: "leader" })`);
-    await pressAll(page, "leader");
-    expect(await log(page)).toEqual(["Control+k", "Escape"]);
-    await page.evaluate("window.log = []");
-    await call(page, `keys.changeSettings({ mode: "activator" })`);
-    expect(await declared(page)).toEqual(DECLARED.activator);
-    await pressAll(page, "activator");
-    expect(await log(page)).toEqual(["t", "?", "Control+k", "Escape"]);
+    expect(await log(page)).toEqual(["Alt+t", "Control+k", "Escape", "Alt+j"]);
     // Turned back on, they all fire.
     await page.evaluate("window.log = []");
-    await call(page, `keys.changeSettings({ enabled: true, mode: null })`);
-    await pressAll(page, "raw");
+    await call(page, "keys.changeSettings({ enabled: true })");
+    expect(await declared(page)).toEqual(DECLARED);
+    await pressAll(page);
     expect(await log(page)).toEqual(ALL);
   });
 });
 
 describe("keys: aria-keyshortcuts", () => {
   test("another tab's change to the settings applies at once, to presses and the attribute", async () => {
-    const page = await open(MODES_FIXTURE);
-    await store(page, { mode: "activator" });
-    expect(await declared(page)).toEqual(DECLARED.activator);
-    await pressAll(page, "activator");
-    expect(await log(page)).toEqual(ALL);
+    const page = await open(SETTINGS_FIXTURE);
     await store(page, { enabled: false });
-    expect((await declared(page)).t).toBeNull();
+    expect(await declared(page)).toEqual(OFF);
+    await pressAll(page);
+    expect(await log(page)).toEqual(["Alt+t", "Control+k", "Escape"]);
     // Storage cleared in another tab: key null.
     await page.evaluate(`(localStorage.clear(),
       dispatchEvent(new StorageEvent("storage", { key: null, storageArea: localStorage })))`);
-    expect(await declared(page)).toEqual(DECLARED.raw);
+    expect(await declared(page)).toEqual(DECLARED);
   });
 
   test("two tabs on one origin: a change in one rewrites the other's attribute", async () => {
-    const one = await open(MODES_FIXTURE);
-    const two = await open(MODES_FIXTURE);
-    await call(one, `keys.changeSettings({ mode: "activator" })`);
+    const one = await open(SETTINGS_FIXTURE);
+    const two = await open(SETTINGS_FIXTURE);
+    await call(one, `keys.changeSettings({ enabled: false })`);
     // The other tab's storage event arrives as a task; wait for it.
     await sleep(two, 50);
-    expect(await declared(two)).toEqual(DECLARED.activator);
-    await press(two, "†", { code: "KeyT", alt: true });
-    expect(await log(two)).toEqual(["t"]);
+    expect(await declared(two)).toEqual(OFF);
+    await press(two, "t");
+    await press(two, "k", { ctrl: true });
+    expect(await log(two)).toEqual(["Control+k"]);
   });
 
   test("stored settings apply on load", async () => {
-    const page = await open(MODES_FIXTURE);
+    const page = await open(SETTINGS_FIXTURE);
     await page.evaluate(
-      `localStorage.setItem("spike-html-design.keys", JSON.stringify({ mode: "activator", activator: "Meta" }))`,
+      `localStorage.setItem("spike-html-design.keys", JSON.stringify({ enabled: false }))`,
     );
-    await page.goto(fixture(MODES_FIXTURE));
-    expect((await declared(page)).t).toBe("Meta+T");
+    await page.goto(fixture(SETTINGS_FIXTURE));
+    expect(await declared(page)).toEqual(OFF);
   });
 
   test("follows added elements and data-keys changes, and leaves unbound elements alone", async () => {
-    const page = await open(MODES_FIXTURE);
+    const page = await open(SETTINGS_FIXTURE);
     const shortcut = (id) =>
       page.evaluate(
         `document.getElementById(${JSON.stringify(id)}).getAttribute("aria-keyshortcuts")`,
@@ -682,7 +585,7 @@ describe("keys: aria-keyshortcuts", () => {
     await page.evaluate(`document.getElementById("added").removeAttribute("data-keys")`);
     expect(await shortcut("added")).toBeNull();
     // An element that never carried data-keys keeps its own.
-    await call(page, `keys.changeSettings({ mode: "activator" })`);
+    await call(page, `keys.changeSettings({ enabled: false })`);
     expect(await shortcut("unbound")).toBe("Alt+U");
   });
 });
@@ -729,9 +632,7 @@ describe("keys: T and the theme menu", () => {
       ).toBe("T");
       await press(page, key);
       expect(await menuOpen(page, true)).toBe(true);
-      expect(await page.evaluate("window.fired")).toEqual([
-        { binding: "t", keys: ["t"], mode: "raw" },
-      ]);
+      expect(await page.evaluate("window.fired")).toEqual([{ binding: "t", keys: ["t"] }]);
     }
   });
 
@@ -762,21 +663,6 @@ describe("keys: T and the theme menu", () => {
     // The one keys-fire is the press that opened the menu: the menu stops its T at the dialog.
     expect(await page.evaluate("window.fired.length")).toBe(1);
     expect(await page.evaluate(`document.querySelector("theme-menu dialog")`)).toBeNull();
-  });
-
-  test("in leader mode g t opens the menu, and the menu's own T saves it", async () => {
-    const page = await openMenuPage();
-    await call(page, `keys.changeSettings({ mode: "leader" })`);
-    await page.evaluate("window.writes = 0");
-    await press(page, "t");
-    await sleep(page, 100);
-    expect(await menuOpen(page, true)).toBe(false);
-    await press(page, "g");
-    await press(page, "t");
-    expect(await menuOpen(page, true)).toBe(true);
-    await press(page, "t");
-    expect(await menuOpen(page, false)).toBe(false);
-    expect(await page.evaluate("window.writes")).toBe(1);
   });
 
   test("holding T opens the menu and its repeats save nothing; a repeated Escape cancels nothing", async () => {
@@ -852,8 +738,8 @@ describe("keys: the help dialog", () => {
       control.dispatchEvent(new Event("change", { bubbles: true }));
     })()`);
 
-  // RAW is the fixture's rows in raw mode, with j registered after the elements.
-  const RAW = [
+  // ROWS is the fixture's rows, with j registered after the elements.
+  const ROWS = [
     ["[?]", "Help"],
     ["[T]", "Theme"],
     ["[A]", "Archive the thread"],
@@ -882,7 +768,7 @@ describe("keys: the help dialog", () => {
     await openHelp(page);
     expect(await fetchedHelp(page)).toBe(true);
     expect(await page.evaluate(`document.getElementById("help").matches(":modal")`)).toBe(true);
-    expect(await rows(page)).toEqual(RAW.slice(0, -1));
+    expect(await rows(page)).toEqual(ROWS.slice(0, -1));
   });
 
   test("showModal() from script, or the ? key, opens and fills it too", async () => {
@@ -896,7 +782,7 @@ describe("keys: the help dialog", () => {
     await page.evaluate(`document.querySelector("[data-keys-list]").replaceChildren()`);
     await press(page, "?", { code: "Slash", shift: true });
     await filled(page);
-    expect(await rows(page)).toEqual(RAW.slice(0, -1));
+    expect(await rows(page)).toEqual(ROWS.slice(0, -1));
   });
 
   test("lists each active binding once, as the one that fires, with its label by the rule", async () => {
@@ -905,7 +791,7 @@ describe("keys: the help dialog", () => {
     await openHelp(page);
     // Second F and the registered f lose to First; Disabled, Inert, Hidden, and the dialog's own
     // Close are left out; A's label is its aria-label, Search's its <label>'s text.
-    expect(await rows(page)).toEqual(RAW);
+    expect(await rows(page)).toEqual(ROWS);
     // Each open lists the page as it is then.
     await closeHelp(page);
     await page.evaluate(`(document.querySelector("[data-keys=d]").disabled = false,
@@ -914,34 +800,6 @@ describe("keys: the help dialog", () => {
     const listed = await rows(page);
     expect(listed).toContainEqual(["[D]", "Disabled"]);
     expect(listed).toContainEqual(["[F]", "Second"]);
-  });
-
-  test("draws the keys of the current mode, set by the page or the reader", async () => {
-    const page = await open(HELP);
-    await openHelp(page);
-    await choose(page, "mode", "leader");
-    let listed = await rows(page);
-    expect(listed[1]).toEqual(["[G] then [T]", "Theme"]);
-    expect(listed[0]).toEqual(["[G] then [?]", "Help"]);
-    expect(listed[4]).toEqual(["[G] then [C]", "Contents"]);
-    expect(listed[5]).toEqual(["[Control]+[K]", "Command"]);
-    await choose(page, "leader", "Space");
-    expect((await rows(page))[1]).toEqual(["[Space] then [T]", "Theme"]);
-    await choose(page, "mode", "activator");
-    await choose(page, "activator", "Alt+Shift");
-    listed = await rows(page);
-    expect(listed[1]).toEqual(["[Alt]+[Shift]+[T]", "Theme"]);
-    // A symbol ignores Shift: ? is drawn as typed, with the activator's Alt alone.
-    expect(listed[0]).toEqual(["[Alt]+[?]", "Help"]);
-  });
-
-  test("in leader mode g c and g t list once each, beside the leader's own chords", async () => {
-    const page = await open(HELP);
-    await call(page, `keys.register("g", "Top", () => {})`);
-    await call(page, `keys.changeSettings({ mode: "leader" })`);
-    await openHelp(page);
-    // g is bare: in leader mode it is g g, so it doesn't shadow g c.
-    expect((await rows(page)).at(-1)).toEqual(["[G] then [G]", "Top"]);
   });
 
   test("a row button closes the dialog and runs its binding: click, focus, or the handler", async () => {
@@ -957,7 +815,7 @@ describe("keys: the help dialog", () => {
     await runRow("Next section");
     expect(await log(page)).toEqual([
       "t",
-      `j ${JSON.stringify({ binding: "j", keys: [], mode: "raw", label: "Next section" })}`,
+      `j ${JSON.stringify({ binding: "j", keys: [], label: "Next section" })}`,
     ]);
     // Running a row is no key press: keys-fire is not dispatched.
     expect(await page.evaluate("window.fired")).toEqual([]);
@@ -981,28 +839,22 @@ describe("keys: the help dialog", () => {
       legend: "Settings",
       controls: [
         ["enabled", true, null],
-        ["mode", "raw", ["raw", "leader", "activator"]],
-        ["leader", "g", ["g", ",", "\\", "Space"]],
-        ["activator", "Alt", ["Alt", "Control", "Meta", "Alt+Shift"]],
         // The tests' store wait, WAIT, is listed first, as the page's own.
         ["wait", "", ["", "1000", "1500", "3000", "5000"]],
       ],
     });
-    expect(
-      await page.evaluate(`document.querySelector("#help [data-keys-settings]").textContent`),
-    ).toContain("Control+T, Control+W, and Control+N never reach a page");
-    await choose(page, "mode", "activator");
-    await choose(page, "activator", "Control");
     await choose(page, "wait", 3000);
-    expect(await saved(page)).toEqual({ mode: "activator", activator: "Control", wait: 3000 });
+    expect(await saved(page)).toEqual({ wait: 3000 });
+    expect(await call(page, "keys.settings()")).toEqual({ enabled: true, wait: 3000 });
+    // The page's own wait, the empty first option, removes the reader's from storage.
+    await choose(page, "wait", "");
+    expect(await saved(page)).toBeNull();
+    await choose(page, "enabled", false);
+    expect(await saved(page)).toEqual({ enabled: false });
     await closeHelp(page);
     await press(page, "t");
-    await press(page, "t", { ctrl: true });
-    expect(await log(page)).toEqual(["t"]);
-    // Back to a default removes it from storage.
-    await openHelp(page);
-    await choose(page, "activator", "Alt");
-    expect(await saved(page)).toEqual({ mode: "activator", wait: 3000 });
+    await press(page, "k", { ctrl: true });
+    expect(await log(page)).toEqual(["Control+k"]);
   });
 
   test("the off switch marks character-key rows off while combinations still fire", async () => {
@@ -1032,10 +884,6 @@ describe("keys: the help dialog", () => {
     await press(page, "c");
     await press(page, "k", { ctrl: true });
     expect(await log(page)).toEqual(["t", "Control+k"]);
-    // In activator mode the bare bindings are combinations, so they're on again.
-    await openHelp(page);
-    await choose(page, "mode", "activator");
-    expect((await rows(page))[1]).toEqual(["[Alt]+[T]", "Theme"]);
   });
 
   test("carries the screen-reader note", async () => {
@@ -1044,9 +892,8 @@ describe("keys: the help dialog", () => {
     const note = await page.evaluate(
       `document.querySelector("#help [data-keys-note]").textContent`,
     );
-    for (const text of ["NVDA+F2", "JAWS+3", "Narrator+3", "VO+Tab", "NVDA's browse mode"]) {
-      expect(note).toContain(text);
-    }
+    for (const text of ["NVDA+F2", "JAWS+3", "Narrator+3", "VO+Tab"]) expect(note).toContain(text);
+    expect(note).not.toContain("activator");
   });
 
   test("another tab's change shows in the dialog on the next open, and changes what fires", async () => {
@@ -1055,26 +902,25 @@ describe("keys: the help dialog", () => {
     await openHelp(two);
     await closeHelp(two);
     await openHelp(one);
-    await choose(one, "mode", "leader");
+    await choose(one, "wait", 5000);
     await choose(one, "enabled", false);
     await sleep(two, 50);
     await openHelp(two);
-    expect((await rows(two))[1]).toEqual(["[G] then [T] off", "Theme"]);
+    expect((await rows(two))[1]).toEqual(["[T] off", "Theme"]);
     expect(
       await two.evaluate(`[...document.querySelectorAll("#help [data-keys-settings] :is(input, select)")]
         .map((el) => el.type === "checkbox" ? el.checked : el.value)`),
-    ).toEqual([false, "leader", "g", "Alt", ""]);
+    ).toEqual([false, "5000"]);
     await closeHelp(two);
-    await press(two, "g");
     await press(two, "t");
     await press(two, "k", { ctrl: true });
     expect(await log(two)).toEqual(["Control+k"]);
   });
 });
 
-// Behavior 14, the specimen: served, it loads keys and states no mode, its header's Help button
-// and ? open the help dialog, and specimen.js registers j and k, which move focus through the
-// sections with an id, and g, which goes to the top, each wrapped by the reader's mode.
+// Behavior 14, the specimen: served, it loads keys, its header's Help button and ? open the help
+// dialog, and specimen.js registers j and k, which move focus through the sections with an id,
+// and g, which goes to the top.
 describe("keys: the specimen", () => {
   // DESKTOP is a viewport tall enough to show several sections, short enough that the page
   // scrolls through every one the tests reach.
@@ -1142,16 +988,15 @@ describe("keys: the specimen", () => {
     })`);
 
   const helpOpen = (page) => page.evaluate(`document.getElementById("help").open`);
-  const question = (page, held = {}) => press(page, "?", { code: "Slash", shift: true, ...held });
+  const question = (page) => press(page, "?", { code: "Slash", shift: true });
 
-  test("states no mode, so raw applies, and its Help button opens the help dialog by show-modal", async () => {
+  test("its Help button carries ? and opens the help dialog by show-modal", async () => {
     const page = await openSpecimen();
     expect(
       await page.evaluate(`(() => {
         const help = document.querySelector("body > header > button + button");
         const close = document.querySelector("#help button[command=close]");
         return {
-          mode: document.documentElement.hasAttribute("data-keys-mode"),
           help: [help.textContent.replace(/\\s+/g, " ").trim(), help.getAttribute("data-keys"),
             help.getAttribute("aria-keyshortcuts"), help.getAttribute("command"),
             help.getAttribute("commandfor")],
@@ -1161,7 +1006,6 @@ describe("keys: the specimen", () => {
         };
       })()`),
     ).toEqual({
-      mode: false,
       help: ["Help ?", "?", "Shift+/", "show-modal", "help"],
       close: ["?", "help"],
       sections: 19,
@@ -1232,65 +1076,6 @@ describe("keys: the specimen", () => {
     await press(page, "g");
     expect(await at(page)).toBe("h1");
     expect(await page.evaluate("scrollY")).toBe(0);
-  });
-
-  test("in leader mode, g j, g k, and g g move and go to the top, and the bare keys do nothing", async () => {
-    const page = await openSpecimen();
-    await call(page, `keys.changeSettings({ mode: "leader" })`);
-    await press(page, "j");
-    expect(await at(page)).toBe("body");
-    await press(page, "g");
-    await press(page, "j");
-    expect(await at(page)).toBe("tokens");
-    await press(page, "g");
-    await press(page, "j");
-    await press(page, "g");
-    await press(page, "k");
-    expect(await at(page)).toBe("tokens");
-    await press(page, "g");
-    await press(page, "g");
-    expect(await at(page)).toBe("h1");
-    expect(await page.evaluate("scrollY")).toBe(0);
-    await press(page, "g");
-    await question(page);
-    await filled(page);
-    expect(await rows(page)).toEqual([
-      ["[G] then [T]", "Theme"],
-      ["[G] then [?]", "Help"],
-      ["[G] then [J]", "Next section"],
-      ["[G] then [K]", "Previous section"],
-      ["[G] then [G]", "Top"],
-    ]);
-  });
-
-  test("in activator mode, chosen in the help dialog, Alt+j, Alt+k, and Alt+g work", async () => {
-    const page = await openSpecimen();
-    await question(page);
-    await filled(page);
-    await page.evaluate(`(() => {
-      const control = document.querySelector("#help [data-keys-settings] [name=mode]");
-      control.value = "activator";
-      control.dispatchEvent(new Event("change", { bubbles: true }));
-    })()`);
-    expect((await rows(page)).map(([keys]) => keys)).toEqual([
-      "[Alt]+[T]",
-      "[Alt]+[?]",
-      "[Alt]+[J]",
-      "[Alt]+[K]",
-      "[Alt]+[G]",
-    ]);
-    // The dialog's own Close takes ? with the activator held, as every bare binding does.
-    await question(page, { alt: true });
-    expect(await helpOpen(page)).toBe(false);
-    await press(page, "∆", { code: "KeyJ", alt: true });
-    expect(await at(page)).toBe("tokens");
-    await press(page, "∆", { code: "KeyJ", alt: true });
-    await press(page, "˚", { code: "KeyK", alt: true });
-    expect(await at(page)).toBe("tokens");
-    await press(page, "j");
-    expect(await at(page)).toBe("tokens");
-    await press(page, "©", { code: "KeyG", alt: true });
-    expect(await at(page)).toBe("h1");
   });
 
   test("from file://, it has no keys, and its help dialog says why it lists nothing", async () => {

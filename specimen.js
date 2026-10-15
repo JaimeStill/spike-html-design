@@ -1,10 +1,9 @@
 // The specimen's own shortcuts, specimen code rather than the package's: keys binds none itself,
 // so this page registers its own with keys' register(). j and k move focus to the next and the
 // previous section with an id, in document order, nested sections included, and g goes to the
-// top. Each is a bare key, so the reader's mode wraps it: g j, g k, and g g in leader mode, Alt+j,
-// Alt+k, and Alt+g in activator mode. The specimen loads this file as a module script by relative
-// URL, beside keys.js, so it runs served and on Pages; from file://, chromium blocks it, and the
-// page has no shortcuts, as it has no menu.
+// top. The specimen loads this file as a module script by relative URL, beside keys.js, so it
+// runs served and on Pages; from file://, chromium blocks it, and the page has no shortcuts, as
+// it has no menu.
 import { register } from "./modules/keys.js";
 
 // sections lists the sections a j or k press moves through: every section with an id, each
