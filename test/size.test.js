@@ -14,6 +14,8 @@ const MODULES = {
   "modules/theme-menu.js": ["modules/preferences.js", "modules/registry.js"],
   "modules/register.js": ["modules/registry.js"],
   "modules/register-full.js": ["modules/registry.js"],
+  "modules/keys.js": ["modules/keys-grammar.js"],
+  "modules/keys-grammar.js": [],
 };
 
 // FIXTURE is a one-entry package, entry.css importing part.css, that the budget tests audit
