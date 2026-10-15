@@ -192,10 +192,11 @@ const FACETS = {
 const TOKENS = Object.assign({}, ...Object.values(FACETS));
 
 // RETIRED are the token names the facets dropped: from v0.1.0 and v0.2.0, the color tiers but
-// --bg-1, which v0.6.0 takes back as the first elevated surface, the role tokens, and herald's text tiers; herald's numbered space steps, its font stacks, and the
-// text steps the type facet renamed; and --measure, since line length is layout's. None may be
-// declared or read anywhere in the working tree. The kept text names (--text-xs, --text-xl,
-// --text-2xl to --text-4xl) are not among them.
+// --bg-1, which v0.6.0 takes back as the first elevated surface, the role tokens, and herald's
+// text tiers; herald's numbered space steps, its font stacks, and the text steps the type facet
+// renamed; and --measure, since line length is layout's. None may be declared or read anywhere
+// in the working tree. The kept text names (--text-xs, --text-xl, --text-2xl to --text-4xl) are
+// not among them.
 const RETIRED = [
   "--divider",
   "--fg-1",
