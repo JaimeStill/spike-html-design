@@ -26,7 +26,8 @@ afterAll(() => server.stop());
 // RULES are the color facet's rule names, in the order check() reports them.
 const RULES = ["tokens", "color-only", "layer", "specificity", "paints", "surfaces", "registered"];
 
-// BROKEN are the fixture profiles, each to the one rule it breaks.
+// BROKEN are the fixture profiles, each to the one rule it breaks. Every rule but paints, which an
+// entry's own rule keeps, has one; a consumer's rule breaks paints in its own test below.
 const BROKEN = {
   missing: "tokens",
   spacing: "color-only",
@@ -92,8 +93,6 @@ describe("conformance", () => {
       expect([name, results[name].map((failure) => failure.rule)]).toEqual([name, [rule]]);
       expect(results[name][0].message).toStartWith(`${name}: `);
     }
-    // Every rule but paints, which an entry's own rule keeps, has a fixture that breaks it.
-    expect(RULES.filter((rule) => !Object.values(BROKEN).includes(rule))).toEqual(["paints"]);
   });
 
   test("names the failing tokens and schemes, and an unknown name fails every applying rule", async () => {

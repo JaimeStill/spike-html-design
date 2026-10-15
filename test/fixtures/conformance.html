@@ -19,7 +19,7 @@
       import { register } from "../../modules/registry.js";
       import "../../modules/register-full.js";
 
-      // Every fixture profile is registered but unregistered.
+      // Every fixture profile but unregistered is registered.
       for (const name of ["missing", "unlayered", "specific", "surfaces", "spacing"]) {
         register("color", name);
       }
