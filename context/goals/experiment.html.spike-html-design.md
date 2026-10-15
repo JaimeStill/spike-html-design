@@ -172,7 +172,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 0/8 committed · review stop — · standards — · spec — · editor —
+slices 1/8 committed (grammar ec54ae1) · review stop — · standards — · spec — · editor —
 
 ## Decisions
 
