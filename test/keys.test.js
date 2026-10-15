@@ -686,3 +686,96 @@ describe("keys: aria-keyshortcuts", () => {
     expect(await shortcut("unbound")).toBe("Alt+U");
   });
 });
+
+// T moved from <theme-menu> to keys in v0.6.0: the preferences fixture binds it with data-keys
+// on its Theme button, and the menu keeps T as its own key while open.
+describe("keys: T and the theme menu", () => {
+  const PREFERENCES = "spike-html-design.preferences";
+
+  // openMenuPage opens the preferences fixture with every keys-fire recorded in window.fired and
+  // every storage write counted in window.writes.
+  async function openMenuPage() {
+    const page = await openPage(fixture("preferences.html"));
+    pages.push(page);
+    await page.evaluate(`(() => {
+      window.fired = [];
+      document.addEventListener("keys-fire", (event) => window.fired.push(event.detail));
+      window.writes = 0;
+      const setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (...args) { window.writes++; return setItem.apply(this, args); };
+    })()`);
+    return page;
+  }
+
+  // menuOpen resolves to whether the menu is open once open settles at it, or after 2 s.
+  const menuOpen = (page, open) =>
+    page.evaluate(`new Promise((resolve) => {
+      const end = performance.now() + 2000;
+      const poll = () => {
+        const now = document.querySelector("theme-menu").hasAttribute("data-open");
+        if (now === ${open} || performance.now() > end) resolve(now);
+        else setTimeout(poll, 10);
+      };
+      poll();
+    })`);
+
+  test("T, or t with caps lock, opens the menu through keys, which declares it", async () => {
+    for (const key of ["t", "T"]) {
+      const page = await openMenuPage();
+      expect(
+        await page.evaluate(
+          `document.querySelector("button[commandfor=theme]").getAttribute("aria-keyshortcuts")`,
+        ),
+      ).toBe("T");
+      await press(page, key);
+      expect(await menuOpen(page, true)).toBe(true);
+      expect(await page.evaluate("window.fired")).toEqual([
+        { binding: "t", keys: ["t"], mode: "raw" },
+      ]);
+    }
+  });
+
+  test("T with a modifier, or in a field, opens nothing", async () => {
+    const page = await openMenuPage();
+    for (const held of ["ctrl", "alt", "meta", "shift"]) await press(page, "t", { [held]: true });
+    for (const selector of ["input", "textarea", "select", "[contenteditable]"]) {
+      await page.evaluate(`document.querySelector(${JSON.stringify(selector)}).focus()`);
+      await press(page, "t");
+    }
+    await sleep(page, 100);
+    expect(await menuOpen(page, true)).toBe(false);
+    expect(await page.evaluate("window.fired")).toEqual([]);
+  });
+
+  test("T while the menu is open saves once and closes it, and keys never sees it", async () => {
+    const page = await openMenuPage();
+    await press(page, "t");
+    expect(await menuOpen(page, true)).toBe(true);
+    await press(page, "l");
+    await press(page, "t");
+    expect(await menuOpen(page, false)).toBe(false);
+    await sleep(page, 100);
+    expect(await page.evaluate("window.writes")).toBe(1);
+    expect(await page.evaluate(`JSON.parse(localStorage.getItem("${PREFERENCES}")).color`)).toBe(
+      "primer",
+    );
+    // The one keys-fire is the press that opened the menu: the menu stops its T at the dialog.
+    expect(await page.evaluate("window.fired.length")).toBe(1);
+    expect(await page.evaluate(`document.querySelector("theme-menu dialog")`)).toBeNull();
+  });
+
+  test("in leader mode g t opens the menu, and the menu's own T saves it", async () => {
+    const page = await openMenuPage();
+    await call(page, `keys.changeSettings({ mode: "leader" })`);
+    await page.evaluate("window.writes = 0");
+    await press(page, "t");
+    await sleep(page, 100);
+    expect(await menuOpen(page, true)).toBe(false);
+    await press(page, "g");
+    await press(page, "t");
+    expect(await menuOpen(page, true)).toBe(true);
+    await press(page, "t");
+    expect(await menuOpen(page, false)).toBe(false);
+    expect(await page.evaluate("window.writes")).toBe(1);
+  });
+});

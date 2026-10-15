@@ -9,7 +9,7 @@
 // Module scripts run in document order, so the registry lists the page's profiles when this
 // module runs, and blocking="render" holds first paint until it has applied the stored choice:
 // no flash of the default profile. Its bytes delay first paint, so it holds only that: apply,
-// persistence, the storage event, the T binding, and the thin element. The menu itself is
+// persistence, the storage event, and the thin element. The menu itself is
 // theme-menu.js, fetched the first time the menu opens. Without storage, or without this module,
 // the page renders its defaults: preferences are progressive enhancement.
 //
@@ -103,20 +103,11 @@ addEventListener("storage", (event) => {
   apply(read() ?? {});
 });
 
-// isField reports whether a key pressed on target types into it, so T there is text, not the
-// shortcut.
-function isField(target) {
-  return (
-    target instanceof Element &&
-    (target.isContentEditable || target.closest("input, textarea, select") !== null)
-  );
-}
-
 // ThemeMenu is the thin element the page places once, in light DOM, with an id its own button
-// names: <button commandfor="theme" command="--open">. It opens on that invoker command and on
-// T, and only then fetches theme-menu.js, whose open(element) builds the menu inside it and whose
-// accept(element) saves and closes it (T while open). The menu module marks itself open and
-// closed through setOpen.
+// names: <button commandfor="theme" command="--open">. It opens on that invoker command, and only
+// then fetches theme-menu.js, whose open(element) builds the menu inside it. It binds no key: a
+// page binds T by giving that button data-keys="t" and loading keys.js, which clicks it. The menu
+// module marks itself open and closed through setOpen.
 class ThemeMenu extends HTMLElement {
   #menu = null;
 
@@ -125,30 +116,10 @@ class ThemeMenu extends HTMLElement {
     this.addEventListener("command", (event) => {
       if (event.command === "--open") this.show();
     });
-    this.onkey = this.onkey.bind(this);
-  }
-
-  // T binds here until keys.js takes the binding in v0.6.0. Shift is allowed, so t and T (caps
-  // lock or shift) both count; Ctrl, Alt, and Meta leave the key to the browser and the system.
-  connectedCallback() {
-    document.addEventListener("keydown", this.onkey);
-  }
-
-  disconnectedCallback() {
-    document.removeEventListener("keydown", this.onkey);
-  }
-
-  onkey(event) {
-    if (event.key !== "t" && event.key !== "T") return;
-    if (event.ctrlKey || event.altKey || event.metaKey || event.defaultPrevented) return;
-    if (isField(event.target)) return;
-    event.preventDefault();
-    if (open) this.#load().then((menu) => menu.accept(this));
-    else this.show();
   }
 
   // show loads the menu module once, on first open, and opens the menu. It returns nothing: its
-  // callers, the command and T, wait on nothing. A second call while the module loads opens the
+  // caller, the command, waits on nothing. A second call while the module loads opens the
   // menu once, since the menu's open ignores an element whose menu is already open.
   show() {
     if (open) return;

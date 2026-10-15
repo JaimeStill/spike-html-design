@@ -6,11 +6,12 @@
     <link rel="stylesheet" href="../../../full.css" />
     <script type="module" blocking="render" src="../../../modules/register-full.js"></script>
     <script type="module" blocking="render" src="../../../modules/preferences.js"></script>
+    <script type="module" src="../../../modules/keys.js"></script>
   </head>
   <body>
     <h1>preferences fixture elsewhere</h1>
     <p>A full-entry page in another directory of the same origin: it shares the stored choice.</p>
-    <p><button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">Theme <kbd>T</kbd></button></p>
+    <p><button type="button" commandfor="theme" command="--open" data-keys="t">Theme <kbd>T</kbd></button></p>
     <p><label>Text <input type="text" /></label></p>
     <p><label>Notes <textarea></textarea></label></p>
     <p><label>Pick <select><option>one</option><option>two</option></select></label></p>

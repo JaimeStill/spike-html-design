@@ -11,10 +11,12 @@
          choice applies before first paint. Both import the registry, which the modulepreload
          fetches beside them rather than after them, so first paint waits one round trip, not
          two. Relative module scripts run served and on Pages; from file://, chromium blocks
-         them, and the page renders its defaults with no menu. -->
+         them, and the page renders its defaults with no menu. keys follows as a plain module
+         script, since no shortcut is pressed before first paint; it binds the Theme button's T. -->
     <link rel="modulepreload" href="./modules/registry.js" />
     <script type="module" blocking="render" src="./modules/register-full.js"></script>
     <script type="module" blocking="render" src="./modules/preferences.js"></script>
+    <script type="module" src="./modules/keys.js"></script>
     <style>
       /* The specimen layer arranges this page as a console: a compact header, each section
          under its heading, a full-width banner over each subsection, and the samples in panels,
@@ -606,7 +608,7 @@
   <body>
     <header>
       <h1>spike-html-design</h1>
-      <button type="button" commandfor="theme" command="--open" aria-keyshortcuts="T">
+      <button type="button" commandfor="theme" command="--open" data-keys="t">
         Theme <kbd>T</kbd>
       </button>
       <p>

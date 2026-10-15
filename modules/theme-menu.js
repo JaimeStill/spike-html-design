@@ -5,7 +5,6 @@
 //
 //   open(element)    opens the menu inside element and marks it open (setOpen), so another
 //                    tab's save waits on the menu's Save or Cancel.
-//   accept(element)  T while open: saves and closes the menu.
 //
 // Each row is a native radio group, a fieldset with a legend and a radio per name the registry
 // lists for that facet (the scheme's are system, light, dark), drawn as ◀ current value ▶: the
@@ -18,6 +17,10 @@
 // Keys, each stopped at the dialog so no page-wide listener sees it: Up/Down and k/j move
 // between rows; Left/Right cycle a row natively, h/l cycle it the same way, wrapping; Tab is one
 // stop per row, as a radio group is; t/T saves; Escape cancels.
+//
+// T inside the menu is the menu's own key, as Escape is, not a keys.js binding: focus sits on a
+// radio, a field where keys is silent, and the menu stops T at the dialog, so a press saves once.
+// Save's aria-keyshortcuts="T" is written here for the same reason, and Save carries no data-keys.
 //
 // The menu's arrangement is its own CSS, never the baseline's layers: one constructed sheet,
 // adopted onto the document once, in the layer spike-html-design.theme-menu, which falls after
@@ -360,8 +363,4 @@ export function open(element) {
   element.toggleAttribute("data-open", true);
   dialog.showModal();
   dialog.querySelector(".theme-menu-row :checked")?.focus();
-}
-
-export function accept(element) {
-  close(element, true);
 }
