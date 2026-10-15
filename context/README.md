@@ -77,18 +77,18 @@ Its packaging, a git-tag package that other packages extend, is also an input to
 ## Scope
 
 - **No build.** Hand-written CSS, HTML, and ES modules with custom elements and no framework.
-  Tools are pinned in mise. Bundling at release waits until validate measures the cost of the
-  @import chain from the CDN.
+  Tools are pinned in mise. validate measured the cost of the @import chain from the CDN and of
+  the comments, and leaves a release build to the experiment.html intake ("The answer").
 - **Packaging.** From facets on, a `package.json` names and versions the package and exports
   its CSS entry points, and from preferences on its JS modules, with no dependencies. A
   consumer installs it by git tag, `bun add github:JaimeStill/spike-html-design#vX.Y.Z`, which
   validate proves. The lean entry point holds the foundation and the default profiles, and the
-  full one every profile; "Entries and exports", below, lists v0.6.0's exports. Each entry's
+  full one every profile; "Entries and exports", below, lists v0.7.0's exports. Each entry's
   size, raw and brotli, is reported from facets on, and its brotli size is held to a budget from
   profiles on.
 - **Serving.** GitHub Pages through `actions/deploy-pages`, for the specimen page. jsDelivr is a
   tested secondary channel: `cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@vX.Y.Z/...`.
-- **Releases.** One minor tag per task, v0.1.0 to v0.6.0. A tag is never changed or re-cut. The
+- **Releases.** One minor tag per task, v0.1.0 to v0.7.0. A tag is never changed or re-cut. The
   token names change at v0.3.0 with no aliases; earlier tags keep their names.
 - **Not here.** Components such as a badge or a card belong to consumer packages, which declare
   their own later layers. Layouts and a layout engine are spike-html-components' and then
@@ -101,7 +101,7 @@ Each entry names the task that builds it. Each tag keeps its own names on its ow
 v0.1.0 and v0.2.0 have flat layers, Primer-derived themes with the `data-theme` hook, role
 tokens, and component classes; v0.3.0 has `--border-3`; v0.4.0 has flat profile export keys,
 `./profiles/<name>`; v0.4.0 and v0.5.0 have a pane surface, `--bg-0`, darker than the page in
-both schemes; and v0.5.0's `<theme-menu>` binds its own T, Shift included. "Using v0.6.0",
+both schemes; and v0.5.0's `<theme-menu>` binds its own T, Shift included. "Using v0.7.0",
 below, describes the interface a page uses now.
 
 - **Layers** (facets): one top-level layer named for the package holds tokens, with color,
@@ -145,17 +145,20 @@ below, describes the interface a page uses now.
 - **Package** (facets, profiles, preferences, validate): `package.json` and the lean entry point,
   with each entry's size reported by `mise run size` and the check (facets); the full entry point
   and the enforced size budget (profiles); the JS exports, each with its own budget
-  (preferences); the git-tag install and an extension fixture that passes the
-  exported conformance test (validate).
+  (preferences); `./conformance`, which checks a color profile against the facet's contract in a
+  live page, and the Harbor extension fixture, a package that installs the baseline by git tag,
+  adds a color profile, and passes that check (validate).
 - **Publishing:** the specimen page, `index.html`, on Pages, with a section per layer and facet
   from facets on, a grid of preview containers for every profile and scheme from profiles on, a
   Theme button that opens the menu from preferences on, and from keys on a Help button and
   dialog, with T, ?, j, k, and g bound; `mise run serve` (facets), which serves a branch on
   localhost; a page per tag under `pinned/` that links the tag's jsDelivr URLs, for its modules
   too from v0.5.0, and for the specimen's own `specimen.js` from v0.6.0; `mise run pin <tag>`,
-  which checks a published tag's stylesheets, modules, and page scripts live.
+  which checks a published tag's stylesheets, modules, and page scripts live, and from v0.6.0
+  installs the Harbor fixture from GitHub by the tag (validate); and `mise run chain <tag>`
+  (validate), which measures the CSS entries' and keys.js's import chains live from jsDelivr.
 
-## Using v0.6.0
+## Using v0.7.0
 
 ### Wiring a page
 
@@ -169,11 +172,11 @@ dialog:
 ```html
 <html lang="en">
   <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/full.css" />
-    <link rel="modulepreload" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/registry.js" />
-    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/register-full.js"></script>
-    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/preferences.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/keys.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/full.css" />
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/registry.js" />
+    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/register-full.js"></script>
+    <script type="module" blocking="render" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/preferences.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/keys.js"></script>
   </head>
   <body>
     <button type="button" commandfor="theme" command="--open" data-keys="t">
@@ -333,7 +336,7 @@ links. A page or extension that imports a profile beyond its entry registers tha
 in a module loaded before the preferences module:
 
 ```js
-import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/registry.js";
+import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/registry.js";
 
 register("color", "catppuccin");
 ```
@@ -418,7 +421,7 @@ native action or invoker command runs, or focuses it when it is a field. A scrip
 handler with no element:
 
 ```js
-import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/modules/keys.js";
+import { register } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/keys.js";
 
 const remove = register("g c", "Go to the contents", () =>
   document.getElementById("contents").focus(),
@@ -548,6 +551,59 @@ keeps the page's own text, its Close button still working. Keys imports the modu
 next open, but chromium keeps the failed module for the life of the document, so only a reload
 loads it.
 
+### Conformance
+
+The conformance module, `conformance.js`, from v0.7.0, checks one color profile in a live page
+against the color facet's contract, so a package that ships a profile can test it by version. It
+imports nothing and loads no CSS:
+
+```js
+import { check } from "https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/modules/conformance.js";
+
+const failures = await check("color", "harbor");
+```
+
+`check(facet, name)` waits for the page's load event, probes with elements and a stylesheet of its
+own, removes them, and resolves to a list of `{ rule, message }`; an empty list means the profile
+conforms. Each rule fails at most once, in `RULES`'s order. It rejects with a `TypeError` for an
+unknown facet, a facet with no check (only color has one), or an empty name. It reads computed
+values, never a stylesheet's rules, which chromium hides from `file://` and cross-origin pages, so
+it runs alike from `file://` through jsDelivr, from a local server, and from node_modules.
+
+| Rule | The profile named `name` |
+| --- | --- |
+| `tokens` | Sets each of the sixteen color tokens under `data-palette="<name>"` to a color, in light and in dark. |
+| `color-only` | Sets no space or type token there. |
+| `layer` | Sits inside `spike-html-design.tokens.color`, so a consumer's later layer beats it. |
+| `specificity` | Applies at zero specificity, `:where([data-palette="<name>"])`. |
+| `paints` | A scope with the name paints its background from its own `--bg` and its text from its own `--fg`, in each scheme. |
+| `surfaces` | `--bg`, `--bg-1`, and `--bg-2` step toward `--fg` in each scheme. |
+| `registered` | The name is listed under color in the registry. |
+
+The rules, the function's name and arguments, and its failure list are public API, frozen with
+v0.7.0. A source credit and upstream swatches are this repository's standard for its own
+profiles, not the contract's.
+
+### Extending with a package
+
+The Harbor fixture, `test/fixtures/extension-package/`, is an extension package as a consumer
+writes one. Its `package.json` depends on the baseline by tag,
+`"spike-html-design": "github:JaimeStill/spike-html-design#v0.6.0"`, and `bun install` fetches it.
+Its page links `full.css` from node_modules and then its own profile, `harbor.css`, which places
+itself in the color layer since it is linked rather than imported with `layer()`:
+
+```css
+@layer spike-html-design.tokens.color {
+  :where([data-palette="harbor"]) { --bg: light-dark(#f7f9fb, #0d1620); /* … */ }
+}
+```
+
+Its `register.js` registers `harbor` after the baseline's registration module and before the
+preferences module, so the menu lists it and a stored choice applies it before first paint.
+Browsers don't read a package's exports: a page with no build reaches node_modules by path, and
+its modules by bare names through an import map, which the page writes. Module scripts from
+node_modules need a server; chromium runs none from `file://`.
+
 ### Entries and exports
 
 | Export | File | Holds |
@@ -563,15 +619,16 @@ loads it.
 | `./keys` | `modules/keys.js` | The keys runtime: `register`, `settings`, `changeSettings`, and `bindings`. |
 | `./keys/grammar` | `modules/keys-grammar.js` | The binding grammar, with no DOM: `parse`, `problem`, `stringify`, `normalize`, `matches`, `labels`, and `keyshortcuts`. |
 | `./keys/help` | `modules/keys-help.js` | The help dialog's contents, `fill`, which keys loads on the dialog's first open. |
+| `./conformance` | `modules/conformance.js` | The conformance check, `check` and `RULES`, from v0.7.0. |
 
 A page links one entry, never both. A page that needs a profile beyond the lean entry's links
 the lean entry, imports that profile into its facet's sub-layer after the entry, and registers
 its name (see "The registry"):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/baseline.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/baseline.css" />
 <style>
-  @import url(https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.6.0/layers/tokens/color/catppuccin.css)
+  @import url(https://cdn.jsdelivr.net/gh/JaimeStill/spike-html-design@v0.7.0/layers/tokens/color/catppuccin.css)
     layer(spike-html-design.tokens.color);
 </style>
 ```
@@ -601,16 +658,18 @@ export is not an entry; its size counts in the entry that imports it.
 | `modules/keys.js` | 10,300 |
 | `modules/keys-grammar.js` | 3,500 |
 | `modules/keys-help.js` | 13,200 |
+| `modules/conformance.js` | 4,000 |
 
-v0.6.0's keys entries total 9,661, 3,066, and 12,351 bytes, leaving 639, 434, and 849 bytes of
-headroom. `keys.js` is about three times @github/hotkey's 2,872 bytes, the precedent's
-runtime; comments are 53–56% of the keys modules' brotli size, left as written for validate's
-holistic size strategy.
+v0.7.0's keys entries, unchanged from v0.6.0, total 9,661, 3,066, and 12,351 bytes, leaving 639,
+434, and 849 bytes of headroom, and `conformance.js` 3,542, leaving 458. `keys.js` is about three
+times @github/hotkey's 2,872 bytes, the precedent's runtime. Comments are left as written; "The
+answer" gives their cost and the size strategy.
 
 The check fails when an entry exceeds its budget or has none. The budgets live in `BUDGETS` in
 `scripts/size.js`, and raising one is the architect's decision. Raw sizes are reported, not
 enforced. `mise run size` prints each entry's files with their raw and brotli sizes, the totals,
-and the headroom.
+and the headroom, and beside them what the entry would weigh as one file, its imports inlined,
+and as that file without comments: an estimate of a release build's saving, never budgeted.
 
 ### Modules from `file://`
 
@@ -658,8 +717,9 @@ themes proved the earlier evidence list, which v0.2.0's README holds.
 6. `keys`: the keys grammar, runtime, and help modules, T moved off `<theme-menu>`, the
    specimen's help dialog and bindings, and a review stop that kept one convention, keys as
    written; v0.6.0 (evidence 7).
-7. `validate`: the git-tag install, the extension fixture, pin stability, sizes against the
-   budget, the cost of the CDN's import chain, and the answer (evidence 8–11).
+7. `validate`: the git-tag install, the conformance export and the extension fixture, pin
+   stability, sizes against the budget, the cost of the CDN's import chain, and the answer;
+   v0.7.0 (evidence 8–11).
 
 ## References
 
@@ -670,4 +730,119 @@ design, `app/client/design`, and its presentation palette,
 
 ## The answer
 
-Planned: the `validate` task writes it.
+**The question:** Can one tagged, native baseline of design facets (color, space, and type, each
+with swappable profiles, over elements and tools layers) be consumed by version, as a git-tag
+package and through a pinned CDN URL, and extended by other packages?
+
+**The answer:** Yes: seven immutable tags, v0.1.0 to v0.7.0, are consumed by pinned jsDelivr URL
+and by bun's git-tag install, and an extension package adds a color profile that passes the
+exported conformance check; the open cost is size, most of it comments, left to the intake.
+
+### The evidence, and where it is proven
+
+1. **Layers, no build.** The package has no dependency and no build step, and its layers nest
+   under `spike-html-design` in order; each entry imports its files one hop deep; a page's later
+   layer beats the elements and tools layers at any specificity. Proven by tests alone:
+   `test/baseline.test.js` ("layers") and `test/package.test.js`.
+2. **Facet contracts.** Each facet declares only its own tokens, swapping one facet's profile
+   changes only that facet's tokens, and the fluid scales stay within their rem bounds at every
+   display shape. Proven by `test/baseline.test.js` ("tokens", "facet independence", "fluid space
+   and type", "radius", "space and type profiles"); the scales and ratios were set at the facets
+   review stop.
+3. **Color profiles.** Flexoki, Primer, Catppuccin, and Everforest, each light and dark; the page
+   follows a live change of the system scheme; each profile's contrast is recorded and recomputed
+   in chromium, not corrected. Proven by `test/baseline.test.js` ("color interface", "color
+   profiles", the contrast records); the set was settled at profiles review stop 1, which dropped
+   Kanagawa.
+4. **Native behavior.** Under the reset and elements layers, every element's layout properties
+   match chromium's defaults, and only the tools layer styles a class. Proven by
+   `test/baseline.test.js` ("elements behavior", "tools"); the facets review stop accepted the
+   layers.
+5. **Preview containers.** A `data-palette` and `data-scheme` scope renders its subtree as its
+   profile renders at the root. Proven by `test/baseline.test.js` ("color interface", the preview
+   cards); the profiles review stop accepted the grid.
+6. **Preferences.** The menu lists the registry's profiles per facet and the scheme; a choice
+   persists across reloads and pages; render-blocking, the choice applies before first paint
+   (0 ms flash), and without `blocking="render"` the defaults show for about 366 ms; extension
+   packages register into the same registry. Proven by `test/preferences.test.js` and
+   `test/registry.test.js`, and for an extension by `test/extension-package.test.js`.
+7. **Keys.** The grammar, runtime, and help modules bind nothing themselves; the page binds its
+   own, silent in fields, on repeats, and while composing; Escape releases a field; keys writes
+   `aria-keyshortcuts` and has an off switch, and the help dialog lists every binding. Proven by
+   `test/keys.test.js` and `test/keys-grammar.test.js`; one convention, keys as written, was kept at
+   the keys review stops, and the third accepted the Escape release and the surfaces.
+8. **Consumption by version.** By pinned jsDelivr URL: each tag's pinned page renders as its
+   specimen from `file://` and a local server, hermetically in `test/pinned.test.js`, and live from
+   jsDelivr and Pages in `mise run pin`, which passed for v0.1.0 to v0.6.0 on 2026-10-15
+   (19:05:49Z) with 30, 30, 38, 58, 97, and 122 checks and none failed. By git tag:
+   `test/extension-package.test.js` installs the fixture offline from this repository at the tag,
+   and `mise run pin v0.6.0` installed it from GitHub, where bun resolved the annotated tag
+   (object 7d71d5f), its 25 published files byte-equal to the tag's, and the page rendered as the
+   pinned page in light and dark. Only v0.6.0 installs it: earlier tags lack modules the fixture
+   loads, as v0.5.0 lacks keys.js. v0.7.0's pin runs at its release.
+9. **Extension.** The Harbor fixture adds a color profile into the color layer, registers it after
+   the built-in profiles, appears in the theme menu, applies by `data-palette` and by the stored
+   choice, and passes `./conformance`. The four built-in profiles conform, served and from
+   `file://` through a CDN, and a fixture profile breaking each rule fails by that rule's name.
+   Proven by tests alone: `test/extension-package.test.js` and `test/conformance.test.js`.
+10. **Stability.** A pinned page's test reads its tag's files with `git show`, so no later change
+    to the working tree reaches it, and the live `mise run pin` of 2026-10-15 passed every
+    published tag, v0.1.0's page included, after five later tags. Proven by `test/pinned.test.js`
+    and `mise run pin`.
+11. **Size and the chain's cost.** Every entry stays within its brotli budget, enforced by the
+    check (`test/size.test.js`, `mise run size`); `mise run chain v0.6.0` measured the CDN's import
+    chain (below), and `test/chain.test.js` holds its file and hop counts.
+
+### Size and the import chain
+
+`mise run size`, in brotli bytes, per file as served, as one file, and as one file without
+comments:
+
+| Entry | Per file (budget) | One file | One file, no comments |
+| --- | --- | --- | --- |
+| `baseline.css` | 13,657 (14,000) | 10,958 | 2,697 |
+| `full.css` | 17,533 (18,000) | 12,504 | 3,134 |
+| `modules/keys.js` | 9,661 (10,300) | 9,306 | 3,975 |
+| `modules/keys-help.js` | 12,351 (13,200) | 11,610 | 5,268 |
+| `modules/conformance.js` | 3,542 (4,000) | 3,542 | 2,115 |
+
+Comments are about 80% of the CSS's brotli size as served, and 40–67% of each module's.
+
+`mise run chain v0.6.0`, on 2026-10-15 (19:06:32Z), from jsDelivr's Cloudflare edge in Atlanta,
+the median of five runs with the cache disabled over a warm connection. v0.7.0's CSS is unchanged
+from v0.6.0's, so the figures stand for it.
+
+| Entry | Files | Hops | Span | First paint |
+| --- | --- | --- | --- | --- |
+| `baseline.css` | 10 | 1 | 64.1 ms | 140.0 ms (60.2–174.6, the cold first run highest) |
+| `full.css` | 15 | 1 | 65.9 ms | 144.0 ms (64.2–69.0) |
+| `modules/keys.js` | 2 | 1 below the entry | 53.5 ms (52.1–57.1) | none: a module never blocks paint |
+
+The span is the time from the entry's response to its last import's. A separate probe saw
+jsDelivr's Fastly edges (cache-fra, cache-pdk), so the edge, and the figures, vary by place and
+time.
+
+The chain costs one hop, about 65 ms, on top of the entry; the comments cost about four times
+the code. The options for a release build, none taken here:
+
+- **One file per entry**, its imports inlined: removes the hop and saves about 20–30% of the CSS.
+- **Comments stripped**: cuts the CSS's one file to about a quarter, and the keys modules' to
+  under half.
+- **jsDelivr's `.min`**: free, but its on-the-fly minifier (clean-css 5.3.3) fails on
+  `baseline.css`; it works on the layer files.
+- **A build in a later spike**, which would also own minification and a published `dist/`.
+
+Which to take, and where, is the experiment.html intake's decision.
+
+### Facts for later spikes
+
+- **WCAG 2.1.4.** v0.5.0's `<theme-menu>` binds T with no way to turn it off, which fails WCAG
+  2.1.4, Character Key Shortcuts (Level A). The tag is immutable. v0.6.0 moves T to keys, whose
+  off switch covers it.
+- **bun build** (for spike-html-apps). `bun build` resolves the package's exports and rewrites
+  `light-dark()` into `--buncss-light` and `--buncss-dark` variables; whether a nested
+  `data-scheme` still works under that rewrite is untested.
+- **A git install's size.** bun ignores `package.json` `"files"` for a git dependency, so an
+  install carries the whole tree, about 1.6 MB with `test/`, `pinned/`, and `context/`.
+- **Registering the color tokens.** `@property` with syntax `"<color>"` was rejected: it resolves
+  `light-dark()` where the token is declared, which breaks a nested `data-scheme`.

@@ -964,3 +964,54 @@ slices 4/5 committed (c4ada3d, 7d6e288, 356aa35, 017dd43) · standards — · sp
 - coordinator · html-artifacts.md, "Answers · experiment.html": validate records that v0.5.0's
   <theme-menu> binds T with no way to turn it off, failing WCAG 2.1.4 (Level A); the tag is
   immutable, and v0.6.0 moves T to keys, whose off switch covers it (keys).
+- coordinator · html-artifacts.md, "Answers · experiment.html": add the section below (validate).
+
+      ### Answer · experiment.html.spike-html-design
+
+      **Question:** Can one tagged, native baseline of design facets (color, space, and type, each
+      with swappable profiles, over elements and tools layers) be consumed by version, as a
+      git-tag package and through a pinned CDN URL, and extended by other packages?
+
+      **Answer:** Yes: seven immutable tags, v0.1.0 to v0.7.0, are consumed by pinned jsDelivr URL
+      and by bun's git-tag install, and an extension package adds a color profile that passes the
+      exported conformance check; the open cost is size, most of it comments, left to the intake.
+
+      1. Layers, no build: one dependency-free package whose layers nest under one top-level
+         layer, each entry one @import hop deep, beaten by a consumer's later layer. Proven by
+         tests alone.
+      2. Facet contracts: color, space, and type declare only their own tokens, a profile swap
+         changes only its facet, and the fluid scales hold their rem bounds. Proven by tests; the
+         scales were set at the facets review stop.
+      3. Color profiles: Flexoki, Primer, Catppuccin, and Everforest, light and dark, following
+         the system scheme live, contrast recorded per profile and scheme. Proven by tests; the
+         set was settled at profiles review stop 1.
+      4. Native behavior: under the reset and elements layers every element keeps chromium's
+         default layout; only the opt-in tools layer styles a class. Proven by tests; accepted at
+         the facets review stop.
+      5. Preview containers: a data-palette or data-scheme scope renders as its profile does at
+         the root. Proven by tests; the grid was accepted at the profiles review stop.
+      6. Preferences: a theming menu over a registry that extensions add to; the choice persists
+         and, render-blocking, applies before first paint (a 0 ms flash; about 366 ms without).
+         Proven by tests alone.
+      7. Keys: grammar, runtime, and help modules that bind nothing themselves, with
+         aria-keyshortcuts, an off switch, and a help dialog. Proven by tests; one convention,
+         keys as written, was kept at the keys review stops.
+      8. Consumption by version: pinned pages render the same from file://, a local server, and
+         Pages, hermetically in the check and live in mise run pin, which passed v0.1.0 to v0.6.0
+         on 2026-10-15 with no failure; the git-tag install runs offline in the check and from
+         GitHub in mise run pin v0.6.0, 25 files byte-equal, rendering as the pinned page.
+      9. Extension: a fixture package adds the Harbor profile into the color layer, registers it,
+         shows it in the menu, applies it, and passes ./conformance; the four built-in profiles
+         conform and each broken fixture fails by rule. Proven by tests alone.
+      10. Stability: each pinned page is tested against its own tag's files, and mise run pin
+          passed every published tag on one day, after five later tags. Proven by a test and mise
+          run pin.
+      11. Size and cost: every entry within its brotli budget (mise run size, in the check); mise
+          run chain measured one hop of about 65 ms from jsDelivr, and comments are about 80% of
+          the CSS's brotli size. A release build (one file per entry, comments stripped,
+          jsDelivr's .min, or a build in a later spike) is left to the intake.
+
+      v0.5.0's <theme-menu> binds T with no way to turn it off, failing WCAG 2.1.4 (Level A); the
+      tag is immutable, and v0.6.0 moves T to keys, whose off switch covers it.
+
+      [The answer](https://github.com/JaimeStill/spike-html-design/blob/main/context/README.md#the-answer) · [spike-html-design](https://github.com/JaimeStill/spike-html-design)
