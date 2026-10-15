@@ -171,7 +171,7 @@ Release       v0.6.0
 
 ## Progress
 
-slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454) · review stop held (simplify: 6b), second look pending · standards — · spec — · editor —
+slices 6/8 committed (grammar ec54ae1, runtime c08b39c, modes b5033ef, T 986f0e1, help 31725aa, specimen 1fda454, simplify 7054986) · review stop held, 6b committed, second look pending · standards — · spec — · editor —
 
 ## Decisions
 
